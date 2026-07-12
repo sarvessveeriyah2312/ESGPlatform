@@ -1,1 +1,132 @@
-# ESGPlatform
+# Lestari — ESG Reporting Platform
+
+A multi-tenant ESG (Environmental, Social & Governance) reporting SaaS built for **Bursa Malaysia**
+compliance — the Simplified ESG Disclosure Guide (SEDG), Bursa Main/ACE Market listing
+requirements, and IFRS S1/S2 climate disclosures. Companies onboard by market classification and
+plan tier, log sustainability data with an approval trail, run materiality assessments, track
+governance/compliance obligations, and generate board-ready disclosure reports.
+
+The project is a monorepo: a React frontend and a Spring Boot backend, developed together and
+fully wired to each other (no mocked data in the frontend).
+
+```
+ESG/
+├── frontend/   React 19 + TypeScript + Vite — the web app
+├── backend/    Java 21 + Spring Boot 3 + PostgreSQL — the REST API
+├── BRD_SDG_ESG_Platform.docx   Business Requirements Document
+├── PRD_SDG_ESG_Platform.docx   Product Requirements Document
+└── SRS_SDG_ESG_Platform.docx   Software Requirements Specification
+```
+
+## Tech stack
+
+| Layer | Stack |
+|---|---|
+| Frontend | React 19, TypeScript, Vite 6, Tailwind CSS 4, React Router 7 (`HashRouter`), Lucide icons |
+| Backend | Java 21, Spring Boot 3.3.5, Spring Security (stateless JWT), Spring Data JPA / Hibernate, PostgreSQL, Flyway |
+| Reporting | Thymeleaf + OpenHTMLtoPDF (server-rendered PDF reports), Apache Commons CSV |
+| Email | Spring Mail — per-company "bring your own SMTP" with a platform-wide fallback |
+| Docs | springdoc-openapi (Swagger UI) |
+
+## Features
+
+- **Auth & tenancy** — JWT-based auth, one company per tenant, five roles (`COMPANY_ADMIN`,
+  `COMPANY_CONTRIBUTOR`, `CONSULTANT`, `PLATFORM_ADMIN`, `SUPERADMIN`), tenant isolation enforced
+  at the data-access layer via a Hibernate filter (not just the UI).
+- **Subscription tiers** — `starter` → `growth` → `issuer-ready`, each unlocking more indicators,
+  modules, and export formats. Plan is re-checked from the DB on every gated request, so a
+  downgrade takes effect immediately.
+- **ESG indicators** — per-company values with target tracking, an append-only audit trail
+  (who/when/source), and a management sign-off/approval workflow.
+- **Materiality assessment** — Identify → Prioritise → Validate, versioned snapshots (never
+  mutated after creation), stakeholder engagement tracking.
+- **Governance & compliance** — three-tier oversight structure, per-matter ownership, statutory
+  policy tracking (Section 17A MACC Act, whistleblowing, board gender diversity) with due-date
+  status.
+- **IFRS S1/S2 climate module** — business segments, climate risk/opportunity register, Scope 1/2/3
+  GHG ledger, governance/strategy/risk-management narrative (issuer-tier only).
+  Scope 3 transition relief is computed server-side, not stored as an editable flag.
+- **Assurance workspace** — fiscal-year sign-off gated on 100% indicator completion, with its own
+  audit trail.
+  
+- **Reports & export** — three server-rendered PDF reports (Integrated ESG Disclosure, Materiality
+  Assessment, Governance & Compliance), a raw indicator CSV ledger, and a Bursa CSI-compatible CSV
+  (readiness aid, not a real submission channel).
+- **Team management** — invite teammates by email with a secure, expiring, one-time invite link;
+  pending-invite tracking with resend/revoke; role assignment.
+- **Settings** — full profile (with photo upload), and per-company SMTP configuration with a
+  "send test email" button so invites and notifications can be sent from your own domain.
+- **Admin console** — a separate operator surface for `PLATFORM_ADMIN`/`SUPERADMIN` to manage
+  tenants, plans, and platform-wide reference data.
+
+## Getting started
+
+### Prerequisites
+
+- Node.js (for the frontend)
+- Java 21 (Temurin recommended) + Maven 3.9+ (for the backend)
+- PostgreSQL 15+ running locally (Docker is optional, not required for local dev)
+
+### 1. Backend
+
+```bash
+createdb lestari_esg          # one-time
+
+cd backend
+mvn spring-boot:run           # http://localhost:8080, 'dev' profile by default
+```
+
+Flyway migrations run automatically on startup — nothing to seed manually. Swagger UI is at
+`http://localhost:8080/swagger-ui.html` once running (authenticate with a JWT from
+`POST /api/v1/auth/login`).
+
+Key environment variables (all optional locally — sane dev defaults are baked in):
+
+| Variable | Purpose |
+|---|---|
+| `DB_USERNAME` / `DB_PASSWORD` | Override if your local Postgres isn't peer-auth as your OS user |
+| `JWT_SECRET` | HMAC signing key for auth tokens — override before deploying anywhere non-local |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated origins allowed to call the API (defaults to the frontend dev server) |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USERNAME` / `SMTP_PASSWORD` / `MAIL_FROM` | Platform-wide default outbound email — companies can also configure their own SMTP in-app under Settings |
+| `APP_BASE_URL` | Used to build shareable links (e.g. team invite URLs) |
+| `UPLOADS_DIR` | Local disk path for uploaded files (indicator evidence, profile photos) |
+
+See [`backend/README.md`](backend/README.md) for the full module-by-module architecture breakdown.
+
+### 2. Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.example .env.local     # then set VITE_API_BASE_URL if not using the default
+npm run dev                    # http://localhost:3000
+```
+
+| Script | Purpose |
+|---|---|
+| `npm run dev` | Dev server with hot reload |
+| `npm run build` | Production build |
+| `npm run lint` | TypeScript type-check (`tsc --noEmit`) — there's no separate ESLint config |
+| `npm run clean` | Remove `dist/` |
+
+`VITE_API_BASE_URL` (defaults to `http://localhost:8080`) is the only variable that matters for
+running against the backend above. `GEMINI_API_KEY` is inherited from the project's original
+Google AI Studio scaffold and isn't currently used by any app feature.
+
+### Try it out
+
+The login page ships with one-click sandbox accounts for the two ends of the plan spectrum: an
+SME/`starter`-plan user and a Main Market/`issuer-ready` user with IFRS S1/S2 access.
+
+## Documentation
+
+- [`BRD_SDG_ESG_Platform.docx`](BRD_SDG_ESG_Platform.docx) — Business Requirements
+- [`PRD_SDG_ESG_Platform.docx`](PRD_SDG_ESG_Platform.docx) — Product Requirements
+- [`SRS_SDG_ESG_Platform.docx`](SRS_SDG_ESG_Platform.docx) — Software Requirements Specification
+- [`backend/README.md`](backend/README.md) — backend architecture, package layout, known
+  simplifications
+- [`CLAUDE.md`](CLAUDE.md) — codebase guidance for AI coding agents working in this repo
+
+## License
+
+Apache-2.0 (see SPDX headers in source files).

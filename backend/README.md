@@ -4,8 +4,8 @@ Java 21 + Spring Boot 3 + PostgreSQL backend for the Lestari ESG reporting platf
 multi-tenant data model, JWT auth, and REST API described in the project's BRD/PRD/SRS documents,
 covering all three subscription tiers (`STARTER`, `GROWTH`, `ISSUER_READY`).
 
-This is a standalone backend — the React frontend in `../frontend/` is not yet wired to call it
-(all frontend data is still mocked in localStorage). That integration is a separate future task.
+The React frontend in `../frontend/` is fully wired to this API (no mocked data) — see the root
+[`README.md`](../README.md) for how the two run together.
 
 ## Requirements
 
@@ -76,14 +76,19 @@ Package root `com.lestari.esg`. See the plan/design notes for the full rationale
   never stored as an editable flag (SRS FR-6.3/6.4).
 - **`assurance`** — fiscal-year sign-off workflow gated on 100% indicator completion, with its own
   audit trail mirroring the indicators module's pattern.
-- **`export`** — raw indicator CSV and a CSI-compatible CSV (readiness aid only, never a real
-  submission to Bursa's CSI platform), plus an export history log.
+- **`export`** — raw indicator CSV, a CSI-compatible CSV (readiness aid only, never a real
+  submission to Bursa's CSI platform), a server-rendered Integrated ESG Disclosure PDF
+  (Thymeleaf + OpenHTMLtoPDF), and an export history log. Materiality and Governance modules each
+  render their own PDF report the same way.
+- **`email`** — best-effort transactional email (team invites, SMTP test-send). Resolves a
+  per-company SMTP configuration first, falling back to a platform-wide default; SMTP passwords
+  are AES/GCM-encrypted at rest.
 
 ## Known simplifications (documented, not accidental)
 
 - No refresh tokens — a bumped `tokenVersion` invalidates all of a user's existing tokens instead.
-- No PDF/Word export generation — only CSV, which covers the one exact-schema requirement
-  (CSI-compatible export). PDF templating was deferred as disproportionate effort for this pass.
+- No Word (.docx) export generation — PDF (via Thymeleaf) and CSV are covered; Word export is
+  client-side plain text today.
 - Consultant multi-tenant access is not built — one `AppUser` belongs to exactly one `Company`.
 - No Testcontainers — dev/manual testing runs against a real local Postgres; the `test` Spring
   profile uses H2 in PostgreSQL-compatibility mode for any future slice tests.
