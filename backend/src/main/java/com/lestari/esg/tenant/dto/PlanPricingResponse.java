@@ -1,0 +1,15 @@
+package com.lestari.esg.tenant.dto;
+
+import com.lestari.esg.tenant.PlanPricing;
+import com.lestari.esg.tenant.SubscriptionPlan;
+
+import java.math.BigDecimal;
+
+public record PlanPricingResponse(
+        SubscriptionPlan plan,
+        BigDecimal monthlyPrice
+) {
+    public static PlanPricingResponse from(PlanPricing p) {
+        return new PlanPricingResponse(p.getPlan(), p.getMonthlyPrice());
+    }
+}

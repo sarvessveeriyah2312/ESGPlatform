@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:db}:5432/${DB_NAME:lestari_esg}
+    username: ${DB_USERNAME:lestari}
+    password: ${DB_PASSWORD:lestari}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration

@@ -1,0 +1,31 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.iml
+
+# Env files (secrets) — keep examples
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+
+# Node (frontend)
+node_modules/
+dist/
+build/
+coverage/
+
+# Java / Maven (backend)
+target/
+*.class
+
+# Claude Code local settings (machine-specific permissions, not shared)
+.claude/settings.local.json
