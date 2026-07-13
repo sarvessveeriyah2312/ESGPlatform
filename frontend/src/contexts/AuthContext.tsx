@@ -28,6 +28,7 @@ export interface UserProfile {
   address: string;
   bio: string;
   hasAvatar: boolean;
+  mfaSetupRequired: boolean;
 }
 
 function toUserProfile(me: MeResponse): UserProfile {
@@ -47,16 +48,24 @@ function toUserProfile(me: MeResponse): UserProfile {
     address: me.address ?? '',
     bio: me.bio ?? '',
     hasAvatar: me.hasAvatar,
+    mfaSetupRequired: me.mfaSetupRequired,
   };
 }
+
+export type LoginOutcome =
+  | { status: 'success'; profile: UserProfile }
+  | { status: 'mfa_required'; mfaToken: string }
+  | { status: 'email_verification_required'; email: string };
 
 interface AuthContextProps {
   user: UserProfile | null;
   isAuthenticated: boolean;
   /** True while rehydrating the session from a stored token on initial app load. */
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<UserProfile>;
-  register: (name: string, email: string, company: string, password: string) => Promise<UserProfile>;
+  login: (email: string, password: string) => Promise<LoginOutcome>;
+  completeMfaLogin: (mfaToken: string, code: string) => Promise<UserProfile>;
+  register: (name: string, email: string, company: string, password: string) => Promise<string>;
+  resendVerification: (email: string) => Promise<void>;
   acceptInvite: (token: string, name: string, password: string) => Promise<UserProfile>;
   updateProfile: (data: { name: string; email: string; phone: string; dateOfBirth: string; address: string; bio: string }) => Promise<UserProfile>;
   completeOnboarding: (data: {
@@ -116,8 +125,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; currentPlan: Pl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (email: string, password: string): Promise<UserProfile> => {
-    const { token, user: me } = await authApi.login(email, password);
+  const login = async (email: string, password: string): Promise<LoginOutcome> => {
+    const result = await authApi.login(email, password);
+    if (result.emailVerificationRequired) {
+      return { status: 'email_verification_required', email };
+    }
+    if (result.mfaRequired) {
+      return { status: 'mfa_required', mfaToken: result.mfaToken! };
+    }
+    const { token, user: me } = result.auth!;
+    tokenStore.set(token);
+    const profile = toUserProfile(me);
+    setUser(profile);
+    setIsAuthenticated(true);
+    setWorkspacePlan(profile.plan);
+    return { status: 'success', profile };
+  };
+
+  const completeMfaLogin = async (mfaToken: string, code: string): Promise<UserProfile> => {
+    const { token, user: me } = await authApi.verifyMfa(mfaToken, code);
     tokenStore.set(token);
     const profile = toUserProfile(me);
     setUser(profile);
@@ -126,14 +152,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; currentPlan: Pl
     return profile;
   };
 
-  const register = async (name: string, email: string, company: string, password: string): Promise<UserProfile> => {
-    const { token, user: me } = await authApi.register(name, email, password, company);
-    tokenStore.set(token);
-    const profile = toUserProfile(me);
-    setUser(profile);
-    setIsAuthenticated(true);
-    setWorkspacePlan(profile.plan);
-    return profile;
+  const register = async (name: string, email: string, company: string, password: string): Promise<string> => {
+    const result = await authApi.register(name, email, password, company);
+    return result.email;
+  };
+
+  const resendVerification = async (email: string): Promise<void> => {
+    await authApi.resendVerification(email);
   };
 
   const acceptInvite = async (token: string, name: string, password: string): Promise<UserProfile> => {
@@ -195,7 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; currentPlan: Pl
   const clearSessionExpired = () => setSessionExpired(false);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, register, acceptInvite, updateProfile, completeOnboarding, logout, updateUser, sessionExpired, clearSessionExpired }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, completeMfaLogin, register, resendVerification, acceptInvite, updateProfile, completeOnboarding, logout, updateUser, sessionExpired, clearSessionExpired }}>
       {children}
     </AuthContext.Provider>
   );

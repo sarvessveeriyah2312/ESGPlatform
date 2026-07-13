@@ -49,6 +49,7 @@ import { Role, canAccess, MANAGEMENT_ROLES, PLATFORM_ROLES, TENANT_ROLES } from 
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import AcceptInvitePage from './components/AcceptInvitePage';
+import VerifyEmailPage from './components/VerifyEmailPage';
 import OnboardingPage from './components/OnboardingPage';
 import UpgradeGate from './components/ui/UpgradeGate';
 import AuthTopBar from './components/ui/AuthTopBar';
@@ -109,6 +110,13 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
     return <Navigate to="/onboarding" replace />;
   }
 
+  // Platform-wide "require 2FA for all users" toggle (Platform Settings → Security) — every role
+  // can reach /profile, which is where 2FA enrollment lives, so redirect there until they enroll.
+  const requiresMfaSetup = user && user.mfaSetupRequired;
+  if (requiresMfaSetup && location.pathname !== '/profile') {
+    return <Navigate to="/profile" replace />;
+  }
+
   const isPlatformAdmin = canAccess(user?.role, PLATFORM_ROLES);
   const hasPageAccess = canAccess(user?.role, allowedRoles);
   const activeCompany = user?.company || 'Lestari Workspace';
@@ -141,7 +149,8 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
       'admin/reference': 'Platform Admin — Reference Frameworks',
       'admin/billing': 'Platform Admin — Subscriptions & Invoices',
       'admin/support': 'Platform Admin — Feedback & Support',
-      'admin/plans': 'Platform Admin — Plan Management'
+      'admin/plans': 'Platform Admin — Plan Management',
+      'admin/settings': 'Platform Admin — Settings'
     };
     return ['Workspace', mapping[path] || path];
   };
@@ -170,6 +179,7 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
     { key: 'admin-billing', label: 'Subscriptions & Invoices', icon: <CreditCard className="w-4 h-4" />, path: '/admin/billing' },
     { key: 'admin-support', label: 'Feedback & Support', icon: <Ticket className="w-4 h-4" />, path: '/admin/support' },
     { key: 'admin-plans', label: 'Plan Management', icon: <Package className="w-4 h-4" />, path: '/admin/plans' },
+    { key: 'admin-settings', label: 'Platform Settings', icon: <Settings className="w-4 h-4" />, path: '/admin/settings' },
   ];
 
   const canManageWorkspace = canAccess(user?.role, MANAGEMENT_ROLES);
@@ -459,6 +469,14 @@ function AppContent() {
           </AuthenticatedLayout>
         }
       />
+      <Route
+        path="/admin/settings"
+        element={
+          <AuthenticatedLayout allowedRoles={PLATFORM_ROLES}>
+            <AdminPanel />
+          </AuthenticatedLayout>
+        }
+      />
 
       {/* Standalone Authentication & Onboarding Gateway Pages */}
       <Route 
@@ -472,6 +490,10 @@ function AppContent() {
       <Route
         path="/accept-invite"
         element={<AcceptInvitePage />}
+      />
+      <Route
+        path="/verify-email"
+        element={<VerifyEmailPage />}
       />
       <Route
         path="/onboarding"
@@ -658,10 +680,12 @@ function AppContent() {
           </AuthenticatedLayout>
         }
       />
+      {/* No allowedRoles — every authenticated role can reach Profile & Settings; SettingsView itself
+          hides admin-only sub-tabs (e.g. SMTP) internally based on role. */}
       <Route
         path="/settings"
         element={
-          <AuthenticatedLayout allowedRoles={MANAGEMENT_ROLES}>
+          <AuthenticatedLayout>
             <SettingsView />
           </AuthenticatedLayout>
         }

@@ -6,15 +6,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { 
-  Trees, 
-  User, 
-  Building, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
+import {
+  Trees,
+  User,
+  Building,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
   ArrowLeft,
   CheckCircle,
   HelpCircle,
@@ -28,9 +28,11 @@ import Button from './ui/Button';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, resendVerification } = useAuth();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -90,15 +92,25 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
-      await register(name, email, company, password);
-      navigate('/onboarding');
-    } catch (err) {
-      setErrorMessage('Database connection handshake timed out. Please try again.');
+      const registeredWith = await register(name, email, company, password);
+      setRegisteredEmail(registeredWith);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Database connection handshake timed out. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendState('sending');
+    try {
+      await resendVerification(registeredEmail);
+      setResendState('sent');
+    } catch {
+      setResendState('idle');
     }
   };
 
@@ -116,6 +128,48 @@ export default function RegisterPage() {
       setErrorMessage('');
     }
   };
+
+  if (registeredEmail) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center px-6 py-12 font-sans">
+        <div className="max-w-md w-full space-y-8">
+          <div className="flex items-center justify-center space-x-2.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-black text-xl shadow-lg">
+              <Trees className="w-6 h-6" />
+            </div>
+            <span className="text-2xl font-black text-gray-900 tracking-tight">Lestari</span>
+          </div>
+
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 shadow-xl text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+              <Mail className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-gray-900">Check your email</h3>
+              <p className="text-xs text-gray-500">
+                We've sent a verification link to <strong className="text-gray-700">{registeredEmail}</strong>. Click it to activate your account, then sign in.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resendState !== 'idle'}
+              className="text-xs text-emerald-600 underline hover:text-emerald-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {resendState === 'sending' ? 'Sending…' : resendState === 'sent' ? 'Verification email sent' : 'Resend verification email'}
+            </button>
+
+            <div className="pt-2">
+              <Button variant="secondary" size="sm" onClick={() => navigate('/login')}>
+                Go to Sign In
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex text-gray-900 font-sans">

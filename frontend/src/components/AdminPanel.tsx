@@ -20,6 +20,7 @@ import AdminReferenceTab from './admin/AdminReferenceTab';
 import AdminBillingTab from './admin/AdminBillingTab';
 import AdminSupportTab from './admin/AdminSupportTab';
 import AdminPlansTab from './admin/AdminPlansTab';
+import AdminSettingsTab from './admin/AdminSettingsTab';
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -124,6 +125,8 @@ export default function AdminPanel() {
           )}
 
           {activeTab === 'plans' && <AdminPlansTab showToast={showToast} />}
+
+          {activeTab === 'settings' && <AdminSettingsTab showToast={showToast} />}
         </>
       )}
     </div>

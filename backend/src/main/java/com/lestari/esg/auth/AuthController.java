@@ -4,10 +4,18 @@ import com.lestari.esg.auth.dto.AcceptInviteRequest;
 import com.lestari.esg.auth.dto.AuthResponse;
 import com.lestari.esg.auth.dto.InvitePreviewResponse;
 import com.lestari.esg.auth.dto.LoginRequest;
+import com.lestari.esg.auth.dto.LoginResponse;
 import com.lestari.esg.auth.dto.MeResponse;
 import com.lestari.esg.auth.dto.OnboardingRequest;
 import com.lestari.esg.auth.dto.RegisterRequest;
+import com.lestari.esg.auth.dto.RegisterResponse;
+import com.lestari.esg.auth.dto.ResendVerificationRequest;
+import com.lestari.esg.auth.dto.ResendVerificationResponse;
+import com.lestari.esg.auth.dto.SessionMetadata;
 import com.lestari.esg.auth.dto.UpdateProfileRequest;
+import com.lestari.esg.auth.dto.VerifyEmailRequest;
+import com.lestari.esg.auth.dto.VerifyMfaRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -40,13 +48,31 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request.token());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ResendVerificationResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        authService.resendVerification(request.email());
+        return ResponseEntity.ok(new ResendVerificationResponse(
+                "If an account exists for that email and it isn't verified yet, we've sent a new verification link."));
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.login(request, sessionMetadata(httpRequest)));
+    }
+
+    @PostMapping("/login/verify-mfa")
+    public ResponseEntity<AuthResponse> verifyMfa(@Valid @RequestBody VerifyMfaRequest request, HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.verifyMfa(request, sessionMetadata(httpRequest)));
     }
 
     @GetMapping("/me")
@@ -91,7 +117,12 @@ public class AuthController {
     }
 
     @PostMapping("/invites/{token}/accept")
-    public ResponseEntity<AuthResponse> acceptInvite(@PathVariable String token, @Valid @RequestBody AcceptInviteRequest request) {
-        return ResponseEntity.ok(authService.acceptInvite(token, request));
+    public ResponseEntity<AuthResponse> acceptInvite(@PathVariable String token, @Valid @RequestBody AcceptInviteRequest request,
+                                                       HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.acceptInvite(token, request, sessionMetadata(httpRequest)));
+    }
+
+    private SessionMetadata sessionMetadata(HttpServletRequest request) {
+        return new SessionMetadata(request.getRemoteAddr(), request.getHeader("User-Agent"));
     }
 }

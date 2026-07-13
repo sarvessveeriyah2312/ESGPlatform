@@ -4,6 +4,7 @@ import com.lestari.esg.apiaccess.ApiTokenRepository;
 import com.lestari.esg.security.ApiTokenAuthenticationFilter;
 import com.lestari.esg.security.JwtAuthenticationFilter;
 import com.lestari.esg.security.JwtService;
+import com.lestari.esg.session.UserSessionRepository;
 import com.lestari.esg.user.AppUserRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.context.annotation.Bean;
@@ -38,8 +39,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, AppUserRepository appUserRepository, EntityManager entityManager) {
-        return new JwtAuthenticationFilter(jwtService, appUserRepository, entityManager);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, AppUserRepository appUserRepository,
+                                                            UserSessionRepository userSessionRepository, EntityManager entityManager) {
+        return new JwtAuthenticationFilter(jwtService, appUserRepository, userSessionRepository, entityManager);
     }
 
     @Bean
@@ -68,7 +70,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/login/verify-mfa",
+                                "/api/v1/auth/verify-email", "/api/v1/auth/resend-verification").permitAll()
                         .requestMatchers("/api/v1/auth/invites/**").permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()

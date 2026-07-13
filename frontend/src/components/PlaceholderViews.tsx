@@ -33,6 +33,7 @@ import { authApi } from '../api/authApi';
 import { emailSettingsApi, EmailSettingsResponse } from '../api/emailSettingsApi';
 import Button from './ui/Button';
 import Card from './ui/Card';
+import SecuritySettingsTab from './settings/SecuritySettingsTab';
 
 // 1. MATERIALITY ASSESSMENT
 export function MaterialityAssessmentView() {
@@ -229,7 +230,7 @@ interface SettingsTab {
 
 const SETTINGS_TABS: SettingsTab[] = [
   { id: 'profile', label: 'Profile', icon: User },
-  { id: 'security', label: 'Security', icon: Shield, badge: '2FA', badgeClass: 'text-emerald-600 bg-emerald-50' },
+  { id: 'security', label: 'Security', icon: Shield },
   { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'smtp', label: 'Email (SMTP)', icon: Mail, adminOnly: true },
@@ -286,7 +287,7 @@ export function SettingsView() {
         </nav>
       </div>
 
-      {activeTab !== 'profile' && activeTab !== 'smtp' && (
+      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center text-center space-y-3">
           <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
             {React.createElement(SETTINGS_TABS.find((t) => t.id === activeTab)!.icon, { className: 'w-5 h-5 text-gray-400' })}
@@ -297,6 +298,7 @@ export function SettingsView() {
       )}
 
       {activeTab === 'profile' && <ProfileTab />}
+      {activeTab === 'security' && <SecuritySettingsTab />}
       {activeTab === 'smtp' && canManage && <SmtpSettingsTab />}
     </div>
   );

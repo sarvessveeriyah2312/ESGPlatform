@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiError.of(401, "Unauthorized", "Invalid email or password", request.getRequestURI()));
+                .body(ApiError.of(401, "Unauthorized", ex.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

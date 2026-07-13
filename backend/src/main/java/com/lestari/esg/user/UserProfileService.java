@@ -3,6 +3,7 @@ package com.lestari.esg.user;
 import com.lestari.esg.common.exceptions.ForbiddenException;
 import com.lestari.esg.common.exceptions.NotFoundException;
 import com.lestari.esg.security.CurrentUserProvider;
+import com.lestari.esg.session.UserSessionService;
 import com.lestari.esg.user.dto.ChangePasswordRequest;
 import com.lestari.esg.user.dto.UpdateUserProfileRequest;
 import com.lestari.esg.user.dto.UserProfileResponse;
@@ -24,15 +25,18 @@ public class UserProfileService {
     private final UserDetailsRepository userDetailsRepository;
     private final PasswordEncoder passwordEncoder;
     private final CurrentUserProvider currentUserProvider;
+    private final UserSessionService userSessionService;
 
     public UserProfileService(AppUserRepository appUserRepository,
                                UserDetailsRepository userDetailsRepository,
                                PasswordEncoder passwordEncoder,
-                               CurrentUserProvider currentUserProvider) {
+                               CurrentUserProvider currentUserProvider,
+                               UserSessionService userSessionService) {
         this.appUserRepository = appUserRepository;
         this.userDetailsRepository = userDetailsRepository;
         this.passwordEncoder = passwordEncoder;
         this.currentUserProvider = currentUserProvider;
+        this.userSessionService = userSessionService;
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +71,7 @@ public class UserProfileService {
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         user.setTokenVersion(user.getTokenVersion() + 1);
         appUserRepository.save(user);
+        userSessionService.revokeAll(user.getId());
     }
 
     private AppUser currentUser() {

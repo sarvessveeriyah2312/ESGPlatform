@@ -26,7 +26,7 @@ import Button from './ui/Button';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, sessionExpired, clearSessionExpired } = useAuth();
+  const { login, completeMfaLogin, resendVerification, sessionExpired, clearSessionExpired } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +36,14 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+  const [mfaStep, setMfaStep] = useState(false);
+  const [mfaToken, setMfaToken] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [useBackupCode, setUseBackupCode] = useState(false);
 
   // Landed here because a request came back 401 (expired/invalid token) rather than an explicit
   // "Log out" click — explain why, then clear the flag so it doesn't resurface on a later visit.
@@ -51,6 +59,8 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
+    setUnverifiedEmail('');
+    setResendState('idle');
 
     if (!email) {
       setErrorMessage('Please enter your corporate email address.');
@@ -62,17 +72,28 @@ export default function LoginPage() {
     }
 
     setIsSubmitting(true);
-    
+
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 800));
 
     try {
-      const user = await login(email, password);
+      const outcome = await login(email, password);
+      if (outcome.status === 'email_verification_required') {
+        setUnverifiedEmail(outcome.email);
+        setIsSubmitting(false);
+        return;
+      }
+      if (outcome.status === 'mfa_required') {
+        setMfaToken(outcome.mfaToken);
+        setMfaStep(true);
+        setIsSubmitting(false);
+        return;
+      }
       setSuccessMessage('Authentication successful. Initializing secure workspace...');
-      
+
       // Short delay before redirecting for smooth UX
       setTimeout(() => {
-        navigate(postLoginPath(user.role, user.onboardingCompleted));
+        navigate(postLoginPath(outcome.profile.role, outcome.profile.onboardingCompleted));
       }, 600);
     } catch (error: any) {
       setIsSubmitting(false);
@@ -80,17 +101,66 @@ export default function LoginPage() {
     }
   };
 
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setIsSubmitting(true);
+    try {
+      const profile = await completeMfaLogin(mfaToken, mfaCode);
+      setSuccessMessage('Authentication successful. Initializing secure workspace...');
+      setTimeout(() => {
+        navigate(postLoginPath(profile.role, profile.onboardingCompleted));
+      }, 600);
+    } catch (error: any) {
+      setIsSubmitting(false);
+      setErrorMessage(error.message || 'Invalid code. Please try again.');
+      // The global 401 handler fires on this failed request too (it fires on every 401), which
+      // would otherwise flip sessionExpired=true even though no session existed yet — clear it so
+      // a later fresh visit to /login doesn't show a stale "session expired" banner.
+      clearSessionExpired();
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendState('sending');
+    try {
+      await resendVerification(unverifiedEmail);
+      setResendState('sent');
+    } catch {
+      setResendState('idle');
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setMfaStep(false);
+    setMfaToken('');
+    setMfaCode('');
+    setUseBackupCode(false);
+    setErrorMessage('');
+  };
+
   const handleQuickLogin = async (demoEmail: string, isCorp: boolean) => {
     setEmail(demoEmail);
     setPassword('demo1234');
     setErrorMessage('');
-    
+
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 600));
-    
+
     try {
-      const user = await login(demoEmail, 'demo1234');
-      navigate(postLoginPath(user.role, user.onboardingCompleted));
+      const outcome = await login(demoEmail, 'demo1234');
+      if (outcome.status === 'email_verification_required') {
+        setUnverifiedEmail(outcome.email);
+        setIsSubmitting(false);
+        return;
+      }
+      if (outcome.status === 'mfa_required') {
+        setMfaToken(outcome.mfaToken);
+        setMfaStep(true);
+        setIsSubmitting(false);
+        return;
+      }
+      navigate(postLoginPath(outcome.profile.role, outcome.profile.onboardingCompleted));
     } catch (error: any) {
       setErrorMessage(error.message);
       setIsSubmitting(false);
@@ -166,9 +236,77 @@ export default function LoginPage() {
             <p className="text-sm text-gray-500 mt-2">Sign in to manage your sustainability indicators and corporate disclosures.</p>
           </div>
           
-          {/* Form */}
+          {/* MFA Code Form */}
+          {mfaStep ? (
+          <form onSubmit={handleMfaSubmit} className="space-y-5">
+
+            {errorMessage && (
+              <div className="p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-semibold flex items-center shadow-sm">
+                <Lock className="w-4 h-4 mr-2" />
+                {errorMessage}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center shadow-sm">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                {successMessage}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700">
+                {useBackupCode ? 'Backup code' : 'Authentication code'}
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  inputMode={useBackupCode ? 'text' : 'numeric'}
+                  placeholder={useBackupCode ? 'XXXX-XXXX' : '123456'}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  disabled={isSubmitting}
+                  autoFocus
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 hover:border-gray-300 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-900 placeholder-gray-400 transition-all shadow-sm"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm rounded-xl cursor-pointer transition-all flex items-center justify-center shadow-sm disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Verifying...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <span>Verify</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              )}
+            </button>
+
+            <div className="flex items-center justify-between text-xs">
+              <button type="button" onClick={handleBackToLogin} className="text-gray-500 hover:text-gray-700 font-semibold cursor-pointer">
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => { setUseBackupCode(!useBackupCode); setMfaCode(''); }}
+                className="text-emerald-600 hover:text-emerald-700 font-semibold cursor-pointer"
+              >
+                {useBackupCode ? 'Use authenticator code instead' : 'Use a backup code instead'}
+              </button>
+            </div>
+          </form>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
-            
+
             {/* Error Message */}
             {errorMessage && (
               <div className="p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-semibold flex items-center shadow-sm">
@@ -182,6 +320,24 @@ export default function LoginPage() {
               <div className="p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center shadow-sm">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 {successMessage}
+              </div>
+            )}
+
+            {/* Email Not Verified */}
+            {unverifiedEmail && (
+              <div className="p-3.5 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl text-xs font-semibold shadow-sm space-y-2">
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 mr-2 shrink-0" />
+                  <span>Please verify your email before signing in.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resendState !== 'idle'}
+                  className="text-amber-800 underline hover:text-amber-900 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {resendState === 'sending' ? 'Sending…' : resendState === 'sent' ? 'Verification email sent' : 'Resend verification email'}
+                </button>
               </div>
             )}
 
@@ -266,18 +422,22 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+          )}
 
+          {!mfaStep && (
           <div className="text-center text-xs text-gray-500 pt-4">
             Don't have an account?{' '}
-            <button 
+            <button
               onClick={() => navigate('/register')}
               className="text-emerald-600 font-bold hover:underline cursor-pointer"
             >
               Sign Up
             </button>
           </div>
+          )}
 
           {/* Quick Sandbox Login Section */}
+          {!mfaStep && (
           <div className="pt-8 border-t border-gray-100 space-y-4">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">
               Sandbox Test Accounts
@@ -309,7 +469,8 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-          
+          )}
+
         </div>
       </div>
     </div>

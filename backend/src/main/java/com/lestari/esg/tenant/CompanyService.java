@@ -3,6 +3,7 @@ package com.lestari.esg.tenant;
 import com.lestari.esg.common.exceptions.ConflictException;
 import com.lestari.esg.common.exceptions.NotFoundException;
 import com.lestari.esg.email.EmailService;
+import com.lestari.esg.platform.PlatformSettingsService;
 import com.lestari.esg.security.CurrentUserProvider;
 import com.lestari.esg.tenant.dto.CompanyResponse;
 import com.lestari.esg.tenant.dto.CreateTenantUserRequest;
@@ -17,7 +18,6 @@ import com.lestari.esg.tenant.dto.UpdateUserRoleRequest;
 import com.lestari.esg.user.AppUser;
 import com.lestari.esg.user.AppUserRepository;
 import com.lestari.esg.user.Role;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,13 +42,13 @@ public class CompanyService {
     private final CurrentUserProvider currentUserProvider;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-    private final String appBaseUrl;
+    private final PlatformSettingsService platformSettingsService;
     private final SecureRandom random = new SecureRandom();
 
     public CompanyService(CompanyRepository companyRepository, SectorRepository sectorRepository,
                            AppUserRepository appUserRepository, TeamInviteRepository teamInviteRepository,
                            CurrentUserProvider currentUserProvider, PasswordEncoder passwordEncoder,
-                           EmailService emailService, @Value("${lestari.app.base-url}") String appBaseUrl) {
+                           EmailService emailService, PlatformSettingsService platformSettingsService) {
         this.companyRepository = companyRepository;
         this.sectorRepository = sectorRepository;
         this.appUserRepository = appUserRepository;
@@ -56,7 +56,7 @@ public class CompanyService {
         this.currentUserProvider = currentUserProvider;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
-        this.appBaseUrl = appBaseUrl;
+        this.platformSettingsService = platformSettingsService;
     }
 
     @Transactional(readOnly = true)
@@ -196,7 +196,7 @@ public class CompanyService {
     }
 
     private String buildInviteUrl(String token) {
-        return appBaseUrl + "/#/accept-invite?token=" + token;
+        return platformSettingsService.getEffectiveAppBaseUrl() + "/#/accept-invite?token=" + token;
     }
 
     private String generateInviteToken() {

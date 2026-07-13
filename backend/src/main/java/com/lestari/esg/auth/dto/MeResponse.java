@@ -25,6 +25,7 @@ public record MeResponse(
         LocalDate dateOfBirth,
         String address,
         String bio,
-        boolean hasAvatar
+        boolean hasAvatar,
+        boolean mfaSetupRequired
 ) {
 }

@@ -4,14 +4,23 @@ import com.lestari.esg.auth.dto.AcceptInviteRequest;
 import com.lestari.esg.auth.dto.AuthResponse;
 import com.lestari.esg.auth.dto.InvitePreviewResponse;
 import com.lestari.esg.auth.dto.LoginRequest;
+import com.lestari.esg.auth.dto.LoginResponse;
 import com.lestari.esg.auth.dto.MeResponse;
 import com.lestari.esg.auth.dto.OnboardingRequest;
 import com.lestari.esg.auth.dto.RegisterRequest;
+import com.lestari.esg.auth.dto.RegisterResponse;
+import com.lestari.esg.auth.dto.SessionMetadata;
 import com.lestari.esg.auth.dto.UpdateProfileRequest;
+import com.lestari.esg.auth.dto.VerifyMfaRequest;
 import com.lestari.esg.common.exceptions.ConflictException;
 import com.lestari.esg.common.exceptions.NotFoundException;
+import com.lestari.esg.emailverification.EmailVerificationService;
+import com.lestari.esg.mfa.MfaService;
+import com.lestari.esg.platform.PlatformSettingsService;
 import com.lestari.esg.security.CurrentUserProvider;
+import com.lestari.esg.security.JwtProperties;
 import com.lestari.esg.security.JwtService;
+import com.lestari.esg.session.UserSessionService;
 import com.lestari.esg.tenant.Company;
 import com.lestari.esg.tenant.CompanyRepository;
 import com.lestari.esg.tenant.MarketClassification;
@@ -29,6 +38,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -40,6 +51,11 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final CurrentUserProvider currentUserProvider;
+    private final MfaService mfaService;
+    private final UserSessionService userSessionService;
+    private final EmailVerificationService emailVerificationService;
+    private final PlatformSettingsService platformSettingsService;
+    private final long jwtExpirationMinutes;
 
     public AuthService(AppUserRepository appUserRepository,
                         CompanyRepository companyRepository,
@@ -47,7 +63,12 @@ public class AuthService {
                         TeamInviteRepository teamInviteRepository,
                         PasswordEncoder passwordEncoder,
                         JwtService jwtService,
-                        CurrentUserProvider currentUserProvider) {
+                        CurrentUserProvider currentUserProvider,
+                        MfaService mfaService,
+                        UserSessionService userSessionService,
+                        EmailVerificationService emailVerificationService,
+                        PlatformSettingsService platformSettingsService,
+                        JwtProperties jwtProperties) {
         this.appUserRepository = appUserRepository;
         this.companyRepository = companyRepository;
         this.sectorRepository = sectorRepository;
@@ -55,10 +76,15 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.currentUserProvider = currentUserProvider;
+        this.mfaService = mfaService;
+        this.userSessionService = userSessionService;
+        this.emailVerificationService = emailVerificationService;
+        this.platformSettingsService = platformSettingsService;
+        this.jwtExpirationMinutes = jwtProperties.getExpirationMinutes();
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         if (appUserRepository.existsByEmailIgnoreCase(request.email())) {
             throw new ConflictException("An account with this email already exists");
         }
@@ -76,14 +102,16 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setName(request.name());
         user.setRole(Role.COMPANY_ADMIN);
+        user.setEmailVerified(false);
         user = appUserRepository.save(user);
 
-        String token = jwtService.generateToken(user);
-        return new AuthResponse(token, toMeResponse(user));
+        emailVerificationService.sendVerificationEmail(user);
+
+        return new RegisterResponse(user.getEmail());
     }
 
     @Transactional
-    public AuthResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request, SessionMetadata meta) {
         AppUser user = appUserRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
@@ -91,7 +119,47 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        String token = jwtService.generateToken(user);
+        if (!Boolean.TRUE.equals(user.getEmailVerified())) {
+            return new LoginResponse(false, null, true, null);
+        }
+
+        if (mfaService.isEnabled(user.getId())) {
+            String mfaToken = jwtService.generateMfaChallengeToken(user.getId());
+            return new LoginResponse(true, mfaToken, false, null);
+        }
+
+        return new LoginResponse(false, null, false, issueSession(user, meta));
+    }
+
+    @Transactional
+    public void verifyEmail(String token) {
+        emailVerificationService.verify(token);
+    }
+
+    @Transactional
+    public void resendVerification(String email) {
+        emailVerificationService.resend(email);
+    }
+
+    @Transactional
+    public AuthResponse verifyMfa(VerifyMfaRequest request, SessionMetadata meta) {
+        UUID userId = jwtService.parseMfaChallenge(request.mfaToken())
+                .orElseThrow(() -> new BadCredentialsException("MFA session expired — please log in again"));
+        AppUser user = appUserRepository.findById(userId)
+                .orElseThrow(() -> new BadCredentialsException("MFA session expired — please log in again"));
+
+        if (!mfaService.verifyLoginCode(userId, request.code())) {
+            throw new BadCredentialsException("Invalid verification code");
+        }
+
+        return issueSession(user, meta);
+    }
+
+    private AuthResponse issueSession(AppUser user, SessionMetadata meta) {
+        UUID jti = UUID.randomUUID();
+        String token = jwtService.generateToken(user, jti);
+        Instant expiresAt = Instant.now().plus(jwtExpirationMinutes, ChronoUnit.MINUTES);
+        userSessionService.record(user.getId(), jti, meta.ipAddress(), meta.userAgent(), expiresAt);
         return new AuthResponse(token, toMeResponse(user));
     }
 
@@ -104,7 +172,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse acceptInvite(String token, AcceptInviteRequest request) {
+    public AuthResponse acceptInvite(String token, AcceptInviteRequest request, SessionMetadata meta) {
         TeamInvite invite = requireValidInvite(token);
         if (appUserRepository.existsByEmailIgnoreCase(invite.getEmail())) {
             throw new ConflictException("An account with this email already exists");
@@ -123,8 +191,7 @@ public class AuthService {
         invite.setAcceptedAt(Instant.now());
         teamInviteRepository.save(invite);
 
-        String jwt = jwtService.generateToken(user);
-        return new AuthResponse(jwt, toMeResponse(user));
+        return issueSession(user, meta);
     }
 
     private TeamInvite requireValidInvite(String token) {
@@ -204,6 +271,7 @@ public class AuthService {
 
     MeResponse toMeResponse(AppUser user) {
         Company company = user.getCompany();
+        boolean mfaSetupRequired = platformSettingsService.isMfaRequired() && !mfaService.isEnabled(user.getId());
         return new MeResponse(
                 user.getId(),
                 user.getName(),
@@ -221,7 +289,8 @@ public class AuthService {
                 user.getDateOfBirth(),
                 user.getAddress(),
                 user.getBio(),
-                user.getAvatarPath() != null
+                user.getAvatarPath() != null,
+                mfaSetupRequired
         );
     }
 }

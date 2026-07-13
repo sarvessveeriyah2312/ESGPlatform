@@ -1,6 +1,8 @@
 package com.lestari.esg.email;
 
 import com.lestari.esg.email.dto.TestEmailResponse;
+import com.lestari.esg.platform.PlatformSettings;
+import com.lestari.esg.platform.PlatformSettingsRepository;
 import com.lestari.esg.security.SecretCryptoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +17,11 @@ import java.util.Properties;
 import java.util.UUID;
 
 /**
- * Sends transactional email either via a tenant's own "bring your own SMTP" settings
- * ({@link CompanyEmailSettings}) or, if the tenant hasn't configured one, the platform-wide
- * default {@link JavaMailSender} (built from {@code spring.mail.*} / {@code SMTP_*} env vars).
- * If neither is configured, sending is silently skipped — callers (e.g. team invites) already
- * fall back to a shareable link.
+ * Sends transactional email via, in order: a tenant's own "bring your own SMTP" settings
+ * ({@link CompanyEmailSettings}), the DB-backed platform default ({@link PlatformSettings}, editable
+ * by a platform admin without a redeploy), or the env-var-configured platform {@link JavaMailSender}
+ * (from {@code spring.mail.*} / {@code SMTP_*}). If none is configured, sending is silently skipped —
+ * callers (e.g. team invites) already fall back to a shareable link.
  */
 @Service
 public class EmailService {
@@ -30,17 +32,20 @@ public class EmailService {
     private final String platformFromAddress;
     private final boolean platformConfigured;
     private final CompanyEmailSettingsRepository companyEmailSettingsRepository;
+    private final PlatformSettingsRepository platformSettingsRepository;
     private final SecretCryptoService cryptoService;
 
     public EmailService(JavaMailSender platformMailSender,
                          @Value("${lestari.mail.from}") String platformFromAddress,
                          @Value("${spring.mail.host:}") String platformMailHost,
                          CompanyEmailSettingsRepository companyEmailSettingsRepository,
+                         PlatformSettingsRepository platformSettingsRepository,
                          SecretCryptoService cryptoService) {
         this.platformMailSender = platformMailSender;
         this.platformFromAddress = platformFromAddress;
         this.platformConfigured = platformMailHost != null && !platformMailHost.isBlank();
         this.companyEmailSettingsRepository = companyEmailSettingsRepository;
+        this.platformSettingsRepository = platformSettingsRepository;
         this.cryptoService = cryptoService;
     }
 
@@ -68,18 +73,45 @@ public class EmailService {
         }
     }
 
-    /** Sends a real test email using the given (not-yet-persisted-as-tested) settings, reporting success/failure back to the caller synchronously. */
-    public TestEmailResponse sendTestEmail(CompanyEmailSettings settings, String toEmail) {
-        JavaMailSenderImpl sender = buildSender(settings);
+    public void sendVerificationEmail(UUID companyId, String toEmail, String toName, String verifyUrl) {
+        Sender sender = resolveSender(companyId);
+        if (sender == null) {
+            log.info("No SMTP configured for company {} or the platform — skipping verification email to {}; verify link: {}", companyId, toEmail, verifyUrl);
+            return;
+        }
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(settings.getFromAddress());
+            message.setFrom(sender.fromAddress());
+            message.setTo(toEmail);
+            message.setSubject("Verify your email for Lestari");
+            message.setText(
+                    "Hi " + toName + ",\n\n" +
+                    "Please verify your email address to activate your Lestari account:\n\n" + verifyUrl + "\n\n" +
+                    "This link expires in 24 hours.\n\n" +
+                    "— Lestari ESG Reporting Platform"
+            );
+            sender.mailSender().send(message);
+        } catch (Exception e) {
+            log.warn("Failed to send verification email to {}: {}", toEmail, e.getMessage());
+        }
+    }
+
+    /** Sends a real test email using the given (not-yet-persisted-as-tested) settings, reporting success/failure back to the caller synchronously. */
+    public TestEmailResponse sendTestEmail(CompanyEmailSettings settings, String toEmail) {
+        return sendTestEmail(toConfig(settings), toEmail);
+    }
+
+    public TestEmailResponse sendTestEmail(SmtpConfig config, String toEmail) {
+        JavaMailSenderImpl sender = buildSender(config);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(config.fromAddress());
             message.setTo(toEmail);
             message.setSubject("Lestari SMTP test email");
             message.setText(
                     "This is a test email confirming your SMTP settings are working correctly.\n\n" +
-                    "Host: " + settings.getSmtpHost() + ":" + settings.getSmtpPort() + "\n" +
-                    "From: " + settings.getFromAddress() + "\n\n" +
+                    "Host: " + config.host() + ":" + config.port() + "\n" +
+                    "From: " + config.fromAddress() + "\n\n" +
                     "— Lestari ESG Reporting Platform"
             );
             sender.send(message);
@@ -87,6 +119,10 @@ public class EmailService {
         } catch (Exception e) {
             return new TestEmailResponse(false, rootMessage(e));
         }
+    }
+
+    /** SMTP transport parameters common to both a tenant's and the platform's stored settings. */
+    public record SmtpConfig(String host, int port, String username, String passwordEncrypted, String fromAddress) {
     }
 
     private record Sender(JavaMailSender mailSender, String fromAddress) {
@@ -97,20 +133,33 @@ public class EmailService {
                 .filter(s -> Boolean.TRUE.equals(s.getEnabled()));
         if (tenantSettings.isPresent()) {
             CompanyEmailSettings s = tenantSettings.get();
-            return new Sender(buildSender(s), s.getFromAddress());
+            return new Sender(buildSender(toConfig(s)), s.getFromAddress());
         }
+
+        Optional<PlatformSettings> dbPlatformSettings = platformSettingsRepository.findFirstByOrderByCreatedAtAsc()
+                .filter(s -> Boolean.TRUE.equals(s.getEnabled()));
+        if (dbPlatformSettings.isPresent()) {
+            PlatformSettings s = dbPlatformSettings.get();
+            SmtpConfig config = new SmtpConfig(s.getSmtpHost(), s.getSmtpPort(), s.getSmtpUsername(), s.getSmtpPasswordEncrypted(), s.getFromAddress());
+            return new Sender(buildSender(config), s.getFromAddress());
+        }
+
         if (platformConfigured) {
             return new Sender(platformMailSender, platformFromAddress);
         }
         return null;
     }
 
-    private JavaMailSenderImpl buildSender(CompanyEmailSettings settings) {
+    private SmtpConfig toConfig(CompanyEmailSettings s) {
+        return new SmtpConfig(s.getSmtpHost(), s.getSmtpPort(), s.getSmtpUsername(), s.getSmtpPasswordEncrypted(), s.getFromAddress());
+    }
+
+    private JavaMailSenderImpl buildSender(SmtpConfig config) {
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
-        sender.setHost(settings.getSmtpHost());
-        sender.setPort(settings.getSmtpPort());
-        sender.setUsername(settings.getSmtpUsername());
-        sender.setPassword(cryptoService.decrypt(settings.getSmtpPasswordEncrypted()));
+        sender.setHost(config.host());
+        sender.setPort(config.port());
+        sender.setUsername(config.username());
+        sender.setPassword(cryptoService.decrypt(config.passwordEncrypted()));
 
         Properties props = sender.getJavaMailProperties();
         props.put("mail.smtp.auth", "true");

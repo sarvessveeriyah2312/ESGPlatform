@@ -5,10 +5,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, RefreshCw, ChevronDown, Settings, LogOut, LifeBuoy, User } from 'lucide-react';
+import { Bell, Search, RefreshCw, ChevronDown, Settings, LogOut, LifeBuoy } from 'lucide-react';
 import { usePlan, PlanType } from '../../contexts/PlanContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { canAccess, MANAGEMENT_ROLES, TENANT_ROLES } from '../../permissions';
+import { canAccess, TENANT_ROLES } from '../../permissions';
 
 interface AuthTopBarProps {
   breadcrumbs: string[]; // e.g. ["Workspace", "ESG Dashboard"]
@@ -136,26 +136,13 @@ export default function AuthTopBar({
                 <button
                   onClick={() => {
                     setProfileMenuOpen(false);
-                    navigate('/profile');
+                    navigate('/settings');
                   }}
                   className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <User className="w-4 h-4 mr-2.5 text-gray-400" />
-                  My Profile
+                  <Settings className="w-4 h-4 mr-2.5 text-gray-400" />
+                  Profile & Settings
                 </button>
-
-                {canAccess(user?.role, MANAGEMENT_ROLES) && (
-                  <button
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      navigate('/settings');
-                    }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <Settings className="w-4 h-4 mr-2.5 text-gray-400" />
-                    Profile & Settings
-                  </button>
-                )}
 
                 {canAccess(user?.role, TENANT_ROLES) && (
                   <button

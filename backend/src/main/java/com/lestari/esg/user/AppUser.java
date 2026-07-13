@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 /**
@@ -67,4 +68,10 @@ public class AppUser extends BaseEntity {
 
     @Column(name = "avatar_original_name", length = 255)
     private String avatarOriginalName;
+
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = true;
+
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
 }

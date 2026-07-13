@@ -1,5 +1,7 @@
 package com.lestari.esg.security;
 
+import com.lestari.esg.session.UserSession;
+import com.lestari.esg.session.UserSessionRepository;
 import com.lestari.esg.user.AppUser;
 import com.lestari.esg.user.AppUserRepository;
 import jakarta.persistence.EntityManager;
@@ -15,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -23,16 +27,25 @@ import java.util.Optional;
  * populates the {@link SecurityContextHolder}, and enables the Hibernate {@code companyFilter}
  * on the request-bound persistence context as the data-access-layer tenant-isolation safety net
  * (requires {@code spring.jpa.open-in-view=true} so the same session spans the whole request).
+ *
+ * Also checks the token's jti against user_session for granular per-device revocation. Tokens
+ * minted before this check existed carry no jti claim; those are let through on tokenVersion+active
+ * alone (their own natural expiry retires this fallback within one token lifetime of deploy).
  */
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Duration LAST_SEEN_UPDATE_INTERVAL = Duration.ofMinutes(5);
+
     private final JwtService jwtService;
     private final AppUserRepository appUserRepository;
+    private final UserSessionRepository userSessionRepository;
     private final EntityManager entityManager;
 
-    public JwtAuthenticationFilter(JwtService jwtService, AppUserRepository appUserRepository, EntityManager entityManager) {
+    public JwtAuthenticationFilter(JwtService jwtService, AppUserRepository appUserRepository,
+                                    UserSessionRepository userSessionRepository, EntityManager entityManager) {
         this.jwtService = jwtService;
         this.appUserRepository = appUserRepository;
+        this.userSessionRepository = userSessionRepository;
         this.entityManager = entityManager;
     }
 
@@ -54,9 +67,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     AppUser user = userOpt.get();
                     boolean versionMatches = user.getTokenVersion().equals(d.tokenVersion());
 
-                    if (versionMatches && Boolean.TRUE.equals(user.getActive())) {
+                    if (versionMatches && Boolean.TRUE.equals(user.getActive()) && sessionValid(d)) {
                         var companyId = user.getCompany() != null ? user.getCompany().getId() : null;
-                        var principal = new LestariPrincipal(user.getId(), companyId, user.getRole(), user.getEmail(), java.util.Set.of());
+                        var principal = new LestariPrincipal(user.getId(), companyId, user.getRole(), user.getEmail(), java.util.Set.of(), d.jti());
 
                         var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
                         var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);
@@ -74,5 +87,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean sessionValid(JwtService.DecodedToken d) {
+        if (d.jti() == null) {
+            return true;
+        }
+        Optional<UserSession> sessionOpt = userSessionRepository.findByJti(d.jti().toString());
+        if (sessionOpt.isEmpty()) {
+            return false;
+        }
+        UserSession session = sessionOpt.get();
+        boolean valid = session.getRevokedAt() == null && session.getExpiresAt().isAfter(Instant.now());
+        if (valid && Duration.between(session.getLastSeenAt(), Instant.now()).compareTo(LAST_SEEN_UPDATE_INTERVAL) >= 0) {
+            session.setLastSeenAt(Instant.now());
+            userSessionRepository.save(session);
+        }
+        return valid;
     }
 }

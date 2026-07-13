@@ -67,7 +67,7 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
                     if (userOpt.isPresent() && Boolean.TRUE.equals(userOpt.get().getActive())) {
                         AppUser user = userOpt.get();
                         Set<String> scopes = new HashSet<>(token.getScopes());
-                        var principal = new LestariPrincipal(user.getId(), token.getCompanyId(), user.getRole(), user.getEmail(), scopes);
+                        var principal = new LestariPrincipal(user.getId(), token.getCompanyId(), user.getRole(), user.getEmail(), scopes, null);
 
                         var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
                         var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);

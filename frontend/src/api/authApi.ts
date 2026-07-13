@@ -24,11 +24,27 @@ export interface MeResponse {
   address: string | null;
   bio: string | null;
   hasAvatar: boolean;
+  mfaSetupRequired: boolean;
 }
 
 export interface AuthResponse {
   token: string;
   user: MeResponse;
+}
+
+export interface LoginResponse {
+  mfaRequired: boolean;
+  mfaToken: string | null;
+  emailVerificationRequired: boolean;
+  auth: AuthResponse | null;
+}
+
+export interface RegisterResponse {
+  email: string;
+}
+
+export interface ResendVerificationResponse {
+  message: string;
 }
 
 export interface InvitePreviewResponse {
@@ -41,10 +57,18 @@ export interface InvitePreviewResponse {
 
 export const authApi = {
   register: (name: string, email: string, password: string, companyName: string) =>
-    apiClient.post<AuthResponse>('/api/v1/auth/register', { name, email, password, companyName }),
+    apiClient.post<RegisterResponse>('/api/v1/auth/register', { name, email, password, companyName }),
 
   login: (email: string, password: string) =>
-    apiClient.post<AuthResponse>('/api/v1/auth/login', { email, password }),
+    apiClient.post<LoginResponse>('/api/v1/auth/login', { email, password }),
+
+  verifyMfa: (mfaToken: string, code: string) =>
+    apiClient.post<AuthResponse>('/api/v1/auth/login/verify-mfa', { mfaToken, code }),
+
+  verifyEmail: (token: string) => apiClient.post<void>('/api/v1/auth/verify-email', { token }),
+
+  resendVerification: (email: string) =>
+    apiClient.post<ResendVerificationResponse>('/api/v1/auth/resend-verification', { email }),
 
   me: () => apiClient.get<MeResponse>('/api/v1/auth/me'),
 
