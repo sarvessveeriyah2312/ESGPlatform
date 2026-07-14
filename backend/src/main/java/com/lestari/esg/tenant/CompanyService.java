@@ -5,7 +5,9 @@ import com.lestari.esg.common.exceptions.NotFoundException;
 import com.lestari.esg.email.EmailService;
 import com.lestari.esg.platform.PlatformSettingsService;
 import com.lestari.esg.security.CurrentUserProvider;
+import com.lestari.esg.tenant.dto.CompanyGroupMemberResponse;
 import com.lestari.esg.tenant.dto.CompanyResponse;
+import com.lestari.esg.tenant.dto.CreateSubsidiaryRequest;
 import com.lestari.esg.tenant.dto.CreateTenantUserRequest;
 import com.lestari.esg.tenant.dto.CreateTenantUserResponse;
 import com.lestari.esg.tenant.dto.TeamInviteResponse;
@@ -93,6 +95,72 @@ public class CompanyService {
     private Company currentCompany() {
         return companyRepository.findById(currentUserProvider.requireCompanyId())
                 .orElseThrow(() -> new NotFoundException("Company not found"));
+    }
+
+    private Company groupRoot(Company company) {
+        return company.getParentCompany() != null ? company.getParentCompany() : company;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CompanyGroupMemberResponse> getGroup() {
+        UUID currentCompanyId = currentUserProvider.requireCompanyId();
+        Company root = groupRoot(currentCompany());
+        List<Company> members = new java.util.ArrayList<>();
+        members.add(root);
+        members.addAll(companyRepository.findByParentCompanyId(root.getId()));
+        return members.stream()
+                .map(c -> CompanyGroupMemberResponse.from(c, c.getId().equals(currentCompanyId)))
+                .toList();
+    }
+
+    @Transactional
+    public CompanyGroupMemberResponse createSubsidiary(CreateSubsidiaryRequest request) {
+        Company root = groupRoot(currentCompany());
+
+        Company subsidiary = new Company();
+        subsidiary.setName(request.name());
+        subsidiary.setMarketClassification(root.getMarketClassification());
+        subsidiary.setSubscriptionPlan(root.getSubscriptionPlan());
+        subsidiary.setFiscalYearEndMonth(root.getFiscalYearEndMonth());
+        subsidiary.setSectorModuleEnabled(root.getSectorModuleEnabled());
+        subsidiary.setOnboardingCompleted(true);
+        subsidiary.setActive(true);
+        subsidiary.setParentCompany(root);
+        subsidiary = companyRepository.save(subsidiary);
+
+        return CompanyGroupMemberResponse.from(subsidiary, false);
+    }
+
+    @Transactional
+    public CompanyGroupMemberResponse switchCompany(UUID targetCompanyId) {
+        Company target = companyRepository.findById(targetCompanyId)
+                .orElseThrow(() -> new NotFoundException("Company not found"));
+        Company root = groupRoot(currentCompany());
+        if (!groupRoot(target).getId().equals(root.getId())) {
+            throw new NotFoundException("Company not found");
+        }
+
+        AppUser me = appUserRepository.findById(currentUserProvider.getPrincipal().userId())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        me.setCompany(target);
+        appUserRepository.save(me);
+
+        return CompanyGroupMemberResponse.from(target, true);
+    }
+
+    @Transactional
+    public void deleteSubsidiary(UUID companyId) {
+        Company target = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("Company not found"));
+        Company root = groupRoot(currentCompany());
+        if (target.getParentCompany() == null || !groupRoot(target).getId().equals(root.getId())) {
+            throw new NotFoundException("Company not found");
+        }
+        if (!appUserRepository.findByCompanyId(companyId).isEmpty()) {
+            throw new ConflictException("Cannot delete a company with users still assigned to it — "
+                    + "reassign or remove them first (this also blocks deleting the company you're currently switched into)");
+        }
+        companyRepository.delete(target);
     }
 
     private static final java.util.Set<Role> ASSIGNABLE_ROLES = java.util.Set.of(Role.COMPANY_ADMIN, Role.COMPANY_CONTRIBUTOR, Role.CONSULTANT);

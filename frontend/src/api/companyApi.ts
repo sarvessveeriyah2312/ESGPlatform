@@ -34,6 +34,15 @@ export interface CompanyResponse {
   onboardingCompleted: boolean;
 }
 
+export interface CompanyGroupMember {
+  id: string;
+  name: string;
+  sectorCode: string | null;
+  marketClassification: BackendMarketClassification;
+  subscriptionPlan: BackendSubscriptionPlan;
+  current: boolean;
+}
+
 export const companyApi = {
   get: () => apiClient.get<CompanyResponse>('/api/v1/company'),
 
@@ -64,4 +73,15 @@ export const companyApi = {
 
   revokeInvite: (inviteId: string) =>
     apiClient.delete<void>(`/api/v1/company/invites/${inviteId}`),
+
+  getGroup: () => apiClient.get<CompanyGroupMember[]>('/api/v1/company/group'),
+
+  createSubsidiary: (name: string) =>
+    apiClient.post<CompanyGroupMember>('/api/v1/company/subsidiaries', { name }),
+
+  switchCompany: (companyId: string) =>
+    apiClient.post<CompanyGroupMember>(`/api/v1/company/switch/${companyId}`),
+
+  deleteSubsidiary: (companyId: string) =>
+    apiClient.delete<void>(`/api/v1/company/subsidiaries/${companyId}`),
 };

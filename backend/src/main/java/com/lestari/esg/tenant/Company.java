@@ -31,6 +31,10 @@ public class Company extends BaseEntity {
     @JoinColumn(name = "sector_code")
     private Sector sector;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_company_id")
+    private Company parentCompany;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "size_band", length = 30)
     private CompanySizeBand sizeBand;

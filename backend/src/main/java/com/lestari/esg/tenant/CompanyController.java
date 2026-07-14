@@ -1,7 +1,9 @@
 package com.lestari.esg.tenant;
 
 import com.lestari.esg.security.CurrentUserProvider;
+import com.lestari.esg.tenant.dto.CompanyGroupMemberResponse;
 import com.lestari.esg.tenant.dto.CompanyResponse;
+import com.lestari.esg.tenant.dto.CreateSubsidiaryRequest;
 import com.lestari.esg.tenant.dto.CreateTenantUserRequest;
 import com.lestari.esg.tenant.dto.CreateTenantUserResponse;
 import com.lestari.esg.tenant.dto.TeamInviteResponse;
@@ -57,6 +59,31 @@ public class CompanyController {
     @PatchMapping("/profile")
     public CompanyResponse updateProfile(@Valid @RequestBody UpdateCompanyProfileRequest request) {
         return companyService.updateProfile(request);
+    }
+
+    @GetMapping("/group")
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public List<CompanyGroupMemberResponse> group() {
+        return companyService.getGroup();
+    }
+
+    @PostMapping("/subsidiaries")
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public CompanyGroupMemberResponse createSubsidiary(@Valid @RequestBody CreateSubsidiaryRequest request) {
+        return companyService.createSubsidiary(request);
+    }
+
+    @PostMapping("/switch/{companyId}")
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public CompanyGroupMemberResponse switchCompany(@PathVariable UUID companyId) {
+        return companyService.switchCompany(companyId);
+    }
+
+    @DeleteMapping("/subsidiaries/{companyId}")
+    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    public ResponseEntity<Void> deleteSubsidiary(@PathVariable UUID companyId) {
+        companyService.deleteSubsidiary(companyId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/users")

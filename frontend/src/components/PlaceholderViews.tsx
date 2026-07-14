@@ -34,6 +34,7 @@ import { emailSettingsApi, EmailSettingsResponse } from '../api/emailSettingsApi
 import Button from './ui/Button';
 import Card from './ui/Card';
 import SecuritySettingsTab from './settings/SecuritySettingsTab';
+import CompanyTab from './settings/CompanyTab';
 
 // 1. MATERIALITY ASSESSMENT
 export function MaterialityAssessmentView() {
@@ -217,7 +218,7 @@ export function BillingView() {
 }
 
 // 12. SETTINGS
-type SettingsTabId = 'profile' | 'security' | 'preferences' | 'notifications' | 'smtp' | 'billing' | 'privacy';
+type SettingsTabId = 'profile' | 'security' | 'preferences' | 'notifications' | 'smtp' | 'company' | 'billing' | 'privacy';
 
 interface SettingsTab {
   id: SettingsTabId;
@@ -234,6 +235,7 @@ const SETTINGS_TABS: SettingsTab[] = [
   { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'smtp', label: 'Email (SMTP)', icon: Mail, adminOnly: true },
+  { id: 'company', label: 'Company', icon: Building, adminOnly: true },
   { id: 'billing', label: 'Billing & Plan', icon: CreditCard },
   { id: 'privacy', label: 'Privacy & Data', icon: Lock },
 ];
@@ -287,7 +289,7 @@ export function SettingsView() {
         </nav>
       </div>
 
-      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && (
+      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && activeTab !== 'company' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center text-center space-y-3">
           <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
             {React.createElement(SETTINGS_TABS.find((t) => t.id === activeTab)!.icon, { className: 'w-5 h-5 text-gray-400' })}
@@ -300,6 +302,7 @@ export function SettingsView() {
       {activeTab === 'profile' && <ProfileTab />}
       {activeTab === 'security' && <SecuritySettingsTab />}
       {activeTab === 'smtp' && canManage && <SmtpSettingsTab />}
+      {activeTab === 'company' && canManage && <CompanyTab />}
     </div>
   );
 }
