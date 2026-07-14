@@ -10,4 +10,5 @@ public interface S1RiskOpportunityRepository extends JpaRepository<S1RiskOpportu
     List<S1RiskOpportunity> findByCompanyId(UUID companyId);
     List<S1RiskOpportunity> findBySegmentId(UUID segmentId);
     Optional<S1RiskOpportunity> findByIdAndCompanyId(UUID id, UUID companyId);
+    void deleteBySegmentId(UUID segmentId);
 }

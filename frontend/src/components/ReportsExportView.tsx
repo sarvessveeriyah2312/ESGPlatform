@@ -36,6 +36,7 @@ import { companyApi, CompanyResponse } from '../api/companyApi';
 import { materialityApi, AssessmentSummaryResponse, ScoreResponse } from '../api/materialityApi';
 import { governanceApi, GovernanceLevelResponse, MatterOwnershipResponse } from '../api/governanceApi';
 import { compliancePolicyApi, CompliancePolicyResponse } from '../api/compliancePolicyApi';
+import { climateApi, BusinessSegmentResponse, IfrsS2Response, EmissionsResponse } from '../api/climateApi';
 import { marketFromBackend } from '../api/mappers';
 
 // Interface for export history
@@ -130,6 +131,9 @@ export default function ReportsExportView() {
   const [exportingRaw, setExportingRaw] = useState<boolean>(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
+  const [activeReportTab, setActiveReportTab] = useState<'summary' | 'ifrs-s1' | 'ifrs-s2'>('summary');
+  const [generatingIfrsS1, setGeneratingIfrsS1] = useState<boolean>(false);
+  const [generatingIfrsS2, setGeneratingIfrsS2] = useState<boolean>(false);
   const [indicators, setIndicators] = useState<IndicatorResponse[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
 
@@ -140,6 +144,9 @@ export default function ReportsExportView() {
   const [governanceLevels, setGovernanceLevels] = useState<GovernanceLevelResponse[]>([]);
   const [ownership, setOwnership] = useState<MatterOwnershipResponse[]>([]);
   const [compliancePolicies, setCompliancePolicies] = useState<CompliancePolicyResponse[]>([]);
+  const [segments, setSegments] = useState<BusinessSegmentResponse[]>([]);
+  const [ifrsS2, setIfrsS2] = useState<IfrsS2Response | null>(null);
+  const [emissions, setEmissions] = useState<EmissionsResponse | null>(null);
 
   // Export history — sourced from the real backend history log
   const [history, setHistory] = useState<ExportHistoryItem[]>([]);
@@ -208,6 +215,11 @@ export default function ReportsExportView() {
     governanceApi.getStructure().then(setGovernanceLevels).catch((e) => console.error(e));
     governanceApi.getOwnership().then(setOwnership).catch((e) => console.error(e));
     compliancePolicyApi.list().then(setCompliancePolicies).catch((e) => console.error(e));
+    if (hasFeature('climate-module') && hasFeature('ifrs-s1-s2')) {
+      climateApi.listSegments().then(setSegments).catch((e) => console.error(e));
+      climateApi.getS2().then(setIfrsS2).catch((e) => console.error(e));
+      climateApi.getEmissions().then(setEmissions).catch((e) => console.error(e));
+    }
     materialityApi.listAssessments().then((rows) => {
       setAssessments(rows);
       const latest = rows
@@ -243,6 +255,20 @@ export default function ReportsExportView() {
   // Governance is gated by the Growth plan; percentage now reflects real backend state rather than a hardcoded constant
   const isGovernanceUnlocked = hasFeature('governance');
   const governancePercentage = isGovernanceUnlocked ? (governanceLevels.length >= 3 ? 100 : governanceLevels.length > 0 ? 50 : 0) : 0;
+
+  // IFRS S1/S2 & GHG emissions are Issuer-Ready-only features, gated the same way as CSI export
+  const isClimateUnlocked = hasFeature('climate-module') && hasFeature('ifrs-s1-s2');
+  const scope1Value = emissions?.scope1.find((p) => p.fiscalYear === fiscalYear)?.value ?? null;
+  const scope2Value = emissions?.scope2.find((p) => p.fiscalYear === fiscalYear)?.value ?? null;
+  const scope3Total = emissions
+    ? emissions.scope3.reduce((sum, cat) => sum + (cat.values.find((v) => v.fiscalYear === fiscalYear)?.value ?? 0), 0)
+    : null;
+  const hasS1Items = segments.some((s) => s.items.length > 0);
+  const hasS2Narrative = !!ifrsS2?.oversightDescription;
+  const hasEmissionsForYear = scope1Value !== null || scope2Value !== null || (scope3Total !== null && scope3Total > 0);
+  const climatePercentage = isClimateUnlocked
+    ? Math.round(([hasS1Items, hasS2Narrative, hasEmissionsForYear].filter(Boolean).length / 3) * 100)
+    : 0;
 
   // Materiality — real completion driven by the latest assessment's validation status
   const latestAssessment = assessments
@@ -288,6 +314,16 @@ export default function ReportsExportView() {
     return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 12).toUpperCase();
   };
 
+  const climateLines: string[] = isClimateUnlocked
+    ? [
+        ...segments.flatMap((s) => s.items.map((item) => `IFRS S1 [${s.name}]: ${item.title} (${item.type}, ${item.horizon})`)),
+        `IFRS S2 Oversight: ${ifrsS2?.oversightDescription ?? 'Not disclosed'}`,
+        `Scope 1 GHG (${period}): ${scope1Value ?? 'N/A'} tCO2e`,
+        `Scope 2 GHG (${period}): ${scope2Value ?? 'N/A'} tCO2e`,
+        `Scope 3 GHG (${period}): ${scope3Total ?? 'N/A'} tCO2e`
+      ]
+    : ['IFRS S1/S2 and GHG emissions disclosures not included (requires Issuer-Ready plan).'];
+
   const buildReportSummaryText = (): string => {
     return [
       `Entity: ${company?.name ?? 'Not configured'}`,
@@ -295,7 +331,8 @@ export default function ReportsExportView() {
       `Period: ${period}`,
       ...materialityLines,
       ...governanceLines,
-      ...indicators.map((ind) => `${ind.name}: ${getValueForYear(ind, fiscalYear) ?? 'N/A'} ${ind.unit || ''}`)
+      ...indicators.map((ind) => `${ind.name}: ${getValueForYear(ind, fiscalYear) ?? 'N/A'} ${ind.unit || ''}`),
+      ...climateLines
     ].join('\n');
   };
 
@@ -320,6 +357,48 @@ export default function ReportsExportView() {
       console.error(e);
       triggerToast('Failed to render the report preview.', 'error');
     }
+  };
+
+  // Preview an IFRS S1 or S2 standalone report
+  const handlePreviewIfrsReport = async (kind: 's1' | 's2') => {
+    triggerToast('Rendering report preview...', 'info');
+    try {
+      const blob = kind === 's1' ? await exportApi.ifrsS1ReportPdf(fiscalYear) : await exportApi.ifrsS2ReportPdf(fiscalYear);
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      setIsPreviewModalOpen(true);
+    } catch (e) {
+      console.error(e);
+      triggerToast('Failed to render the report preview.', 'error');
+    }
+  };
+
+  // Generate & Download an IFRS S1 or S2 standalone report
+  const handleGenerateIfrsReport = (kind: 's1' | 's2') => {
+    const setGeneratingFlag = kind === 's1' ? setGeneratingIfrsS1 : setGeneratingIfrsS2;
+    const label = kind === 's1' ? 'IFRS S1' : 'IFRS S2';
+    setGeneratingFlag(true);
+    triggerToast(`Compiling ${label} data and assembling PDF report...`, 'info');
+
+    const fetcher = kind === 's1' ? exportApi.ifrsS1ReportPdf : exportApi.ifrsS2ReportPdf;
+    fetcher(fiscalYear)
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Lestari_${label.replace(' ', '_')}_Report_${period}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        refreshHistory();
+        triggerToast(`Successfully downloaded ${label} report for ${period}!`, 'success');
+      })
+      .catch((e) => {
+        console.error(e);
+        triggerToast(`Failed to generate the ${label} report.`, 'error');
+      })
+      .finally(() => setGeneratingFlag(false));
   };
 
   // Generate & Download the Main Report
@@ -367,7 +446,8 @@ TABLE OF CONTENTS
 2. Materiality Matrix & Assessment
 3. Governance & Board Oversight
 4. ESG Key Performance Indicators (Bursa Aligned)
-5. Audit & Activity Trails
+5. IFRS S1/S2 & GHG Emissions (Scope 1, 2 & 3)
+6. Audit & Activity Trails
 
 ------------------------------------------------------------------------
 1. CORPORATE PROFILE
@@ -404,7 +484,24 @@ ${governanceLines.join('\n')}
 
       fileContent += `
 ------------------------------------------------------------------------
-5. ASSURANCE WORKSPACE AUDIT FILE LOGS
+5. IFRS S1/S2 & GHG EMISSIONS (${period})
+------------------------------------------------------------------------
+`;
+
+      if (isClimateUnlocked) {
+        const itemCount = segments.reduce((n, s) => n + s.items.length, 0);
+        fileContent += `${itemCount} climate risk/opportunity item(s) across ${segments.length} business segment(s) (IFRS S1).\n`;
+        fileContent += `IFRS S2 Oversight: ${ifrsS2?.oversightDescription ?? 'Not disclosed'}\n`;
+        fileContent += `- Scope 1 (Direct): ${scope1Value !== null ? `${scope1Value} tCO2e` : 'N/A'}\n`;
+        fileContent += `- Scope 2 (Indirect, Purchased Energy): ${scope2Value !== null ? `${scope2Value} tCO2e` : 'N/A'}\n`;
+        fileContent += `- Scope 3 (Value Chain, All Categories): ${scope3Total !== null ? `${scope3Total} tCO2e` : 'N/A'}\n`;
+      } else {
+        fileContent += `- Requires the Issuer-Ready plan — not included in this disclosure cycle.\n`;
+      }
+
+      fileContent += `
+------------------------------------------------------------------------
+6. ASSURANCE WORKSPACE AUDIT FILE LOGS
 ------------------------------------------------------------------------
 This document is prepared via Lestari ESG compliance platform.
 Verification Checksum: LESTARI-SHA256-${checksum}
@@ -568,6 +665,57 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
         </div>
       </div>
 
+      {/* Report Type Tab Bar */}
+      <div className="flex space-x-1 border-b border-navy-100 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveReportTab('summary')}
+          className={`px-6 py-3.5 text-xs font-extrabold border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+            activeReportTab === 'summary'
+              ? 'border-primary-500 text-primary-600 font-black'
+              : 'border-transparent text-navy-500 hover:text-navy-900 hover:border-navy-200'
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            <FileText className="w-3.5 h-3.5" />
+            <span>ESG Disclosure Summary</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveReportTab('ifrs-s1')}
+          className={`px-6 py-3.5 text-xs font-extrabold border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+            activeReportTab === 'ifrs-s1'
+              ? 'border-primary-500 text-primary-600 font-black'
+              : 'border-transparent text-navy-500 hover:text-navy-900 hover:border-navy-200'
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            <FileText className="w-3.5 h-3.5" />
+            <span>IFRS S1 Report</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveReportTab('ifrs-s2')}
+          className={`px-6 py-3.5 text-xs font-extrabold border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+            activeReportTab === 'ifrs-s2'
+              ? 'border-primary-500 text-primary-600 font-black'
+              : 'border-transparent text-navy-500 hover:text-navy-900 hover:border-navy-200'
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            <FileText className="w-3.5 h-3.5" />
+            <span>IFRS S2 Report</span>
+          </div>
+        </button>
+      </div>
+
+      {activeReportTab === 'summary' && (
+      <>
+
       {/* Disclosure Metrics Completion Status Card (Plan Aware) */}
       <Card className="bg-white border-navy-100 p-5 md:p-6" organicGradient>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -579,12 +727,12 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
               Disclosure Completion Overview
             </h4>
             <p className="text-xs text-navy-500 leading-relaxed">
-              Overall data integrity readiness calculated across the three fundamental pillars of the Simplified ESG Disclosure Guide (SEDG).
+              Overall data integrity readiness across the fundamental pillars of the Simplified ESG Disclosure Guide (SEDG), plus IFRS S1/S2 climate disclosures.
             </p>
           </div>
 
           {/* Side-by-Side Progress Rings */}
-          <div className="grid grid-cols-3 gap-3 sm:gap-6 shrink-0 w-full md:w-auto">
+          <div className="grid grid-cols-4 gap-3 sm:gap-6 shrink-0 w-full md:w-auto">
             {/* Ring 1: Materiality */}
             <ProgressRing
               percent={materialityPercentage}
@@ -608,6 +756,15 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
               label="Indicators"
               subLabel={`${filledIndicators} of ${totalIndicators} Logged`}
               colorClass="text-primary-500"
+            />
+
+            {/* Ring 4: IFRS S1/S2 & GHG Emissions (Issuer-Ready Gated) */}
+            <ProgressRing
+              percent={climatePercentage}
+              label="IFRS & GHG"
+              subLabel={isClimateUnlocked ? "S1/S2 + Scope 1-3" : "Issuer-Ready Required"}
+              colorClass="text-purple-500"
+              locked={!isClimateUnlocked}
             />
           </div>
         </div>
@@ -772,6 +929,42 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Section 4: IFRS S1/S2 & GHG Emissions Summary (Issuer-Ready Gated) */}
+                  <div className="space-y-1 pb-4">
+                    <h5 className="text-[10px] font-extrabold text-navy-950 uppercase tracking-wide">4. IFRS S1/S2 &amp; GHG Emissions Summary</h5>
+                    {isClimateUnlocked ? (
+                      <>
+                        <p className="text-navy-500 text-[10px]">
+                          {segments.reduce((n, s) => n + s.items.length, 0)} climate risk/opportunity item(s) across {segments.length} business segment(s).
+                        </p>
+                        <table className="w-full text-left text-[9px] border-collapse">
+                          <thead>
+                            <tr className="border-b border-navy-100 text-navy-400 uppercase font-mono">
+                              <th className="py-1">Scope</th>
+                              <th className="py-1 text-center">Value ({period})</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-navy-50 text-navy-700">
+                            <tr>
+                              <td className="py-1 font-medium">Scope 1 — Direct</td>
+                              <td className="py-1 text-center font-bold font-mono text-navy-950">{scope1Value !== null ? `${scope1Value} tCO2e` : 'N/A'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-medium">Scope 2 — Indirect (Purchased Energy)</td>
+                              <td className="py-1 text-center font-bold font-mono text-navy-950">{scope2Value !== null ? `${scope2Value} tCO2e` : 'N/A'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-medium">Scope 3 — Value Chain (All Categories)</td>
+                              <td className="py-1 text-center font-bold font-mono text-navy-950">{scope3Total !== null ? `${scope3Total} tCO2e` : 'N/A'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </>
+                    ) : (
+                      <p className="text-navy-400 text-[10px] italic">Requires the Issuer-Ready plan — not included in this disclosure cycle.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -879,6 +1072,102 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
         </div>
       </div>
 
+      </>
+      )}
+
+      {activeReportTab === 'ifrs-s1' && (
+        <UpgradeGate feature="ifrs-s1-s2" onUpgrade={() => navigate('/billing')}>
+          <Card className="bg-white border-navy-100 p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-navy-50 pb-4">
+              <div>
+                <h4 className="text-base font-extrabold text-navy-950 flex items-center">
+                  <FileText className="w-4 h-4 mr-2 text-primary-500" />
+                  IFRS S1 Report
+                </h4>
+                <p className="text-xs text-navy-500 mt-0.5">
+                  Standalone General Disclosures report — climate-related risks &amp; opportunities per business segment.
+                </p>
+              </div>
+              <span className="text-[10px] text-primary-600 bg-primary-50 px-2 py-0.5 rounded font-bold shrink-0">
+                {segments.reduce((n, s) => n + s.items.length, 0)} item(s) across {segments.length} segment(s)
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2 text-[11px] text-navy-500">
+              <Info className="w-3.5 h-3.5 text-navy-400 shrink-0" />
+              <span>Generates a PDF covering IFRS S1 — General Disclosures for {period}.</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-navy-50">
+              <Button
+                variant="secondary"
+                onClick={() => handlePreviewIfrsReport('s1')}
+                className="w-full sm:w-auto font-bold px-6 py-2.5"
+                icon={<Eye className="w-4 h-4" />}
+              >
+                Preview
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => handleGenerateIfrsReport('s1')}
+                loading={generatingIfrsS1}
+                className="w-full sm:w-auto font-bold px-6 py-2.5"
+                icon={<Download className="w-4 h-4" />}
+              >
+                Generate & Download
+              </Button>
+            </div>
+          </Card>
+        </UpgradeGate>
+      )}
+
+      {activeReportTab === 'ifrs-s2' && (
+        <UpgradeGate feature="ifrs-s1-s2" onUpgrade={() => navigate('/billing')}>
+          <Card className="bg-white border-navy-100 p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-navy-50 pb-4">
+              <div>
+                <h4 className="text-base font-extrabold text-navy-950 flex items-center">
+                  <FileText className="w-4 h-4 mr-2 text-primary-500" />
+                  IFRS S2 Report
+                </h4>
+                <p className="text-xs text-navy-500 mt-0.5">
+                  Standalone Climate Disclosures report — governance, strategy, risk management, metrics &amp; targets, and the Scope 1/2/3 GHG ledger.
+                </p>
+              </div>
+              <span className="text-[10px] text-primary-600 bg-primary-50 px-2 py-0.5 rounded font-bold shrink-0">
+                {ifrsS2?.oversightDescription ? 'Governance disclosed' : 'Governance not disclosed'}
+              </span>
+            </div>
+
+            <div className="text-[11px] text-navy-500 space-y-1">
+              <div>Scope 1 ({period}): <strong className="text-navy-900">{scope1Value !== null ? `${scope1Value} tCO2e` : 'N/A'}</strong></div>
+              <div>Scope 2 ({period}): <strong className="text-navy-900">{scope2Value !== null ? `${scope2Value} tCO2e` : 'N/A'}</strong></div>
+              <div>Scope 3 ({period}): <strong className="text-navy-900">{scope3Total !== null ? `${scope3Total} tCO2e` : 'N/A'}</strong></div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-navy-50">
+              <Button
+                variant="secondary"
+                onClick={() => handlePreviewIfrsReport('s2')}
+                className="w-full sm:w-auto font-bold px-6 py-2.5"
+                icon={<Eye className="w-4 h-4" />}
+              >
+                Preview
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => handleGenerateIfrsReport('s2')}
+                loading={generatingIfrsS2}
+                className="w-full sm:w-auto font-bold px-6 py-2.5"
+                icon={<Download className="w-4 h-4" />}
+              >
+                Generate & Download
+              </Button>
+            </div>
+          </Card>
+        </UpgradeGate>
+      )}
+
       {/* Export History Table Card */}
       <Card className="bg-white border-navy-100 p-6 space-y-4">
         <div className="flex items-center space-x-2 border-b border-navy-50 pb-3">
@@ -985,7 +1274,9 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
                 variant="primary"
                 onClick={() => {
                   handleClosePreview();
-                  handleGenerateReport();
+                  if (activeReportTab === 'ifrs-s1') handleGenerateIfrsReport('s1');
+                  else if (activeReportTab === 'ifrs-s2') handleGenerateIfrsReport('s2');
+                  else handleGenerateReport();
                 }}
                 className="font-bold"
                 icon={<Download className="w-4 h-4" />}

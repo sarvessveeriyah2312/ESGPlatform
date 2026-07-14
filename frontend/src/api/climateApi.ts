@@ -99,6 +99,9 @@ export interface EmissionActivityEntryResponse {
 export const climateApi = {
   listSegments: () => apiClient.get<BusinessSegmentResponse[]>('/api/v1/ifrs/s1/segments'),
   createSegment: (name: string) => apiClient.post<BusinessSegmentResponse>('/api/v1/ifrs/s1/segments', { name }),
+  renameSegment: (segmentId: string, name: string) =>
+    apiClient.put<BusinessSegmentResponse>(`/api/v1/ifrs/s1/segments/${segmentId}`, { name }),
+  deleteSegment: (segmentId: string) => apiClient.delete<void>(`/api/v1/ifrs/s1/segments/${segmentId}`),
   addItem: (segmentId: string, data: UpsertS1ItemRequest) =>
     apiClient.post<S1ItemResponse>(`/api/v1/ifrs/s1/segments/${segmentId}/items`, data),
   updateItem: (itemId: string, data: UpsertS1ItemRequest) =>
@@ -117,6 +120,8 @@ export const climateApi = {
     apiClient.post<Scope3CategoryResponse>('/api/v1/climate/emissions/scope3/categories', { name, tooltip }),
   setScope3Value: (categoryId: string, fiscalYear: number, value: number) =>
     apiClient.put<EmissionsResponse>(`/api/v1/climate/emissions/scope3/categories/${categoryId}/values/${fiscalYear}`, { value }),
+  deleteScope3Category: (categoryId: string) =>
+    apiClient.delete<void>(`/api/v1/climate/emissions/scope3/categories/${categoryId}`),
 
   listEmissionFactors: () => apiClient.get<EmissionFactorResponse[]>('/api/v1/climate/activity/factors'),
   listActivityEntries: (fiscalYear: number) =>

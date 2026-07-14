@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Trash2,
+  Pencil,
   Info,
   ChevronDown,
   ChevronUp,
@@ -253,6 +254,9 @@ export function IfrsS1Form() {
 
   const [newSegmentInput, setNewSegmentInput] = useState('');
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+  const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
+  const [editSegmentNameInput, setEditSegmentNameInput] = useState('');
+  const [confirmDeleteSegmentId, setConfirmDeleteSegmentId] = useState<string | null>(null);
 
   useEffect(() => {
     climateApi.listSegments().then((data) => {
@@ -281,6 +285,36 @@ export function IfrsS1Form() {
       setActiveSegmentId(mapped.id);
     });
     setNewSegmentInput('');
+  };
+
+  const startRenameSegment = (seg: Segment) => {
+    setEditingSegmentId(seg.id);
+    setEditSegmentNameInput(seg.name);
+  };
+
+  const commitRenameSegment = (segmentId: string) => {
+    const name = editSegmentNameInput.trim();
+    setEditingSegmentId(null);
+    const current = segments.find((s) => s.id === segmentId);
+    if (!name || !current || name === current.name) return;
+    if (segments.some((s) => s.id !== segmentId && s.name.toLowerCase() === name.toLowerCase())) {
+      alert('Segment already exists');
+      return;
+    }
+    setSegments((prev) => prev.map((s) => (s.id === segmentId ? { ...s, name } : s)));
+    climateApi.renameSegment(segmentId, name);
+  };
+
+  const handleDeleteSegment = (segmentId: string) => {
+    setSegments((prev) => {
+      const remaining = prev.filter((s) => s.id !== segmentId);
+      if (activeSegmentId === segmentId) {
+        setActiveSegmentId(remaining.length > 0 ? remaining[0].id : null);
+      }
+      return remaining;
+    });
+    climateApi.deleteSegment(segmentId);
+    setConfirmDeleteSegmentId(null);
   };
 
   const addRiskCard = () => {
@@ -381,24 +415,87 @@ export function IfrsS1Form() {
             {segments.map(seg => {
               const count = seg.items.length;
               const isActive = activeSegmentId === seg.id;
+              const isEditing = editingSegmentId === seg.id;
+              const isConfirmingDelete = confirmDeleteSegmentId === seg.id;
+
+              if (isEditing) {
+                return (
+                  <input
+                    key={seg.id}
+                    autoFocus
+                    type="text"
+                    value={editSegmentNameInput}
+                    onChange={(e) => setEditSegmentNameInput(e.target.value)}
+                    onBlur={() => commitRenameSegment(seg.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                      if (e.key === 'Escape') setEditingSegmentId(null);
+                    }}
+                    className="px-4 py-2 text-xs font-bold rounded-xl border border-primary-500 outline-none ring-1 ring-primary-500 w-40"
+                  />
+                );
+              }
+
               return (
-                <button
+                <div
                   key={seg.id}
-                  type="button"
-                  onClick={() => setActiveSegmentId(seg.id)}
-                  className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer flex items-center space-x-2 ${
+                  className={`group flex items-center rounded-xl border transition-all ${
                     isActive
                       ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
                       : 'bg-white text-navy-600 border-navy-100 hover:border-navy-200'
                   }`}
                 >
-                  <span>{seg.name}</span>
-                  <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded-full font-mono ${
-                    isActive ? 'bg-primary-800 text-white' : 'bg-navy-50 text-navy-500'
-                  }`}>
-                    {count}
-                  </span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSegmentId(seg.id)}
+                    className="pl-4 pr-2 py-2 text-xs font-bold cursor-pointer flex items-center space-x-2"
+                  >
+                    <span>{seg.name}</span>
+                    <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded-full font-mono ${
+                      isActive ? 'bg-primary-800 text-white' : 'bg-navy-50 text-navy-500'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+
+                  {isConfirmingDelete ? (
+                    <div className="flex items-center gap-1 pr-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSegment(seg.id)}
+                        className="px-2 py-1 text-[10px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg cursor-pointer"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteSegmentId(null)}
+                        className={`px-2 py-1 text-[10px] font-bold rounded-lg cursor-pointer ${isActive ? 'text-white/80 hover:text-white' : 'text-navy-500 hover:text-navy-700'}`}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => startRenameSegment(seg)}
+                        className={`p-1 rounded-lg cursor-pointer ${isActive ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-navy-400 hover:text-navy-700 hover:bg-navy-50'}`}
+                        title="Rename segment"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteSegmentId(seg.id)}
+                        className={`p-1 rounded-lg cursor-pointer ${isActive ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-navy-400 hover:text-rose-600 hover:bg-rose-50'}`}
+                        title="Delete segment"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -620,6 +717,8 @@ export function IfrsS2Form() {
   const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
   const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
   const [newScope3CategoryInput, setNewScope3CategoryInput] = useState('');
+  const [newScope3TooltipInput, setNewScope3TooltipInput] = useState('');
+  const [confirmDeleteCategoryId, setConfirmDeleteCategoryId] = useState<string | null>(null);
 
   // Visual confirmation only — every field/table edit already persists immediately via the API calls below.
   const handleSaveS2 = () => {
@@ -650,53 +749,52 @@ export function IfrsS2Form() {
     climateApi.updateS2({ ...toS2Request(sections), linkedTargetId: targetId || null });
   };
 
-  const updateEmissionsValue = (type: 'scope1' | 'scope2' | 'scope3', year: string, index: number, value: string) => {
+  const updateEmissionsValue = (type: 'scope1' | 'scope2', year: string, value: string) => {
     const num = value.trim() === '' ? 0 : Number(value);
     if (isNaN(num)) return;
     const fiscalYear = yearKeyToFiscalYear(year);
 
-    if (type === 'scope1' || type === 'scope2') {
-      setEmissions(prev => ({
-        ...prev,
-        [type]: {
-          ...prev[type],
-          [year]: num
-        }
-      }));
-      if (type === 'scope1') {
-        climateApi.setScope1(fiscalYear, num);
-      } else {
-        climateApi.setScope2(fiscalYear, num);
+    setEmissions(prev => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [year]: num
       }
+    }));
+    if (type === 'scope1') {
+      climateApi.setScope1(fiscalYear, num);
     } else {
-      const category = emissions.scope3[index];
-      if (!category) return;
-
-      setEmissions(prev => {
-        const updatedScope3 = [...prev.scope3];
-        updatedScope3[index] = {
-          ...updatedScope3[index],
-          values: {
-            ...updatedScope3[index].values,
-            [year]: num
-          }
-        };
-        return {
-          ...prev,
-          scope3: updatedScope3
-        };
-      });
-      climateApi.setScope3Value(category.id, fiscalYear, num);
+      climateApi.setScope2(fiscalYear, num);
     }
+  };
+
+  const updateScope3Value = (categoryId: string, index: number, year: string, value: string) => {
+    const num = value.trim() === '' ? 0 : Number(value);
+    if (isNaN(num)) return;
+    const fiscalYear = yearKeyToFiscalYear(year);
+    setEmissions(prev => {
+      const updatedScope3 = [...prev.scope3];
+      updatedScope3[index] = { ...updatedScope3[index], values: { ...updatedScope3[index].values, [year]: num } };
+      return { ...prev, scope3: updatedScope3 };
+    });
+    climateApi.setScope3Value(categoryId, fiscalYear, num);
   };
 
   const addScope3Category = () => {
     const name = newScope3CategoryInput.trim();
     if (!name) return;
-    climateApi.createScope3Category(name).then((created) => {
+    const tooltip = newScope3TooltipInput.trim() || undefined;
+    climateApi.createScope3Category(name, tooltip).then((created) => {
       setEmissions(prev => ({ ...prev, scope3: [...prev.scope3, fromScope3Category(created)] }));
     });
     setNewScope3CategoryInput('');
+    setNewScope3TooltipInput('');
+  };
+
+  const handleDeleteScope3Category = (categoryId: string) => {
+    setEmissions(prev => ({ ...prev, scope3: prev.scope3.filter(c => c.id !== categoryId) }));
+    climateApi.deleteScope3Category(categoryId);
+    setConfirmDeleteCategoryId(null);
   };
 
   const years = ['FY2023', 'FY2024', 'FY2025', 'FY2026'];
@@ -1023,10 +1121,11 @@ export function IfrsS2Form() {
             <thead>
               <tr className="border-b border-navy-100 bg-navy-50/10 text-[9px] font-bold text-navy-400 uppercase tracking-widest font-mono">
                 <th className="px-6 py-3.5">Emission Scope & Category</th>
+                <th className="px-6 py-3.5 text-center w-[160px]">ISSB Transition Relief</th>
                 {years.map(y => (
                   <th key={y} className="px-4 py-3.5 text-center w-[120px]">{y}</th>
                 ))}
-                <th className="px-6 py-3.5 text-center w-[160px]">ISSB Transition Relief</th>
+                <th className="px-6 py-3.5 text-center w-[80px]">Actions</th>
               </tr>
             </thead>
 
@@ -1037,19 +1136,20 @@ export function IfrsS2Form() {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                   <span>Scope 1: Direct Combustion & Fleets</span>
                 </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="text-[10px] text-navy-400 font-mono font-semibold">Not Applicable</span>
+                </td>
                 {years.map(y => (
                   <td key={y} className="px-4 py-3">
                     <input
                       type="text"
                       value={emissions.scope1[y] ?? 0}
-                      onChange={(e) => updateEmissionsValue('scope1', y, 0, e.target.value)}
+                      onChange={(e) => updateEmissionsValue('scope1', y, e.target.value)}
                       className="w-full text-center px-1.5 py-1 text-xs font-bold text-navy-950 border border-navy-200 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 bg-white"
                     />
                   </td>
                 ))}
-                <td className="px-6 py-4 text-center">
-                  <span className="text-[10px] text-navy-400 font-mono font-semibold">Not Applicable</span>
-                </td>
+                <td className="px-6 py-4" />
               </tr>
 
               {/* SCOPE 2 */}
@@ -1058,19 +1158,20 @@ export function IfrsS2Form() {
                   <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
                   <span>Scope 2: Indirect TNB Grid Power</span>
                 </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="text-[10px] text-navy-400 font-mono font-semibold">Not Applicable</span>
+                </td>
                 {years.map(y => (
                   <td key={y} className="px-4 py-3">
                     <input
                       type="text"
                       value={emissions.scope2[y] ?? 0}
-                      onChange={(e) => updateEmissionsValue('scope2', y, 0, e.target.value)}
+                      onChange={(e) => updateEmissionsValue('scope2', y, e.target.value)}
                       className="w-full text-center px-1.5 py-1 text-xs font-bold text-navy-950 border border-navy-200 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 bg-white"
                     />
                   </td>
                 ))}
-                <td className="px-6 py-4 text-center">
-                  <span className="text-[10px] text-navy-400 font-mono font-semibold">Not Applicable</span>
-                </td>
+                <td className="px-6 py-4" />
               </tr>
 
               {/* SCOPE 3 HEADER ROW */}
@@ -1088,6 +1189,15 @@ export function IfrsS2Form() {
                     </span>
                   </button>
                 </td>
+                <td className="px-6 py-3 text-center">
+                  {emissions.scope3.some((cat) => Object.values(cat.reliefByYear).some(Boolean)) ? (
+                    <span className="text-[9px] text-purple-700 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded uppercase font-bold font-mono inline-block">
+                      Relief active
+                    </span>
+                  ) : (
+                    <span className="text-[9px] text-navy-300 font-mono">—</span>
+                  )}
+                </td>
                 {years.map(y => {
                   const total = emissions.scope3.reduce((acc, cat) => acc + (cat.values[y] || 0), 0);
                   return (
@@ -1096,11 +1206,7 @@ export function IfrsS2Form() {
                     </td>
                   );
                 })}
-                <td className="px-6 py-3 text-center">
-                  <span className="text-[9px] text-purple-700 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded uppercase font-bold font-mono inline-block">
-                    C3 relief active
-                  </span>
-                </td>
+                <td className="px-6 py-3" />
               </tr>
 
               {/* SCOPE 3 SUBCATEGORIES ACCORDION CELLS */}
@@ -1110,7 +1216,8 @@ export function IfrsS2Form() {
                     <span className="text-navy-400 text-xs shrink-0 select-none">↳</span>
                     <span className="truncate max-w-[200px]" title={cat.name}>{cat.name}</span>
 
-                    {/* Tooltip Info Icon */}
+                    {/* Tooltip Info Icon — only shown when the category actually has a description */}
+                    {cat.tooltip && (
                     <div className="relative inline-block shrink-0">
                       <button
                         type="button"
@@ -1127,28 +1234,58 @@ export function IfrsS2Form() {
                         </div>
                       )}
                     </div>
+                    )}
+                  </td>
+
+                  <td className="px-6 py-2 text-center">
+                    {Object.values(cat.reliefByYear).some(Boolean) ? (
+                      <span className="text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded uppercase font-bold font-mono inline-block">
+                        Relief active
+                      </span>
+                    ) : (
+                      <span className="text-[9px] text-navy-300 font-mono">—</span>
+                    )}
                   </td>
 
                   {years.map(y => (
                     <td key={y} className="px-4 py-2">
-                      <div className="space-y-1">
-                        <input
-                          type="text"
-                          value={cat.values[y] ?? 0}
-                          onChange={(e) => updateEmissionsValue('scope3', y, idx, e.target.value)}
-                          className="w-full text-center px-1.5 py-1 text-xs font-semibold text-navy-800 border border-navy-100/80 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 bg-white"
-                        />
-                        {cat.reliefByYear[y] && (
-                          <span className="block text-center text-[8px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded px-1 py-0.5 uppercase tracking-wide">
-                            Relief
-                          </span>
-                        )}
-                      </div>
+                      <input
+                        type="text"
+                        value={cat.values[y] ?? 0}
+                        onChange={(e) => updateScope3Value(cat.id, idx, y, e.target.value)}
+                        className="w-full text-center px-1.5 py-1 text-xs font-semibold text-navy-800 border border-navy-100/80 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 bg-white"
+                      />
                     </td>
                   ))}
 
                   <td className="px-6 py-2 text-center">
-                    <span className="text-[10px] text-navy-300 font-mono">—</span>
+                    {confirmDeleteCategoryId === cat.id ? (
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteScope3Category(cat.id)}
+                          className="px-2 py-1 text-[10px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg cursor-pointer"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteCategoryId(null)}
+                          className="px-2 py-1 text-[10px] font-bold text-navy-500 hover:text-navy-700 rounded-lg cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteCategoryId(cat.id)}
+                        className="p-1 text-navy-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                        title="Delete category"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -1156,7 +1293,7 @@ export function IfrsS2Form() {
               {/* ADD SCOPE 3 CATEGORY ROW */}
               {scope3Expanded && (
                 <tr className="bg-navy-50/10">
-                  <td colSpan={years.length + 2} className="px-8 py-3">
+                  <td colSpan={years.length + 3} className="px-8 py-3">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                       {emissions.scope3.length === 0 && (
                         <span className="text-[10px] text-navy-400 font-semibold shrink-0">No Scope 3 categories yet —</span>
@@ -1166,6 +1303,14 @@ export function IfrsS2Form() {
                         placeholder="Add Scope 3 Category (e.g. Category 9: Downstream Transportation)..."
                         value={newScope3CategoryInput}
                         onChange={(e) => setNewScope3CategoryInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') addScope3Category(); }}
+                        className="flex-1 px-3 py-1.5 text-xs font-semibold text-navy-950 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500 bg-white"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Description shown on hover (optional)..."
+                        value={newScope3TooltipInput}
+                        onChange={(e) => setNewScope3TooltipInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') addScope3Category(); }}
                         className="flex-1 px-3 py-1.5 text-xs font-semibold text-navy-950 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500 bg-white"
                       />
@@ -1315,7 +1460,7 @@ export function IfrsS2Form() {
       <div className="border-t border-navy-100 pt-6 flex items-center justify-between">
         <div className="text-xs text-navy-400 flex items-center space-x-1.5 font-medium">
           <Info className="w-3.5 h-3.5 text-primary-500" />
-          <span>Form calculates Scope 3 downstream proxies automatically in compliance with IFRS S2 Paragraph 29.</span>
+          <span>Scope 3 categories are flagged for transition relief automatically based on your market classification's relief period.</span>
         </div>
 
         <div className="flex items-center space-x-3">
@@ -1338,3 +1483,4 @@ export function IfrsS2Form() {
     </div>
   );
 }
+

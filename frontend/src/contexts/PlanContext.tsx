@@ -37,7 +37,7 @@ const FEATURE_REGISTRY: Record<string, { name: string; minPlan: PlanType; descri
   'targets': { name: 'Targets', minPlan: 'growth', description: 'Set, monitor, and visualize custom ESG targets and science-based goals.' },
 
   // Issuer-Ready Plan Hidden Features
-  'ifrs-s1-s2': { name: 'IFRS S1/S2', minPlan: 'issuer-ready', description: 'Fully aligned climate-related risks reporting matching global IFRS standards.' },
+  'ifrs-s1-s2': { name: 'IFRS S1/S2', minPlan: 'issuer-ready', description: 'Fully aligned climate-related risks reporting matching global IFRS standards, including Scope 1, 2 & 3 GHG emissions.' },
   'climate-module': { name: 'Climate Module', minPlan: 'issuer-ready', description: 'Scope 1, 2, & 3 Greenhouse Gas (GHG) calculations and analytics.' },
   'assurance-workspace': { name: 'Assurance Workspace', minPlan: 'issuer-ready', description: 'Prepare audit-ready trails and cooperate with external sustainability assurance providers.' },
   'csi-export': { name: 'CSI Export', minPlan: 'issuer-ready', description: 'One-click direct integration and export to Bursa Malaysia’s CSI portal.' }

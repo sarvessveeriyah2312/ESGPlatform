@@ -413,7 +413,107 @@
 </table>
 <p th:if="${#lists.isEmpty(indicators)}" class="empty-note">No indicators logged yet.</p>
 
-<h2 class="section-title">5. Assurance &amp; Verification</h2>
+<h2 class="section-title">5. IFRS S1 &#8212; Climate-Related Risks &amp; Opportunities</h2>
+<div th:if="${climateUnlocked}">
+    <p class="section-intro">Financially material climate risks and opportunities identified per principal business segment.</p>
+    <div th:each="segment : ${segments}">
+        <h3 class="subsection-title" th:text="${segment.name}">Segment</h3>
+        <table class="data-table" th:if="${!#lists.isEmpty(segment.items)}">
+            <thead>
+                <tr>
+                    <th style="width: 26%;">Title</th>
+                    <th style="width: 10%;">Type</th>
+                    <th style="width: 12%;">Horizon</th>
+                    <th style="width: 32%;">Description</th>
+                    <th class="col-center">Financial Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item, iter : ${segment.items}" th:class="${iter.odd} ? 'row-alt' : ''">
+                    <td th:text="${item.title}">Title</td>
+                    <td>
+                        <span th:if="${item.type.name() == 'RISK'}" class="tier-badge tier-high" th:text="${item.type.name()}">RISK</span>
+                        <span th:if="${item.type.name() == 'OPPORTUNITY'}" class="tier-badge status-current" th:text="${item.type.name()}">OPPORTUNITY</span>
+                    </td>
+                    <td th:text="${item.horizon}">Horizon</td>
+                    <td th:text="${item.description}">Description</td>
+                    <td class="col-center" th:text="${item.financialImpact != null ? item.financialImpact + ' ' + item.currency : 'N/A'}">N/A</td>
+                </tr>
+            </tbody>
+        </table>
+        <p th:if="${#lists.isEmpty(segment.items)}" class="empty-note">No risks or opportunities logged for this segment.</p>
+    </div>
+    <p th:if="${#lists.isEmpty(segments)}" class="empty-note">No business segments configured yet.</p>
+</div>
+<p th:unless="${climateUnlocked}" class="empty-note">IFRS S1/S2 climate disclosures require the Issuer-Ready plan &#8212; not included in this disclosure cycle.</p>
+
+<h2 class="section-title">6. IFRS S2 &#8212; Climate-Related Disclosures</h2>
+<div th:if="${climateUnlocked and s2 != null}">
+    <h3 class="subsection-title">Governance</h3>
+    <p class="section-intro" th:text="${s2.oversightDescription != null ? s2.oversightDescription : 'Not disclosed.'}">Oversight</p>
+    <table class="meta-table">
+        <tr>
+            <td class="label">Review Frequency</td>
+            <td th:text="${s2.reviewFrequency != null ? s2.reviewFrequency : 'Not set'}">Frequency</td>
+            <td class="label">Responsible Committee</td>
+            <td th:text="${s2.responsibleCommittee != null ? s2.responsibleCommittee : 'Not set'}">Committee</td>
+        </tr>
+    </table>
+
+    <h3 class="subsection-title">Strategy &amp; Risk Management</h3>
+    <p class="section-intro" th:text="'Physical Risks: ' + (${s2.physicalRisks} != null ? ${s2.physicalRisks} : 'Not disclosed.')">Physical risks</p>
+    <p class="section-intro" th:text="'Transition Plan: ' + (${s2.transitionPlan} != null ? ${s2.transitionPlan} : 'Not disclosed.')">Transition plan</p>
+    <p class="section-intro" th:text="'Climate Resilience: ' + (${s2.climateResilience} != null ? ${s2.climateResilience} : 'Not disclosed.')">Climate resilience</p>
+    <p class="section-intro" th:text="'Risk Identification Process: ' + (${s2.identificationProcess} != null ? ${s2.identificationProcess} : 'Not disclosed.')">Identification process</p>
+    <p class="section-intro" th:text="'Integration Level: ' + (${s2.integrationLevel} != null ? ${s2.integrationLevel} : 'Not set')">Integration level</p>
+
+    <h3 class="subsection-title">Metrics &amp; Targets</h3>
+    <p class="section-intro" th:text="'Tracked Metrics: ' + (${s2.trackedMetrics} != null ? ${s2.trackedMetrics} : 'Not disclosed.')">Tracked metrics</p>
+    <p class="section-intro" th:text="'Reduction Targets: ' + (${s2.reductionTargets} != null ? ${s2.reductionTargets} : 'Not disclosed.')">Reduction targets</p>
+    <p class="section-intro" th:text="'Internal Carbon Pricing: ' + (${s2.carbonPricing} != null ? ${s2.carbonPricing} : 'Not disclosed.')">Carbon pricing</p>
+
+    <h3 class="subsection-title" th:text="'Greenhouse Gas Emissions &#8212; FY' + ${fiscalYear}">GHG Emissions</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 40%;">Scope</th>
+                <th class="col-center">Value (tCO2e)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Scope 1 &#8212; Direct Emissions</td>
+                <td class="col-center" th:text="${scope1Value != null ? scope1Value : 'N/A'}">N/A</td>
+            </tr>
+            <tr class="row-alt">
+                <td>Scope 2 &#8212; Indirect (Purchased Energy)</td>
+                <td class="col-center" th:text="${scope2Value != null ? scope2Value : 'N/A'}">N/A</td>
+            </tr>
+            <tr>
+                <td>Scope 3 &#8212; Value Chain (All Categories)</td>
+                <td class="col-center" th:text="${scope3Total != null ? scope3Total : 'N/A'}">N/A</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="data-table" th:if="${!#lists.isEmpty(scope3Categories)}">
+        <thead>
+            <tr>
+                <th style="width: 60%;">Scope 3 Category</th>
+                <th class="col-center">Value (tCO2e), FY<span th:text="${fiscalYear}">2026</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="cat, iter : ${scope3Categories}" th:class="${iter.odd} ? 'row-alt' : ''">
+                <td th:text="${cat.name}">Category</td>
+                <td class="col-center" th:text="${scope3ValueByCategoryId.get(cat.id) != null ? scope3ValueByCategoryId.get(cat.id) : 'N/A'}">N/A</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p th:unless="${climateUnlocked}" class="empty-note">IFRS S1/S2 climate disclosures require the Issuer-Ready plan &#8212; not included in this disclosure cycle.</p>
+
+<h2 class="section-title">7. Assurance &amp; Verification</h2>
 <p class="section-intro">This document is prepared via the Lestari ESG compliance platform and is ready for corporate sign-off.</p>
 <div class="assurance-block">
     <div>Verification Checksum: <span class="checksum" th:text="'LESTARI-SHA256-' + ${checksum}">LESTARI-SHA256-XXXXXXXXXXXX</span></div>

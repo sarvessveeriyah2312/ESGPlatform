@@ -170,6 +170,7 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
     { key: 'assurance-workspace', label: 'Assurance Workspace', icon: <Lock className="w-4 h-4" />, path: '/assurance-workspace', premiumOnly: true },
     { key: 'api-access', label: 'API Access', icon: <KeyRound className="w-4 h-4" />, path: '/api-access' },
     { key: 'team', label: 'Team', icon: <Users className="w-4 h-4" />, path: '/team' },
+    { key: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" />, path: '/settings', requiresManagement: true },
   ];
 
   const platformItems = [
@@ -302,6 +303,7 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
                 <nav className="space-y-1">
                   {managementsItems.map(item => {
                     if (item.gated && !isFeatureVisible(item.key)) return null;
+                    if (item.requiresManagement && !canManageWorkspace) return null;
                     // TEMP: plan gating disabled for dev — delete this line to re-enable enforcement.
                     if (false && item.premiumOnly && plan !== 'issuer-ready') return null;
                     const isActive = location.pathname === item.path;
@@ -353,30 +355,15 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
                <p className="text-[11px] text-gray-500 mb-3 leading-relaxed">
                  Contact with one of our expert to get support.
                </p>
-               <button className="w-full py-2 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer">
+               <button
+                 onClick={() => navigate('/support', { state: { openNewTicket: true } })}
+                 className="w-full py-2 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+               >
                  Call the Expert
                </button>
             </div>
           )}
 
-          <div className="space-y-1">
-            {canManageWorkspace && (
-              <button
-                onClick={() => navigate('/settings')}
-                className={`w-full flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
-                  location.pathname === '/settings'
-                    ? 'bg-emerald-50 text-emerald-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                } ${sidebarCollapsed ? 'justify-center' : ''}`}
-                title={sidebarCollapsed ? "Settings" : undefined}
-              >
-                <div className={`${location.pathname === '/settings' ? 'text-emerald-500' : 'text-gray-400'} shrink-0`}>
-                   <Settings className="w-4 h-4" />
-                </div>
-                {!sidebarCollapsed && <span className="ml-3">Settings</span>}
-              </button>
-            )}
-          </div>
         </div>
       </aside>
 

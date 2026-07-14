@@ -27,6 +27,10 @@ export const exportApi = {
 
   integratedReportPdf: (fiscalYear: number) => apiClient.getBlob(`/api/v1/exports/integrated-report.pdf?fiscalYear=${fiscalYear}`),
 
+  ifrsS1ReportPdf: (fiscalYear: number) => apiClient.getBlob(`/api/v1/exports/ifrs-s1-report.pdf?fiscalYear=${fiscalYear}`),
+
+  ifrsS2ReportPdf: (fiscalYear: number) => apiClient.getBlob(`/api/v1/exports/ifrs-s2-report.pdf?fiscalYear=${fiscalYear}`),
+
   log: (exportType: string, format: ExportFormat, fiscalYear: number) =>
     apiClient.post<void>('/api/v1/exports/log', { exportType, format, fiscalYear }),
 

@@ -121,4 +121,13 @@ public class EmissionsService {
         scope3ValueRepository.save(value);
         return getEmissions();
     }
+
+    @Transactional
+    public void deleteScope3Category(UUID categoryId) {
+        UUID companyId = currentUserProvider.requireCompanyId();
+        Scope3Category category = scope3CategoryRepository.findByIdAndCompanyId(categoryId, companyId)
+                .orElseThrow(() -> new NotFoundException("Scope 3 category not found"));
+        scope3ValueRepository.deleteByCategoryId(category.getId());
+        scope3CategoryRepository.delete(category);
+    }
 }

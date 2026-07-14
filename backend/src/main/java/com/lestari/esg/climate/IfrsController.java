@@ -42,6 +42,17 @@ public class IfrsController {
         return ResponseEntity.ok(ifrsService.createSegment(request));
     }
 
+    @PutMapping("/s1/segments/{segmentId}")
+    public BusinessSegmentResponse renameSegment(@PathVariable UUID segmentId, @Valid @RequestBody CreateSegmentRequest request) {
+        return ifrsService.renameSegment(segmentId, request);
+    }
+
+    @DeleteMapping("/s1/segments/{segmentId}")
+    public ResponseEntity<Void> deleteSegment(@PathVariable UUID segmentId) {
+        ifrsService.deleteSegment(segmentId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/s1/segments/{segmentId}/items")
     public ResponseEntity<S1ItemResponse> addItem(@PathVariable UUID segmentId, @Valid @RequestBody UpsertS1ItemRequest request) {
         return ResponseEntity.ok(ifrsService.addItem(segmentId, request));

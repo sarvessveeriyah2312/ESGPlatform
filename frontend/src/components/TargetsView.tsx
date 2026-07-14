@@ -8,16 +8,18 @@ import {
   Target,
   Plus,
   Trash2,
+  Pencil,
   X,
   Check,
   AlertCircle,
-  Calendar
+  Calendar,
+  SlidersHorizontal
 } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { targetsApi, PerformanceTargetResponse, UpsertPerformanceTargetRequest } from '../api/targetsApi';
 import { indicatorsApi, IndicatorResponse } from '../api/indicatorsApi';
-import { computeTargetStatus, TARGET_STATUS_STYLES } from '../utils/targetStatus';
+import { computeTargetStatus, TARGET_STATUS_STYLES, TargetStatus } from '../utils/targetStatus';
 
 const currentYear = new Date().getFullYear();
 // Mirrors Dashboard.tsx / IndicatorsView.tsx — the most recent fiscal year tracked by this app.
@@ -111,10 +113,16 @@ export default function TargetsView() {
   const [targets, setTargets] = useState<PerformanceTargetResponse[]>([]);
   const [indicators, setIndicators] = useState<IndicatorResponse[]>([]);
 
-  // Create modal state
+  // Create/edit modal state — editingTargetId is null when creating, set when editing an existing target
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState<TargetFormState>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+  const [editingTargetId, setEditingTargetId] = useState<string | null>(null);
+
+  // Filter & sort state
+  const [statusFilter, setStatusFilter] = useState<TargetStatus | 'ALL'>('ALL');
+  const [horizonFilter, setHorizonFilter] = useState<'ALL' | 'NEAR_TERM' | 'LONG_TERM'>('ALL');
+  const [sortBy, setSortBy] = useState<'TARGET_YEAR' | 'TITLE' | 'PROGRESS'>('TARGET_YEAR');
 
   // Inline progress editing state (local text buffer keyed by target id) — only used for targets
   // with no linked indicator; linked targets show a computed, read-only percentage instead.
@@ -187,10 +195,32 @@ export default function TargetsView() {
   const openCreateModal = () => {
     setForm(EMPTY_FORM);
     setFormError(null);
+    setEditingTargetId(null);
     setShowCreateModal(true);
   };
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  const openEditModal = (target: PerformanceTargetResponse) => {
+    setForm({
+      title: target.title,
+      description: target.description ?? '',
+      baselineYear: String(target.baselineYear),
+      targetYear: String(target.targetYear),
+      targetValue: String(target.targetValue),
+      currentProgress: target.progressComputed ? '' : String(target.currentProgress),
+      indicatorId: target.indicatorId ?? '',
+      horizon: target.horizon
+    });
+    setFormError(null);
+    setEditingTargetId(target.id);
+    setShowCreateModal(true);
+  };
+
+  const closeModal = () => {
+    setShowCreateModal(false);
+    setEditingTargetId(null);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (form.title.trim() === '') {
@@ -227,12 +257,41 @@ export default function TargetsView() {
       horizon: form.horizon
     };
 
-    targetsApi.create(payload).then((created) => {
-      setTargets((prev) => [...prev, created]);
-      setProgressDrafts((prev) => ({ ...prev, [created.id]: String(created.currentProgress) }));
+    if (editingTargetId) {
+      targetsApi.update(editingTargetId, payload).then((updated) => {
+        setTargets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+        setProgressDrafts((prev) => ({ ...prev, [updated.id]: String(updated.currentProgress) }));
+      });
+    } else {
+      targetsApi.create(payload).then((created) => {
+        setTargets((prev) => [...prev, created]);
+        setProgressDrafts((prev) => ({ ...prev, [created.id]: String(created.currentProgress) }));
+      });
+    }
+
+    closeModal();
+  };
+
+  const statusCounts: Record<TargetStatus, number> = {
+    complete: 0, 'on-track': 0, 'off-track': 0, overdue: 0, 'not-started': 0,
+  };
+  targets.forEach((t) => { statusCounts[computeTargetStatus(t, CURRENT_FISCAL_YEAR)]++; });
+
+  const hasActiveFilters = statusFilter !== 'ALL' || horizonFilter !== 'ALL';
+
+  const visibleTargets = targets
+    .filter((t) => statusFilter === 'ALL' || computeTargetStatus(t, CURRENT_FISCAL_YEAR) === statusFilter)
+    .filter((t) => horizonFilter === 'ALL' || t.horizon === horizonFilter)
+    .slice()
+    .sort((a, b) => {
+      if (sortBy === 'TITLE') return a.title.localeCompare(b.title);
+      if (sortBy === 'PROGRESS') return clampPercent(a.currentProgress) - clampPercent(b.currentProgress);
+      return a.targetYear - b.targetYear;
     });
 
-    setShowCreateModal(false);
+  const clearFilters = () => {
+    setStatusFilter('ALL');
+    setHorizonFilter('ALL');
   };
 
   return (
@@ -266,7 +325,79 @@ export default function TargetsView() {
         </div>
       </div>
 
-      {/* EMPTY STATE */}
+      {/* STATS STRIP — click a tile to filter by that status */}
+      {targets.length > 0 && (
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          <button
+            onClick={() => setStatusFilter('ALL')}
+            className={`text-left p-3.5 rounded-2xl border transition-colors cursor-pointer ${
+              statusFilter === 'ALL' ? 'bg-navy-50 border-navy-200 ring-1 ring-inset ring-navy-300' : 'bg-white border-navy-100 hover:bg-navy-50/50'
+            }`}
+          >
+            <div className="text-lg font-bold text-navy-950">{targets.length}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-navy-400">Total</div>
+          </button>
+          {(['on-track', 'off-track', 'overdue', 'complete', 'not-started'] as TargetStatus[]).map((s) => {
+            const active = statusFilter === s;
+            const style = TARGET_STATUS_STYLES[s];
+            return (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(active ? 'ALL' : s)}
+                className={`text-left p-3.5 rounded-2xl border transition-colors cursor-pointer ${
+                  active ? `${style.className} ring-1 ring-inset ring-current` : 'bg-white border-navy-100 hover:bg-navy-50/50'
+                }`}
+              >
+                <div className="text-lg font-bold text-navy-950">{statusCounts[s]}</div>
+                <div className={`text-[10px] font-bold uppercase tracking-wider ${active ? '' : 'text-navy-400'}`}>{style.label}</div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* FILTER & SORT TOOLBAR */}
+      {targets.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
+          <div className="flex items-center gap-1.5 text-navy-400">
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="text-[10px] uppercase tracking-wider font-bold">Filter</span>
+          </div>
+          <select
+            value={horizonFilter}
+            onChange={(e) => setHorizonFilter(e.target.value as 'ALL' | 'NEAR_TERM' | 'LONG_TERM')}
+            className="px-2.5 py-1.5 text-[11px] font-bold text-navy-700 bg-white border border-navy-200 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
+          >
+            <option value="ALL">All horizons</option>
+            <option value="NEAR_TERM">Near-term</option>
+            <option value="LONG_TERM">Long-term</option>
+          </select>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="text-[11px] font-bold text-primary-600 hover:text-primary-700 cursor-pointer"
+            >
+              Clear filters
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-navy-400">Sort</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'TARGET_YEAR' | 'TITLE' | 'PROGRESS')}
+              className="px-2.5 py-1.5 text-[11px] font-bold text-navy-700 bg-white border border-navy-200 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
+            >
+              <option value="TARGET_YEAR">Target year (soonest)</option>
+              <option value="TITLE">Title (A–Z)</option>
+              <option value="PROGRESS">Progress (lowest first)</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* EMPTY STATES */}
       {targets.length === 0 ? (
         <div className="text-center p-12 bg-white border border-navy-100/50 rounded-3xl space-y-3">
           <Target className="w-8 h-8 text-navy-300 mx-auto" />
@@ -285,9 +416,22 @@ export default function TargetsView() {
             </Button>
           </div>
         </div>
+      ) : visibleTargets.length === 0 ? (
+        <div className="text-center p-12 bg-white border border-navy-100/50 rounded-3xl space-y-3">
+          <SlidersHorizontal className="w-8 h-8 text-navy-300 mx-auto" />
+          <h5 className="text-xs font-bold text-navy-950">No targets match these filters</h5>
+          <p className="text-[11px] text-navy-400 max-w-sm mx-auto">
+            Try adjusting or clearing the status and horizon filters above.
+          </p>
+          <div className="pt-2">
+            <Button variant="secondary" size="sm" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          </div>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {targets.map((target) => {
+        <div className="grid grid-cols-1 gap-6">
+          {visibleTargets.map((target) => {
             const percent = clampPercent(target.currentProgress);
             const isSaved = savedStatus[target.id];
             const linkedIndicator = target.indicatorId ? indicators.find((i) => i.id === target.indicatorId) : undefined;
@@ -329,13 +473,22 @@ export default function TargetsView() {
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(target.id)}
-                        className="p-1.5 text-navy-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
-                        title="Delete target"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => openEditModal(target)}
+                          className="p-1.5 text-navy-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg cursor-pointer transition-colors"
+                          title="Edit target"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(target.id)}
+                          className="p-1.5 text-navy-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                          title="Delete target"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -421,7 +574,7 @@ export default function TargetsView() {
         <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-navy-950/40 backdrop-blur-xs transition-opacity"
-            onClick={() => setShowCreateModal(false)}
+            onClick={closeModal}
           />
 
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-navy-100 relative z-10 overflow-hidden animate-fade-in max-h-[90vh] overflow-y-auto">
@@ -430,22 +583,26 @@ export default function TargetsView() {
             <div className="flex items-start justify-between pb-4 border-b border-navy-50">
               <div className="flex items-center space-x-2.5">
                 <div className="p-2 bg-primary-50 text-primary-600 rounded-xl border border-primary-100">
-                  <Target className="w-5 h-5" />
+                  {editingTargetId ? <Pencil className="w-5 h-5" /> : <Target className="w-5 h-5" />}
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-navy-950 uppercase tracking-wider">New Performance Target</h4>
-                  <p className="text-[10px] text-navy-400 font-semibold">Define a measurable goal with a baseline and target year</p>
+                  <h4 className="text-sm font-black text-navy-950 uppercase tracking-wider">
+                    {editingTargetId ? 'Edit Performance Target' : 'New Performance Target'}
+                  </h4>
+                  <p className="text-[10px] text-navy-400 font-semibold">
+                    {editingTargetId ? 'Update the goal, timeline, or linked indicator' : 'Define a measurable goal with a baseline and target year'}
+                  </p>
                 </div>
               </div>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={closeModal}
                 className="text-navy-400 hover:text-navy-600 p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="space-y-4 pt-4 text-xs font-semibold">
+            <form onSubmit={handleFormSubmit} className="space-y-4 pt-4 text-xs font-semibold">
               <div className="space-y-1.5">
                 <label className="text-[10px] text-navy-400 uppercase tracking-wider">Title</label>
                 <input
@@ -557,11 +714,11 @@ export default function TargetsView() {
               )}
 
               <div className="flex justify-end gap-3 pt-2">
-                <Button variant="secondary" size="sm" type="button" onClick={() => setShowCreateModal(false)}>
+                <Button variant="secondary" size="sm" type="button" onClick={closeModal}>
                   Cancel
                 </Button>
                 <Button variant="primary" size="sm" type="submit" icon={<Check className="w-4 h-4" />}>
-                  Create Target
+                  {editingTargetId ? 'Save Changes' : 'Create Target'}
                 </Button>
               </div>
             </form>

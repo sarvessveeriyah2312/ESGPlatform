@@ -27,15 +27,35 @@ public class ExportController {
 
     private final ExportService exportService;
     private final IntegratedReportService integratedReportService;
+    private final IfrsReportService ifrsReportService;
 
-    public ExportController(ExportService exportService, IntegratedReportService integratedReportService) {
+    public ExportController(ExportService exportService, IntegratedReportService integratedReportService, IfrsReportService ifrsReportService) {
         this.exportService = exportService;
         this.integratedReportService = integratedReportService;
+        this.ifrsReportService = ifrsReportService;
     }
 
     @GetMapping("/integrated-report.pdf")
     public ResponseEntity<byte[]> integratedReport(@RequestParam int fiscalYear) {
         IntegratedReportService.GeneratedReport report = integratedReportService.generateReport(fiscalYear);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.attachment().filename(report.filename()).build());
+        return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF).body(report.content());
+    }
+
+    @GetMapping("/ifrs-s1-report.pdf")
+    @PreAuthorize("@planGate.check('ifrs-s1-s2')")
+    public ResponseEntity<byte[]> ifrsS1Report(@RequestParam int fiscalYear) {
+        IfrsReportService.GeneratedReport report = ifrsReportService.generateS1Report(fiscalYear);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.attachment().filename(report.filename()).build());
+        return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF).body(report.content());
+    }
+
+    @GetMapping("/ifrs-s2-report.pdf")
+    @PreAuthorize("@planGate.check('ifrs-s1-s2')")
+    public ResponseEntity<byte[]> ifrsS2Report(@RequestParam int fiscalYear) {
+        IfrsReportService.GeneratedReport report = ifrsReportService.generateS2Report(fiscalYear);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(ContentDisposition.attachment().filename(report.filename()).build());
         return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF).body(report.content());

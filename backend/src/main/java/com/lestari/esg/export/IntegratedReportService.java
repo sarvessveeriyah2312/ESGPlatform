@@ -1,5 +1,10 @@
 package com.lestari.esg.export;
 
+import com.lestari.esg.climate.EmissionsService;
+import com.lestari.esg.climate.IfrsService;
+import com.lestari.esg.climate.dto.BusinessSegmentResponse;
+import com.lestari.esg.climate.dto.EmissionsResponse;
+import com.lestari.esg.climate.dto.IfrsS2Response;
 import com.lestari.esg.common.exceptions.NotFoundException;
 import com.lestari.esg.export.dto.LogExportRequest;
 import com.lestari.esg.governance.CompliancePolicyService;
@@ -25,9 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -46,6 +48,8 @@ public class IntegratedReportService {
     private final GovernanceService governanceService;
     private final CompliancePolicyService compliancePolicyService;
     private final IndicatorService indicatorService;
+    private final IfrsService ifrsService;
+    private final EmissionsService emissionsService;
     private final ExportService exportService;
     private final PdfRenderer pdfRenderer;
 
@@ -56,6 +60,8 @@ public class IntegratedReportService {
                                     GovernanceService governanceService,
                                     CompliancePolicyService compliancePolicyService,
                                     IndicatorService indicatorService,
+                                    IfrsService ifrsService,
+                                    EmissionsService emissionsService,
                                     ExportService exportService,
                                     PdfRenderer pdfRenderer) {
         this.companyRepository = companyRepository;
@@ -65,6 +71,8 @@ public class IntegratedReportService {
         this.governanceService = governanceService;
         this.compliancePolicyService = compliancePolicyService;
         this.indicatorService = indicatorService;
+        this.ifrsService = ifrsService;
+        this.emissionsService = emissionsService;
         this.exportService = exportService;
         this.pdfRenderer = pdfRenderer;
     }
@@ -111,8 +119,18 @@ public class IntegratedReportService {
         long filledIndicators = indicators.stream().filter(ind -> valueForYear(ind, fiscalYear) != null).count();
         int indicatorsPercentage = indicators.isEmpty() ? 0 : (int) Math.round(filledIndicators * 100.0 / indicators.size());
 
+        boolean climateUnlocked = company.getSubscriptionPlan().atLeast(SubscriptionPlan.ISSUER_READY);
+        List<BusinessSegmentResponse> segments = climateUnlocked ? ifrsService.listSegments() : List.of();
+        IfrsS2Response s2 = climateUnlocked ? ifrsService.getS2() : null;
+        EmissionsResponse emissions = climateUnlocked ? emissionsService.getEmissions() : null;
+        java.math.BigDecimal scope1Value = ReportSupport.valueForYear(emissions != null ? emissions.scope1() : List.of(), fiscalYear);
+        java.math.BigDecimal scope2Value = ReportSupport.valueForYear(emissions != null ? emissions.scope2() : List.of(), fiscalYear);
+        java.math.BigDecimal scope3Total = ReportSupport.scope3TotalForYear(emissions, fiscalYear);
+        int climatePercentage = climatePercentage(climateUnlocked, segments, s2, scope1Value, scope2Value, scope3Total);
+
         Instant generatedAt = Instant.now();
-        String checksum = computeChecksum(buildSummaryText(company, fiscalYear, materialityScores, structure, ownership, policies, indicators));
+        String checksum = ReportSupport.computeChecksum(buildSummaryText(company, fiscalYear, materialityScores, structure, ownership, policies, indicators,
+                climateUnlocked, segments, s2, scope1Value, scope2Value, scope3Total));
 
         Context ctx = new Context(Locale.ENGLISH);
         ctx.setVariable("company", company);
@@ -132,6 +150,15 @@ public class IntegratedReportService {
         ctx.setVariable("indicators", indicators);
         ctx.setVariable("filledIndicators", filledIndicators);
         ctx.setVariable("indicatorValueById", indicatorValueById);
+        ctx.setVariable("climateUnlocked", climateUnlocked);
+        ctx.setVariable("climatePercentage", climatePercentage);
+        ctx.setVariable("segments", segments);
+        ctx.setVariable("s2", s2);
+        ctx.setVariable("scope1Value", scope1Value);
+        ctx.setVariable("scope2Value", scope2Value);
+        ctx.setVariable("scope3Categories", emissions != null ? emissions.scope3() : List.of());
+        ctx.setVariable("scope3Total", scope3Total);
+        ctx.setVariable("scope3ValueByCategoryId", ReportSupport.scope3ValueByCategoryId(emissions, fiscalYear));
 
         byte[] pdf = pdfRenderer.render("integrated-esg-report", ctx);
 
@@ -149,9 +176,24 @@ public class IntegratedReportService {
                 .orElse(null);
     }
 
+    private int climatePercentage(boolean climateUnlocked, List<BusinessSegmentResponse> segments, IfrsS2Response s2,
+                                   java.math.BigDecimal scope1Value, java.math.BigDecimal scope2Value, java.math.BigDecimal scope3Total) {
+        if (!climateUnlocked) {
+            return 0;
+        }
+        boolean hasS1Items = segments.stream().anyMatch(s -> !s.items().isEmpty());
+        boolean hasS2Narrative = s2 != null && s2.oversightDescription() != null && !s2.oversightDescription().isBlank();
+        boolean hasEmissionsForYear = scope1Value != null || scope2Value != null
+                || (scope3Total != null && scope3Total.signum() > 0);
+        long filled = java.util.stream.Stream.of(hasS1Items, hasS2Narrative, hasEmissionsForYear).filter(b -> b).count();
+        return (int) Math.round(filled * 100.0 / 3);
+    }
+
     private String buildSummaryText(Company company, int fiscalYear, List<ScoreResponse> materialityScores,
                                      List<GovernanceLevelResponse> structure, List<MatterOwnershipResponse> ownership,
-                                     List<CompliancePolicyResponse> policies, List<IndicatorResponse> indicators) {
+                                     List<CompliancePolicyResponse> policies, List<IndicatorResponse> indicators,
+                                     boolean climateUnlocked, List<BusinessSegmentResponse> segments, IfrsS2Response s2,
+                                     java.math.BigDecimal scope1Value, java.math.BigDecimal scope2Value, java.math.BigDecimal scope3Total) {
         List<String> lines = new ArrayList<>();
         lines.add("Entity: " + company.getName());
         lines.add("Sector: " + (company.getSector() != null ? company.getSector().getName() : "Not set")
@@ -173,20 +215,18 @@ public class IntegratedReportService {
             java.math.BigDecimal value = valueForYear(ind, fiscalYear);
             lines.add(ind.name() + ": " + (value != null ? value.toPlainString() : "N/A") + " " + (ind.unit() != null ? ind.unit() : ""));
         });
-        return String.join("\n", lines);
-    }
-
-    private String computeChecksum(String content) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(content.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
+        if (!climateUnlocked) {
+            lines.add("IFRS S1/S2 and GHG emissions disclosures not included (requires Issuer-Ready plan).");
+        } else {
+            segments.forEach(seg -> seg.items().forEach(item ->
+                    lines.add("IFRS S1 [" + seg.name() + "]: " + item.title() + " (" + item.type() + ", " + item.horizon() + ")")));
+            if (s2 != null) {
+                lines.add("IFRS S2 Oversight: " + (s2.oversightDescription() != null ? s2.oversightDescription() : "Not disclosed"));
             }
-            return hex.substring(0, 12).toUpperCase(Locale.ROOT);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
+            lines.add("Scope 1 GHG (FY" + fiscalYear + "): " + (scope1Value != null ? scope1Value.toPlainString() : "N/A") + " tCO2e");
+            lines.add("Scope 2 GHG (FY" + fiscalYear + "): " + (scope2Value != null ? scope2Value.toPlainString() : "N/A") + " tCO2e");
+            lines.add("Scope 3 GHG (FY" + fiscalYear + "): " + (scope3Total != null ? scope3Total.toPlainString() : "N/A") + " tCO2e");
         }
+        return String.join("\n", lines);
     }
 }

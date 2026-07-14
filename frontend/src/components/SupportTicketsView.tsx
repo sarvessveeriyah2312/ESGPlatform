@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, X, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supportTicketApi, SupportTicketResponse, TicketType, TicketPriority } from '../api/supportTicketApi';
@@ -11,6 +12,8 @@ import TicketChatPanel from './ui/TicketChatPanel';
 
 export default function SupportTicketsView() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState<SupportTicketResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
@@ -38,6 +41,15 @@ export default function SupportTicketsView() {
       .catch(() => showToast('Failed to load your tickets.', 'warning'))
       .finally(() => setLoading(false));
   }, []);
+
+  // "Call the Expert" in the sidebar navigates here with this flag to jump straight into the New Ticket form
+  useEffect(() => {
+    const state = location.state as { openNewTicket?: boolean } | null;
+    if (state?.openNewTicket) {
+      setCreateOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   const resetCreateForm = () => {
     setFormType('SUPPORT_REQUEST');

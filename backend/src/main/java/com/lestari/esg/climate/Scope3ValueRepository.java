@@ -10,4 +10,5 @@ public interface Scope3ValueRepository extends JpaRepository<Scope3Value, UUID> 
     List<Scope3Value> findByCategoryId(UUID categoryId);
     List<Scope3Value> findByCompanyId(UUID companyId);
     Optional<Scope3Value> findByCategoryIdAndFiscalYear(UUID categoryId, Integer fiscalYear);
+    void deleteByCategoryId(UUID categoryId);
 }

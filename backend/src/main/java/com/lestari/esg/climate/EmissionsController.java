@@ -7,6 +7,7 @@ import com.lestari.esg.climate.dto.SetEmissionValueRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,5 +52,11 @@ public class EmissionsController {
     @PutMapping("/scope3/categories/{categoryId}/values/{fiscalYear}")
     public EmissionsResponse setScope3Value(@PathVariable UUID categoryId, @PathVariable int fiscalYear, @Valid @RequestBody SetEmissionValueRequest request) {
         return emissionsService.setScope3Value(categoryId, fiscalYear, request);
+    }
+
+    @DeleteMapping("/scope3/categories/{categoryId}")
+    public ResponseEntity<Void> deleteScope3Category(@PathVariable UUID categoryId) {
+        emissionsService.deleteScope3Category(categoryId);
+        return ResponseEntity.noContent().build();
     }
 }

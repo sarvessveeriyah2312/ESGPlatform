@@ -105,6 +105,31 @@ public class IfrsService {
     }
 
     @Transactional
+    public BusinessSegmentResponse renameSegment(UUID segmentId, CreateSegmentRequest request) {
+        UUID companyId = currentUserProvider.requireCompanyId();
+        BusinessSegment segment = segmentRepository.findByIdAndCompanyId(segmentId, companyId)
+                .orElseThrow(() -> new NotFoundException("Segment not found"));
+        if (!segment.getName().equalsIgnoreCase(request.name())
+                && segmentRepository.existsByCompanyIdAndNameIgnoreCase(companyId, request.name())) {
+            throw new ConflictException("A segment with this name already exists");
+        }
+        segment.setName(request.name());
+        segment = segmentRepository.save(segment);
+        List<S1ItemResponse> items = itemRepository.findBySegmentId(segment.getId()).stream()
+                .map(S1ItemResponse::from).toList();
+        return BusinessSegmentResponse.from(segment, items);
+    }
+
+    @Transactional
+    public void deleteSegment(UUID segmentId) {
+        UUID companyId = currentUserProvider.requireCompanyId();
+        BusinessSegment segment = segmentRepository.findByIdAndCompanyId(segmentId, companyId)
+                .orElseThrow(() -> new NotFoundException("Segment not found"));
+        itemRepository.deleteBySegmentId(segment.getId());
+        segmentRepository.delete(segment);
+    }
+
+    @Transactional
     public S1ItemResponse addItem(UUID segmentId, UpsertS1ItemRequest request) {
         UUID companyId = currentUserProvider.requireCompanyId();
         BusinessSegment segment = segmentRepository.findByIdAndCompanyId(segmentId, companyId)
