@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.List;
 
 @Entity
@@ -66,4 +67,18 @@ public class Company extends BaseEntity {
     @Convert(converter = StringListConverter.class)
     @Column(name = "priorities_csv")
     private List<String> priorities = List.of();
+
+    @Column(name = "marketing_consent", nullable = false)
+    private Boolean marketingConsent = false;
+
+    @Column(name = "analytics_consent", nullable = false)
+    private Boolean analyticsConsent = false;
+
+    @Column(name = "consent_updated_at")
+    private Instant consentUpdatedAt;
+
+    /** Set when a COMPANY_ADMIN closes the account — see PrivacyService.closeAccount. Distinct from
+     *  `active`, which platform admins also toggle for unrelated suspension reasons. */
+    @Column(name = "closed_at")
+    private Instant closedAt;
 }

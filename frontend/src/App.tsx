@@ -70,6 +70,7 @@ import TargetsView from './components/TargetsView';
 import SupportTicketsView from './components/SupportTicketsView';
 import ProfileView from './components/ProfileView';
 import TeamView from './components/TeamView';
+import CompanyDetailsView from './components/settings/CompanyDetailsView';
 
 // Import all sub-views from PlaceholderViews
 import {
@@ -89,7 +90,6 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
   // Declared before any early return below so hook order stays stable across renders
   // (e.g. logging out flips isAuthenticated on this same mounted component).
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -119,7 +119,6 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
 
   const isPlatformAdmin = canAccess(user?.role, PLATFORM_ROLES);
   const hasPageAccess = canAccess(user?.role, allowedRoles);
-  const activeCompany = user?.company || 'Lestari Workspace';
 
   const userInitials = user?.name 
     ? user.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase() 
@@ -674,6 +673,14 @@ function AppContent() {
         element={
           <AuthenticatedLayout>
             <SettingsView />
+          </AuthenticatedLayout>
+        }
+      />
+      <Route
+        path="/settings/companies/:companyId"
+        element={
+          <AuthenticatedLayout allowedRoles={MANAGEMENT_ROLES}>
+            <CompanyDetailsView />
           </AuthenticatedLayout>
         }
       />

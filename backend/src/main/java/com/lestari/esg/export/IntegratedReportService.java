@@ -4,6 +4,9 @@ import com.lestari.esg.climate.EmissionsService;
 import com.lestari.esg.climate.IfrsService;
 import com.lestari.esg.climate.dto.BusinessSegmentResponse;
 import com.lestari.esg.climate.dto.EmissionsResponse;
+import com.lestari.esg.assurance.AssuranceService;
+import com.lestari.esg.assurance.dto.SignOffResponse;
+import com.lestari.esg.climate.dto.IfrsS1DisclosureResponse;
 import com.lestari.esg.climate.dto.IfrsS2Response;
 import com.lestari.esg.common.exceptions.NotFoundException;
 import com.lestari.esg.export.dto.LogExportRequest;
@@ -50,6 +53,7 @@ public class IntegratedReportService {
     private final IndicatorService indicatorService;
     private final IfrsService ifrsService;
     private final EmissionsService emissionsService;
+    private final AssuranceService assuranceService;
     private final ExportService exportService;
     private final PdfRenderer pdfRenderer;
 
@@ -62,6 +66,7 @@ public class IntegratedReportService {
                                     IndicatorService indicatorService,
                                     IfrsService ifrsService,
                                     EmissionsService emissionsService,
+                                    AssuranceService assuranceService,
                                     ExportService exportService,
                                     PdfRenderer pdfRenderer) {
         this.companyRepository = companyRepository;
@@ -73,6 +78,7 @@ public class IntegratedReportService {
         this.indicatorService = indicatorService;
         this.ifrsService = ifrsService;
         this.emissionsService = emissionsService;
+        this.assuranceService = assuranceService;
         this.exportService = exportService;
         this.pdfRenderer = pdfRenderer;
     }
@@ -121,6 +127,7 @@ public class IntegratedReportService {
 
         boolean climateUnlocked = company.getSubscriptionPlan().atLeast(SubscriptionPlan.ISSUER_READY);
         List<BusinessSegmentResponse> segments = climateUnlocked ? ifrsService.listSegments() : List.of();
+        IfrsS1DisclosureResponse s1 = climateUnlocked ? ifrsService.getS1Disclosure() : null;
         IfrsS2Response s2 = climateUnlocked ? ifrsService.getS2() : null;
         EmissionsResponse emissions = climateUnlocked ? emissionsService.getEmissions() : null;
         java.math.BigDecimal scope1Value = ReportSupport.valueForYear(emissions != null ? emissions.scope1() : List.of(), fiscalYear);
@@ -128,12 +135,18 @@ public class IntegratedReportService {
         java.math.BigDecimal scope3Total = ReportSupport.scope3TotalForYear(emissions, fiscalYear);
         int climatePercentage = climatePercentage(climateUnlocked, segments, s2, scope1Value, scope2Value, scope3Total);
 
+        SignOffResponse signOff = assuranceService.list().stream()
+                .filter(r -> r.fiscalYear() == fiscalYear)
+                .findFirst()
+                .orElse(null);
+
         Instant generatedAt = Instant.now();
         String checksum = ReportSupport.computeChecksum(buildSummaryText(company, fiscalYear, materialityScores, structure, ownership, policies, indicators,
                 climateUnlocked, segments, s2, scope1Value, scope2Value, scope3Total));
 
         Context ctx = new Context(Locale.ENGLISH);
         ctx.setVariable("company", company);
+        ctx.setVariable("frameworkLabel", frameworkLabel(company));
         ctx.setVariable("fiscalYear", fiscalYear);
         ctx.setVariable("reviewerName", reviewer != null ? reviewer.getName() : "Unknown");
         ctx.setVariable("generatedAt", generatedAt);
@@ -153,12 +166,14 @@ public class IntegratedReportService {
         ctx.setVariable("climateUnlocked", climateUnlocked);
         ctx.setVariable("climatePercentage", climatePercentage);
         ctx.setVariable("segments", segments);
+        ctx.setVariable("s1", s1);
         ctx.setVariable("s2", s2);
         ctx.setVariable("scope1Value", scope1Value);
         ctx.setVariable("scope2Value", scope2Value);
         ctx.setVariable("scope3Categories", emissions != null ? emissions.scope3() : List.of());
         ctx.setVariable("scope3Total", scope3Total);
         ctx.setVariable("scope3ValueByCategoryId", ReportSupport.scope3ValueByCategoryId(emissions, fiscalYear));
+        ctx.setVariable("signOff", signOff);
 
         byte[] pdf = pdfRenderer.render("integrated-esg-report", ctx);
 
@@ -166,6 +181,17 @@ public class IntegratedReportService {
 
         String filename = "Lestari_ESG_Integrated_Report_FY" + fiscalYear + ".pdf";
         return new GeneratedReport(pdf, filename);
+    }
+
+    /** SEDG only applies to SME/Starter-tier issuers — Main and ACE Market issuers report against
+     *  Bursa's own Common Sustainability Matters framework, not SEDG. This was previously
+     *  hardcoded to "SEDG" for every company regardless of market classification. */
+    private String frameworkLabel(Company company) {
+        return switch (company.getMarketClassification()) {
+            case SME -> "Simplified ESG Disclosure Guide (SEDG)";
+            case MAIN_MARKET -> "Bursa Malaysia Main Market Sustainability Reporting Guide";
+            case ACE_MARKET -> "Bursa Malaysia ACE Market Sustainability Reporting Guide";
+        };
     }
 
     private java.math.BigDecimal valueForYear(IndicatorResponse indicator, int fiscalYear) {

@@ -2,8 +2,10 @@ package com.lestari.esg.climate;
 
 import com.lestari.esg.climate.dto.BusinessSegmentResponse;
 import com.lestari.esg.climate.dto.CreateSegmentRequest;
+import com.lestari.esg.climate.dto.IfrsS1DisclosureResponse;
 import com.lestari.esg.climate.dto.IfrsS2Response;
 import com.lestari.esg.climate.dto.S1ItemResponse;
+import com.lestari.esg.climate.dto.UpdateIfrsS1DisclosureRequest;
 import com.lestari.esg.climate.dto.UpdateIfrsS2Request;
 import com.lestari.esg.climate.dto.UpsertS1ItemRequest;
 import com.lestari.esg.common.exceptions.ConflictException;
@@ -27,17 +29,20 @@ public class IfrsService {
 
     private final BusinessSegmentRepository segmentRepository;
     private final S1RiskOpportunityRepository itemRepository;
+    private final IfrsS1DisclosureRepository s1Repository;
     private final IfrsS2DisclosureRepository s2Repository;
     private final PerformanceTargetRepository performanceTargetRepository;
     private final CurrentUserProvider currentUserProvider;
 
     public IfrsService(BusinessSegmentRepository segmentRepository,
                         S1RiskOpportunityRepository itemRepository,
+                        IfrsS1DisclosureRepository s1Repository,
                         IfrsS2DisclosureRepository s2Repository,
                         PerformanceTargetRepository performanceTargetRepository,
                         CurrentUserProvider currentUserProvider) {
         this.segmentRepository = segmentRepository;
         this.itemRepository = itemRepository;
+        this.s1Repository = s1Repository;
         this.s2Repository = s2Repository;
         this.performanceTargetRepository = performanceTargetRepository;
         this.currentUserProvider = currentUserProvider;
@@ -169,6 +174,46 @@ public class IfrsService {
     }
 
     @Transactional
+    public IfrsS1DisclosureResponse getS1Disclosure() {
+        UUID companyId = currentUserProvider.requireCompanyId();
+        IfrsS1Disclosure disclosure = s1Repository.findByCompanyId(companyId).orElseGet(() -> seedDefaultS1(companyId));
+        return IfrsS1DisclosureResponse.from(disclosure);
+    }
+
+    private IfrsS1Disclosure seedDefaultS1(UUID companyId) {
+        IfrsS1Disclosure d = new IfrsS1Disclosure();
+        d.setCompanyId(companyId);
+        d.setOversightDescription("The Board Sustainability Committee holds ultimate oversight of all material sustainability-related risks and opportunities, with quarterly reporting from the Chief Sustainability Officer on progress against strategy.");
+        d.setReviewFrequency(ReviewFrequency.QUARTERLY);
+        d.setResponsibleCommittee("Chief Sustainability Officer and Executive Committee");
+        d.setIdentificationProcess("Material sustainability topics are identified through the annual double-materiality assessment, then prioritised and escalated through the same enterprise risk management process used for financial and operational risks.");
+        d.setIntegrationLevel(IntegrationLevel.PARTIALLY_INTEGRATED);
+        d.setTrackedMetrics("Metrics tracked per material matter via the Indicators module, aggregated quarterly for board reporting.");
+        d.setTargetsSummary("Targets are set per material matter (see Targets module) and reviewed annually alongside materiality re-assessment.");
+        d.setConnectedInformation("Sustainability-related financial effects disclosed here are reflected in the going-concern and capital allocation notes of the audited financial statements for the same reporting period.");
+        return s1Repository.save(d);
+    }
+
+    @Transactional
+    public IfrsS1DisclosureResponse updateS1Disclosure(UpdateIfrsS1DisclosureRequest request) {
+        UUID companyId = currentUserProvider.requireCompanyId();
+        IfrsS1Disclosure disclosure = s1Repository.findByCompanyId(companyId).orElseGet(() -> {
+            IfrsS1Disclosure d = new IfrsS1Disclosure();
+            d.setCompanyId(companyId);
+            return d;
+        });
+        disclosure.setOversightDescription(request.oversightDescription());
+        disclosure.setReviewFrequency(request.reviewFrequency());
+        disclosure.setResponsibleCommittee(request.responsibleCommittee());
+        disclosure.setIdentificationProcess(request.identificationProcess());
+        disclosure.setIntegrationLevel(request.integrationLevel());
+        disclosure.setTrackedMetrics(request.trackedMetrics());
+        disclosure.setTargetsSummary(request.targetsSummary());
+        disclosure.setConnectedInformation(request.connectedInformation());
+        return IfrsS1DisclosureResponse.from(s1Repository.save(disclosure));
+    }
+
+    @Transactional
     public IfrsS2Response getS2() {
         UUID companyId = currentUserProvider.requireCompanyId();
         IfrsS2Disclosure disclosure = s2Repository.findByCompanyId(companyId).orElseGet(() -> seedDefaultS2(companyId));
@@ -188,7 +233,16 @@ public class IfrsService {
         d.setIntegrationLevel(IntegrationLevel.PARTIALLY_INTEGRATED);
         d.setTrackedMetrics("Scope 1 direct diesel liters, Scope 2 TNB grid electricity kWh, Scope 3 upstream transport ton-km and raw material supplier ESG disclosure response rates.");
         d.setReductionTargets("A commitment to reduce absolute Scope 1 and Scope 2 Greenhouse Gas emissions by 30% by FY2028 compared to our audited FY2024 baseline.");
-        d.setCarbonPricing("An internal shadow carbon price of RM 35 per tonne of CO2e is integrated into all new capital expenditure assessments exceeding RM 100,000.");
+        d.setCarbonPricing("The internal shadow carbon price is applied to all new capital expenditure assessments exceeding RM 100,000, weighting proposals with higher embedded emissions against lower-carbon alternatives.");
+        d.setTransitionRiskAssetPct(new BigDecimal("18.50"));
+        d.setPhysicalRiskAssetPct(new BigDecimal("12.00"));
+        d.setClimateOpportunityAssetPct(new BigDecimal("9.00"));
+        d.setClimateCapex(new BigDecimal("2400000"));
+        d.setClimateCapexCurrency(Currency.MYR);
+        d.setExecutiveRemunerationLinked(Boolean.TRUE);
+        d.setExecutiveRemunerationDescription("10% of the CSO and COO's annual short-term incentive is tied to achievement of the FY2028 Scope 1/2 reduction target.");
+        d.setCarbonPriceValue(new BigDecimal("35.00"));
+        d.setCarbonPriceCurrency(Currency.MYR);
         return s2Repository.save(d);
     }
 
@@ -211,6 +265,15 @@ public class IfrsService {
         disclosure.setTrackedMetrics(request.trackedMetrics());
         disclosure.setReductionTargets(request.reductionTargets());
         disclosure.setCarbonPricing(request.carbonPricing());
+        disclosure.setTransitionRiskAssetPct(request.transitionRiskAssetPct());
+        disclosure.setPhysicalRiskAssetPct(request.physicalRiskAssetPct());
+        disclosure.setClimateOpportunityAssetPct(request.climateOpportunityAssetPct());
+        disclosure.setClimateCapex(request.climateCapex());
+        disclosure.setClimateCapexCurrency(request.climateCapexCurrency());
+        disclosure.setExecutiveRemunerationLinked(request.executiveRemunerationLinked());
+        disclosure.setExecutiveRemunerationDescription(request.executiveRemunerationDescription());
+        disclosure.setCarbonPriceValue(request.carbonPriceValue());
+        disclosure.setCarbonPriceCurrency(request.carbonPriceCurrency());
 
         if (request.linkedTargetId() != null && !request.linkedTargetId().isBlank()) {
             PerformanceTarget target = performanceTargetRepository

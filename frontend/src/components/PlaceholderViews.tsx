@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   User, Shield, Link as LinkIcon, Calendar, Building,
   FileText,
@@ -35,6 +36,7 @@ import Button from './ui/Button';
 import Card from './ui/Card';
 import SecuritySettingsTab from './settings/SecuritySettingsTab';
 import CompanyTab from './settings/CompanyTab';
+import PrivacyDataTab from './settings/PrivacyDataTab';
 
 // 1. MATERIALITY ASSESSMENT
 export function MaterialityAssessmentView() {
@@ -237,7 +239,7 @@ const SETTINGS_TABS: SettingsTab[] = [
   { id: 'smtp', label: 'Email (SMTP)', icon: Mail, adminOnly: true },
   { id: 'company', label: 'Company', icon: Building, adminOnly: true },
   { id: 'billing', label: 'Billing & Plan', icon: CreditCard },
-  { id: 'privacy', label: 'Privacy & Data', icon: Lock },
+  { id: 'privacy', label: 'Privacy & Data', icon: Lock, adminOnly: true },
 ];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -253,7 +255,10 @@ export function SettingsView() {
   const canManage = canAccess(user?.role, MANAGEMENT_ROLES);
   const visibleTabs = SETTINGS_TABS.filter((t) => !t.adminOnly || canManage);
 
-  const [activeTab, setActiveTab] = useState<SettingsTabId>('profile');
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab') as SettingsTabId | null;
+  const initialTab = requestedTab && SETTINGS_TABS.some((t) => t.id === requestedTab) ? requestedTab : 'profile';
+  const [activeTab, setActiveTab] = useState<SettingsTabId>(initialTab);
 
   return (
     <div className="w-full max-w-[1200px] mx-auto pb-16">
@@ -289,7 +294,7 @@ export function SettingsView() {
         </nav>
       </div>
 
-      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && activeTab !== 'company' && (
+      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && activeTab !== 'company' && activeTab !== 'privacy' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center text-center space-y-3">
           <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
             {React.createElement(SETTINGS_TABS.find((t) => t.id === activeTab)!.icon, { className: 'w-5 h-5 text-gray-400' })}
@@ -303,6 +308,7 @@ export function SettingsView() {
       {activeTab === 'security' && <SecuritySettingsTab />}
       {activeTab === 'smtp' && canManage && <SmtpSettingsTab />}
       {activeTab === 'company' && canManage && <CompanyTab />}
+      {activeTab === 'privacy' && canManage && <PrivacyDataTab />}
     </div>
   );
 }

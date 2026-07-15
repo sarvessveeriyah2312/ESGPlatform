@@ -2,8 +2,10 @@ package com.lestari.esg.climate;
 
 import com.lestari.esg.climate.dto.BusinessSegmentResponse;
 import com.lestari.esg.climate.dto.CreateSegmentRequest;
+import com.lestari.esg.climate.dto.IfrsS1DisclosureResponse;
 import com.lestari.esg.climate.dto.IfrsS2Response;
 import com.lestari.esg.climate.dto.S1ItemResponse;
+import com.lestari.esg.climate.dto.UpdateIfrsS1DisclosureRequest;
 import com.lestari.esg.climate.dto.UpdateIfrsS2Request;
 import com.lestari.esg.climate.dto.UpsertS1ItemRequest;
 import jakarta.validation.Valid;
@@ -67,6 +69,16 @@ public class IfrsController {
     public ResponseEntity<Void> deleteItem(@PathVariable UUID itemId) {
         ifrsService.deleteItem(itemId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/s1/disclosure")
+    public IfrsS1DisclosureResponse getS1Disclosure() {
+        return ifrsService.getS1Disclosure();
+    }
+
+    @PutMapping("/s1/disclosure")
+    public IfrsS1DisclosureResponse updateS1Disclosure(@Valid @RequestBody UpdateIfrsS1DisclosureRequest request) {
+        return ifrsService.updateS1Disclosure(request);
     }
 
     @GetMapping("/s2")

@@ -9,5 +9,7 @@ import java.util.UUID;
 public interface CompliancePolicyRepository extends JpaRepository<CompliancePolicy, UUID> {
     List<CompliancePolicy> findByCompanyId(UUID companyId);
 
-    Optional<CompliancePolicy> findByCompanyIdAndPolicyKey(UUID companyId, CompliancePolicyKey policyKey);
+    Optional<CompliancePolicy> findByIdAndCompanyId(UUID id, UUID companyId);
+
+    Optional<CompliancePolicy> findByCompanyIdAndPolicyKey(UUID companyId, String policyKey);
 }

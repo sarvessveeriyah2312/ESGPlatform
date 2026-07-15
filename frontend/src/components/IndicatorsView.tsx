@@ -26,16 +26,13 @@ import {
   ArrowDown,
   ArrowUp,
   Building2,
-  Lock,
   Compass,
   Sparkles
 } from 'lucide-react';
-import { usePlan } from '../contexts/PlanContext';
 import { useAuth } from '../contexts/AuthContext';
 import { canAccess, MANAGEMENT_ROLES } from '../permissions';
 import Button from './ui/Button';
 import Card from './ui/Card';
-import { IfrsS1Form, IfrsS2Form } from './IfrsDisclosureForm';
 import { useApplicableMatters } from '../hooks/useApplicableMatters';
 import { indicatorsApi, IndicatorResponse, IndicatorValueStatus } from '../api/indicatorsApi';
 import { companyApi } from '../api/companyApi';
@@ -114,15 +111,14 @@ function fiscalYearNumber(yearKey: string): number {
 }
 
 export default function IndicatorsView() {
-  const { plan } = usePlan();
   const { user } = useAuth();
-  const { matters: allApplicableMatters } = useApplicableMatters();
+  const { matters: allApplicableMatters, refetch: refetchApplicableMatters } = useApplicableMatters();
   const canApprove = canAccess(user?.role, MANAGEMENT_ROLES);
 
   // --- COMPONENT STATE ---
   const [indicators, setIndicators] = useState<Indicator[]>([]);
   const [focusYear, setFocusYear] = useState<string>('FY2026');
-  const [activeTab, setActiveTab] = useState<string>('common'); // 'common' | 'sector' | 'ifrs-s1' | 'ifrs-s2'
+  const [activeTab, setActiveTab] = useState<'common' | 'sector'>('common');
   const [isSectorEnabled, setIsSectorEnabled] = useState<boolean>(false);
 
   // Slide-over Audit Trail state
@@ -165,7 +161,10 @@ export default function IndicatorsView() {
   const toggleSectorModule = () => {
     const newVal = !isSectorEnabled;
     setIsSectorEnabled(newVal);
-    companyApi.updateProfile({ sectorModuleEnabled: newVal }).then(() => refreshIndicators());
+    companyApi.updateProfile({ sectorModuleEnabled: newVal }).then(() => {
+      refreshIndicators();
+      refetchApplicableMatters();
+    });
     if (!newVal && activeTab === 'sector') {
       setActiveTab('common');
     }
@@ -183,11 +182,8 @@ export default function IndicatorsView() {
 
     if (activeTab === 'sector') {
       list = list.filter(ind => ind.isSectorSpecific);
-    } else if (activeTab === 'common') {
-      list = list.filter(ind => !ind.isSectorSpecific);
     } else {
-      // General disclosures placeholders (IFRS S1/S2 tabs)
-      return [];
+      list = list.filter(ind => !ind.isSectorSpecific);
     }
 
     if (searchQuery.trim() !== '') {
@@ -509,46 +505,6 @@ export default function IndicatorsView() {
               </div>
             </button>
           )}
-
-          {/* Issuer Ready Tabs slots (IFRS S1 & S2) */}
-          {/* TEMP: plan gating disabled for dev — restore `plan === 'issuer-ready'` to re-enable. */}
-          {true && (
-            <>
-              <button
-                onClick={() => setActiveTab('ifrs-s1')}
-                className={`px-5 py-3 text-xs font-extrabold border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-                  activeTab === 'ifrs-s1'
-                    ? 'border-primary-500 text-primary-600 font-black'
-                    : 'border-transparent text-navy-400 hover:text-navy-600 hover:border-navy-100'
-                }`}
-              >
-                <div className="flex items-center space-x-1.5">
-                  <Lock className="w-3 h-3 text-purple-400" />
-                  <span>IFRS S1 — General Disclosures</span>
-                  <span className="text-[9px] font-bold text-purple-600 bg-purple-50 px-1 py-0.5 rounded border border-purple-100 uppercase tracking-widest font-mono scale-90">
-                    Stage 4E
-                  </span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('ifrs-s2')}
-                className={`px-5 py-3 text-xs font-extrabold border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-                  activeTab === 'ifrs-s2'
-                    ? 'border-primary-500 text-primary-600 font-black'
-                    : 'border-transparent text-navy-400 hover:text-navy-600 hover:border-navy-100'
-                }`}
-              >
-                <div className="flex items-center space-x-1.5">
-                  <Lock className="w-3 h-3 text-purple-400" />
-                  <span>IFRS S2 — Climate Disclosures</span>
-                  <span className="text-[9px] font-bold text-purple-600 bg-purple-50 px-1 py-0.5 rounded border border-purple-100 uppercase tracking-widest font-mono scale-90">
-                    Stage 4E
-                  </span>
-                </div>
-              </button>
-            </>
-          )}
         </div>
 
         {/* Sector Module Toggle */}
@@ -568,62 +524,45 @@ export default function IndicatorsView() {
       </div>
 
       {/* 3. TABLE FILTER BAR */}
-      {(activeTab === 'common' || activeTab === 'sector') && (
-        <div className="bg-white border border-navy-100 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
+      <div className="bg-white border border-navy-100 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
 
-          {/* Left search */}
-          <div className="relative w-full md:max-w-md">
-            <Search className="w-4 h-4 text-navy-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search indicators by name, ID or metric unit..."
-              className="w-full pl-10 pr-4 py-2 text-xs font-semibold text-navy-900 bg-navy-50/40 border border-navy-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition-all"
-            />
-          </div>
-
-          {/* Right categories filters */}
-          <div className="flex items-center space-x-2 w-full md:w-auto overflow-x-auto">
-            <Filter className="w-3.5 h-3.5 text-navy-400 shrink-0" />
-            <span className="text-[10px] text-navy-400 font-bold uppercase tracking-wider shrink-0">Category:</span>
-
-            {['All', 'Environmental', 'Social', 'Governance'].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat as any)}
-                className={`px-3 py-1 text-[11px] font-bold rounded-lg border transition-colors cursor-pointer shrink-0 ${
-                  categoryFilter === cat
-                    ? 'bg-primary-50 border-primary-200 text-primary-700 font-black'
-                    : 'bg-white border-navy-100 text-navy-500 hover:text-navy-900'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+        {/* Left search */}
+        <div className="relative w-full md:max-w-md">
+          <Search className="w-4 h-4 text-navy-400 absolute left-3.5 top-3" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search indicators by name, ID or metric unit..."
+            className="w-full pl-10 pr-4 py-2 text-xs font-semibold text-navy-900 bg-navy-50/40 border border-navy-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition-all"
+          />
         </div>
-      )}
+
+        {/* Right categories filters */}
+        <div className="flex items-center space-x-2 w-full md:w-auto overflow-x-auto">
+          <Filter className="w-3.5 h-3.5 text-navy-400 shrink-0" />
+          <span className="text-[10px] text-navy-400 font-bold uppercase tracking-wider shrink-0">Category:</span>
+
+          {['All', 'Environmental', 'Social', 'Governance'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat as any)}
+              className={`px-3 py-1 text-[11px] font-bold rounded-lg border transition-colors cursor-pointer shrink-0 ${
+                categoryFilter === cat
+                  ? 'bg-primary-50 border-primary-200 text-primary-700 font-black'
+                  : 'bg-white border-navy-100 text-navy-500 hover:text-navy-900'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* ==========================================
-          4. RENDER IFRS FRAMEWORK DISCLOSURES
+          4. INDICATORS DATA TABLES (Active Tabs)
          ========================================== */}
-      {activeTab === 'ifrs-s1' && (
-        <div className="animate-fade-in">
-          <IfrsS1Form />
-        </div>
-      )}
-      {activeTab === 'ifrs-s2' && (
-        <div className="animate-fade-in">
-          <IfrsS2Form />
-        </div>
-      )}
-
-      {/* ==========================================
-          5. INDICATORS DATA TABLES (Active Tabs)
-         ========================================== */}
-      {(activeTab === 'common' || activeTab === 'sector') && (
-        <div className="space-y-6">
+      <div className="space-y-6">
           {activeMatters.map((matter) => {
             const matterIndicators = activeFilteredIndicators.filter(ind => ind.matterId === matter.id);
             if (matterIndicators.length === 0) return null;
@@ -891,7 +830,6 @@ export default function IndicatorsView() {
             </Card>
           )}
         </div>
-      )}
 
       {/* ========================================================
           6. RIGHT SLIDE-OVER PANEL: AUDIT TRAIL & DOCUMENT PROOFS

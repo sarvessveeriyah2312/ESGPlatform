@@ -21,4 +21,9 @@ public class Scope3Category extends TenantOwnedEntity {
 
     @Column(columnDefinition = "TEXT")
     private String tooltip;
+
+    /** 1-15 when this row is one of the GHG Protocol's standard Scope 3 categories (seeded on
+     *  first fetch, see EmissionsService); null for a tenant-added custom category. */
+    @Column(name = "standard_category_number")
+    private Integer standardCategoryNumber;
 }

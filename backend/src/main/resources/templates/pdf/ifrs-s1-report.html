@@ -198,8 +198,31 @@
     </tr>
 </table>
 
-<h2 class="section-title">IFRS S1 &#8212; Climate-Related Risks &amp; Opportunities</h2>
-<p class="section-intro">Disclose material information about sustainability-related risks and opportunities that is useful to primary investors when evaluating capital allocation and enterprise value, walked through systematically across principal business segments.</p>
+<h2 class="section-title">IFRS S1 &#8212; General Sustainability-related Disclosures</h2>
+<div th:if="${s1 != null}">
+    <h3 class="subsection-title">Governance</h3>
+    <p class="section-intro" th:text="${s1.oversightDescription != null ? s1.oversightDescription : 'Not disclosed.'}">Oversight</p>
+    <table class="meta-table">
+        <tr>
+            <td class="label">Review Frequency</td>
+            <td th:text="${s1.reviewFrequency != null ? s1.reviewFrequency : 'Not set'}">Frequency</td>
+            <td class="label">Responsible Committee</td>
+            <td th:text="${s1.responsibleCommittee != null ? s1.responsibleCommittee : 'Not set'}">Committee</td>
+        </tr>
+    </table>
+
+    <h3 class="subsection-title">Risk Management</h3>
+    <p class="section-intro" th:text="'Identification & Prioritisation Process: ' + (${s1.identificationProcess} != null ? ${s1.identificationProcess} : 'Not disclosed.')">Identification process</p>
+    <p class="section-intro" th:text="'Integration Level: ' + (${s1.integrationLevel} != null ? ${s1.integrationLevel} : 'Not set')">Integration level</p>
+
+    <h3 class="subsection-title">Metrics, Targets &amp; Connected Information</h3>
+    <p class="section-intro" th:text="'Tracked Metrics: ' + (${s1.trackedMetrics} != null ? ${s1.trackedMetrics} : 'Not disclosed.')">Tracked metrics</p>
+    <p class="section-intro" th:text="'Targets Summary: ' + (${s1.targetsSummary} != null ? ${s1.targetsSummary} : 'Not disclosed.')">Targets summary</p>
+    <p class="section-intro" th:text="'Connected Information: ' + (${s1.connectedInformation} != null ? ${s1.connectedInformation} : 'Not disclosed.')">Connected information</p>
+</div>
+
+<h3 class="subsection-title">Strategy &#8212; Risks &amp; Opportunities by Business Segment</h3>
+<p class="section-intro">Material sustainability-related risks and opportunities that could reasonably be expected to affect the entity's business model, strategy, and financial planning, walked through systematically across principal business segments.</p>
 <div th:each="segment : ${segments}">
     <h3 class="subsection-title" th:text="${segment.name}">Segment</h3>
     <table class="data-table" th:if="${!#lists.isEmpty(segment.items)}">

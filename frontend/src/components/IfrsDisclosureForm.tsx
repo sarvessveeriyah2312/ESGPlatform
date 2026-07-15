@@ -30,6 +30,7 @@ import {
   S1ItemResponse,
   BusinessSegmentResponse,
   UpsertS1ItemRequest,
+  IfrsS1DisclosureResponse,
   IfrsS2Response,
   Scope3CategoryResponse,
   EmissionFactorResponse,
@@ -81,6 +82,15 @@ interface S2Sections {
     trackedMetrics: string;
     reductionTargets: string;
     carbonPricing: string;
+    transitionRiskAssetPct: string;
+    physicalRiskAssetPct: string;
+    climateOpportunityAssetPct: string;
+    climateCapex: string;
+    climateCapexCurrency: Currency;
+    executiveRemunerationLinked: boolean;
+    executiveRemunerationDescription: string;
+    carbonPriceValue: string;
+    carbonPriceCurrency: Currency;
   };
 }
 
@@ -88,6 +98,8 @@ interface Scope3CategoryUI {
   id: string;
   name: string;
   tooltip: string;
+  standardCategoryNumber: number | null;
+  mandatory: boolean;
   values: { [year: string]: number };
   reliefByYear: { [year: string]: boolean };
 }
@@ -177,6 +189,63 @@ function fromSegment(seg: BusinessSegmentResponse): Segment {
   };
 }
 
+// TYPES FOR IFRS S1's Governance / Risk Management / Metrics & Targets pillars (Strategy is
+// covered separately by the per-segment risk/opportunity cards above).
+interface S1DisclosureSections {
+  governance: {
+    oversightDescription: string;
+    reviewFrequency: FrontendReviewFrequency;
+    responsibleCommittee: string;
+  };
+  riskManagement: {
+    identificationProcess: string;
+    integrationLevel: FrontendIntegrationLevel;
+  };
+  metricsTargets: {
+    trackedMetrics: string;
+    targetsSummary: string;
+    connectedInformation: string;
+  };
+}
+
+function fromS1DisclosureResponse(r: IfrsS1DisclosureResponse): S1DisclosureSections {
+  return {
+    governance: {
+      oversightDescription: r.oversightDescription ?? '',
+      reviewFrequency: r.reviewFrequency ? REVIEW_FREQ_FROM_BACKEND[r.reviewFrequency] : 'Quarterly',
+      responsibleCommittee: r.responsibleCommittee ?? ''
+    },
+    riskManagement: {
+      identificationProcess: r.identificationProcess ?? '',
+      integrationLevel: r.integrationLevel ? INTEGRATION_FROM_BACKEND[r.integrationLevel] : 'Partially Integrated'
+    },
+    metricsTargets: {
+      trackedMetrics: r.trackedMetrics ?? '',
+      targetsSummary: r.targetsSummary ?? '',
+      connectedInformation: r.connectedInformation ?? ''
+    }
+  };
+}
+
+function toS1DisclosureRequest(s: S1DisclosureSections): IfrsS1DisclosureResponse {
+  return {
+    oversightDescription: s.governance.oversightDescription || null,
+    reviewFrequency: REVIEW_FREQ_TO_BACKEND[s.governance.reviewFrequency],
+    responsibleCommittee: s.governance.responsibleCommittee || null,
+    identificationProcess: s.riskManagement.identificationProcess || null,
+    integrationLevel: INTEGRATION_TO_BACKEND[s.riskManagement.integrationLevel],
+    trackedMetrics: s.metricsTargets.trackedMetrics || null,
+    targetsSummary: s.metricsTargets.targetsSummary || null,
+    connectedInformation: s.metricsTargets.connectedInformation || null
+  };
+}
+
+const EMPTY_S1_DISCLOSURE: S1DisclosureSections = {
+  governance: { oversightDescription: '', reviewFrequency: 'Quarterly', responsibleCommittee: '' },
+  riskManagement: { identificationProcess: '', integrationLevel: 'Partially Integrated' },
+  metricsTargets: { trackedMetrics: '', targetsSummary: '', connectedInformation: '' }
+};
+
 function fromS2Response(r: IfrsS2Response): S2Sections {
   return {
     governance: {
@@ -196,12 +265,22 @@ function fromS2Response(r: IfrsS2Response): S2Sections {
     metricsTargets: {
       trackedMetrics: r.trackedMetrics ?? '',
       reductionTargets: r.reductionTargets ?? '',
-      carbonPricing: r.carbonPricing ?? ''
+      carbonPricing: r.carbonPricing ?? '',
+      transitionRiskAssetPct: r.transitionRiskAssetPct != null ? String(r.transitionRiskAssetPct) : '',
+      physicalRiskAssetPct: r.physicalRiskAssetPct != null ? String(r.physicalRiskAssetPct) : '',
+      climateOpportunityAssetPct: r.climateOpportunityAssetPct != null ? String(r.climateOpportunityAssetPct) : '',
+      climateCapex: r.climateCapex != null ? String(r.climateCapex) : '',
+      climateCapexCurrency: r.climateCapexCurrency ?? 'MYR',
+      executiveRemunerationLinked: r.executiveRemunerationLinked ?? false,
+      executiveRemunerationDescription: r.executiveRemunerationDescription ?? '',
+      carbonPriceValue: r.carbonPriceValue != null ? String(r.carbonPriceValue) : '',
+      carbonPriceCurrency: r.carbonPriceCurrency ?? 'MYR'
     }
   };
 }
 
 function toS2Request(s: S2Sections): IfrsS2Response {
+  const num = (v: string): number | null => (v.trim() === '' ? null : Number(v));
   return {
     oversightDescription: s.governance.oversightDescription || null,
     reviewFrequency: REVIEW_FREQ_TO_BACKEND[s.governance.reviewFrequency],
@@ -214,6 +293,15 @@ function toS2Request(s: S2Sections): IfrsS2Response {
     trackedMetrics: s.metricsTargets.trackedMetrics || null,
     reductionTargets: s.metricsTargets.reductionTargets || null,
     carbonPricing: s.metricsTargets.carbonPricing || null,
+    transitionRiskAssetPct: num(s.metricsTargets.transitionRiskAssetPct),
+    physicalRiskAssetPct: num(s.metricsTargets.physicalRiskAssetPct),
+    climateOpportunityAssetPct: num(s.metricsTargets.climateOpportunityAssetPct),
+    climateCapex: num(s.metricsTargets.climateCapex),
+    climateCapexCurrency: s.metricsTargets.climateCapexCurrency,
+    executiveRemunerationLinked: s.metricsTargets.executiveRemunerationLinked,
+    executiveRemunerationDescription: s.metricsTargets.executiveRemunerationDescription || null,
+    carbonPriceValue: num(s.metricsTargets.carbonPriceValue),
+    carbonPriceCurrency: s.metricsTargets.carbonPriceCurrency,
     linkedTargetId: null
   };
 }
@@ -222,7 +310,13 @@ const EMPTY_S2_SECTIONS: S2Sections = {
   governance: { oversightDescription: '', reviewFrequency: 'Quarterly', responsibleCommittee: '' },
   strategy: { physicalRisks: '', transitionPlan: '', climateResilience: '' },
   riskManagement: { identificationProcess: '', integrationLevel: 'Partially Integrated' },
-  metricsTargets: { trackedMetrics: '', reductionTargets: '', carbonPricing: '' }
+  metricsTargets: {
+    trackedMetrics: '', reductionTargets: '', carbonPricing: '',
+    transitionRiskAssetPct: '', physicalRiskAssetPct: '', climateOpportunityAssetPct: '',
+    climateCapex: '', climateCapexCurrency: 'MYR',
+    executiveRemunerationLinked: false, executiveRemunerationDescription: '',
+    carbonPriceValue: '', carbonPriceCurrency: 'MYR'
+  }
 };
 
 const fiscalYearToYearKey = (fy: number): string => `FY${fy}`;
@@ -240,6 +334,8 @@ function fromScope3Category(c: Scope3CategoryResponse): Scope3CategoryUI {
     id: c.id,
     name: c.name,
     tooltip: c.tooltip ?? '',
+    standardCategoryNumber: c.standardCategoryNumber,
+    mandatory: c.mandatory,
     values,
     reliefByYear
   };
@@ -258,18 +354,35 @@ export function IfrsS1Form() {
   const [editSegmentNameInput, setEditSegmentNameInput] = useState('');
   const [confirmDeleteSegmentId, setConfirmDeleteSegmentId] = useState<string | null>(null);
 
+  // Governance / Risk Management / Metrics & Targets pillars — Strategy is the segment/risk cards below.
+  const [disclosure, setDisclosure] = useState<S1DisclosureSections>(EMPTY_S1_DISCLOSURE);
+  const [openPillar, setOpenPillar] = useState<'governance' | 'risk' | 'metrics' | null>('governance');
+
   useEffect(() => {
     climateApi.listSegments().then((data) => {
       const mapped = data.map(fromSegment);
       setSegments(mapped);
       if (mapped.length > 0) setActiveSegmentId(mapped[0].id);
     });
+    climateApi.getS1Disclosure().then((data) => setDisclosure(fromS1DisclosureResponse(data)));
   }, []);
 
   // Visual confirmation only — every field edit already persists immediately via the API calls below.
   const handleSave = () => {
     setShowSaveSuccess(true);
     setTimeout(() => setShowSaveSuccess(false), 2000);
+  };
+
+  const togglePillar = (pillar: 'governance' | 'risk' | 'metrics') => {
+    setOpenPillar(openPillar === pillar ? null : pillar);
+  };
+
+  const updateDisclosureField = (sec: keyof S1DisclosureSections, field: string, value: any) => {
+    setDisclosure((prev) => {
+      const updated = { ...prev, [sec]: { ...prev[sec], [field]: value } };
+      climateApi.updateS1Disclosure(toS1DisclosureRequest(updated));
+      return updated;
+    });
   };
 
   const addCustomSegment = () => {
@@ -375,7 +488,66 @@ export function IfrsS1Form() {
         </p>
       </div>
 
-      {/* Segment Selector Row */}
+      {/* 1. GOVERNANCE Accordion */}
+      <div className="bg-white border border-navy-100 rounded-2xl overflow-hidden">
+        <button
+          type="button"
+          onClick={() => togglePillar('governance')}
+          className="w-full flex items-center justify-between px-5 py-4 bg-navy-50/30 hover:bg-navy-50/60 text-left cursor-pointer transition-colors"
+        >
+          <div className="flex items-center space-x-2.5">
+            <span className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-black flex items-center justify-center font-mono border border-indigo-100">P1</span>
+            <h5 className="text-xs font-extrabold text-navy-900 uppercase tracking-wide">Governance oversight processes</h5>
+          </div>
+          {openPillar === 'governance' ? <ChevronUp className="w-4 h-4 text-navy-400" /> : <ChevronDown className="w-4 h-4 text-navy-400" />}
+        </button>
+
+        {openPillar === 'governance' && (
+          <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-2 gap-5 text-xs font-semibold">
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Board-level Oversight of Sustainability Matters</label>
+              <textarea
+                rows={3}
+                value={disclosure.governance.oversightDescription}
+                onChange={(e) => updateDisclosureField('governance', 'oversightDescription', e.target.value)}
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white bg-navy-50/10"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Oversight & Monitoring Frequency</label>
+                <select
+                  value={disclosure.governance.reviewFrequency}
+                  onChange={(e) => updateDisclosureField('governance', 'reviewFrequency', e.target.value)}
+                  className="w-full px-2.5 py-2 text-xs text-navy-900 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500 bg-white cursor-pointer"
+                >
+                  <option value="Monthly">Monthly Reviews</option>
+                  <option value="Quarterly">Quarterly Reviews</option>
+                  <option value="Bi-Annually">Bi-Annual Audits</option>
+                  <option value="Annually">Annual Strategic Planning</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Responsible Management Role / Committee</label>
+                <input
+                  type="text"
+                  value={disclosure.governance.responsibleCommittee}
+                  onChange={(e) => updateDisclosureField('governance', 'responsibleCommittee', e.target.value)}
+                  className="w-full px-3 py-2 border border-navy-200 rounded-xl text-xs font-medium text-navy-950 outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white bg-navy-50/10"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Segment Selector Row — this is the Strategy (P2) pillar */}
+      <div className="flex items-center space-x-2.5 pt-2">
+        <span className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-black flex items-center justify-center font-mono border border-indigo-100">P2</span>
+        <h5 className="text-xs font-extrabold text-navy-900 uppercase tracking-wide">Strategy: risks & opportunities by segment</h5>
+      </div>
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <label className="text-[10px] font-bold text-navy-400 uppercase tracking-widest font-mono">
@@ -655,6 +827,104 @@ export function IfrsS1Form() {
           )}
         </div>
       )}
+
+      {/* 3. RISK MANAGEMENT Accordion */}
+      <div className="bg-white border border-navy-100 rounded-2xl overflow-hidden">
+        <button
+          type="button"
+          onClick={() => togglePillar('risk')}
+          className="w-full flex items-center justify-between px-5 py-4 bg-navy-50/30 hover:bg-navy-50/60 text-left cursor-pointer transition-colors"
+        >
+          <div className="flex items-center space-x-2.5">
+            <span className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-black flex items-center justify-center font-mono border border-indigo-100">P3</span>
+            <h5 className="text-xs font-extrabold text-navy-900 uppercase tracking-wide">Risk Management Integration</h5>
+          </div>
+          {openPillar === 'risk' ? <ChevronUp className="w-4 h-4 text-navy-400" /> : <ChevronDown className="w-4 h-4 text-navy-400" />}
+        </button>
+
+        {openPillar === 'risk' && (
+          <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-2 gap-5 text-xs font-semibold">
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Sustainability Risk Identification & Prioritisation Process</label>
+              <textarea
+                rows={3}
+                value={disclosure.riskManagement.identificationProcess}
+                onChange={(e) => updateDisclosureField('riskManagement', 'identificationProcess', e.target.value)}
+                placeholder="e.g. Material topics identified via the annual double-materiality assessment, then escalated through enterprise risk management alongside financial and operational risks."
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Integration Level into Enterprise Risk Management (ERM)</label>
+              <div className="flex flex-col gap-2 pt-2">
+                {(['Fully Integrated', 'Partially Integrated', 'Standalone Process'] as FrontendIntegrationLevel[]).map(opt => (
+                  <label key={opt} className="flex items-center space-x-2 cursor-pointer font-medium text-navy-700">
+                    <input
+                      type="radio"
+                      name="s1-erm-integration"
+                      checked={disclosure.riskManagement.integrationLevel === opt}
+                      onChange={() => updateDisclosureField('riskManagement', 'integrationLevel', opt)}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span>{opt}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 4. METRICS & TARGETS Accordion */}
+      <div className="bg-white border border-navy-100 rounded-2xl overflow-hidden">
+        <button
+          type="button"
+          onClick={() => togglePillar('metrics')}
+          className="w-full flex items-center justify-between px-5 py-4 bg-navy-50/30 hover:bg-navy-50/60 text-left cursor-pointer transition-colors"
+        >
+          <div className="flex items-center space-x-2.5">
+            <span className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-black flex items-center justify-center font-mono border border-indigo-100">P4</span>
+            <h5 className="text-xs font-extrabold text-navy-900 uppercase tracking-wide">Metrics, Targets & Connected Information</h5>
+          </div>
+          {openPillar === 'metrics' ? <ChevronUp className="w-4 h-4 text-navy-400" /> : <ChevronDown className="w-4 h-4 text-navy-400" />}
+        </button>
+
+        {openPillar === 'metrics' && (
+          <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-3 gap-5 text-xs font-semibold">
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Metrics Tracked Across Material Matters</label>
+              <textarea
+                rows={4}
+                value={disclosure.metricsTargets.trackedMetrics}
+                onChange={(e) => updateDisclosureField('metricsTargets', 'trackedMetrics', e.target.value)}
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Targets Summary (see Targets module for detail)</label>
+              <textarea
+                rows={4}
+                value={disclosure.metricsTargets.targetsSummary}
+                onChange={(e) => updateDisclosureField('metricsTargets', 'targetsSummary', e.target.value)}
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Connected Information (link to financial statements)</label>
+              <textarea
+                rows={4}
+                value={disclosure.metricsTargets.connectedInformation}
+                onChange={(e) => updateDisclosureField('metricsTargets', 'connectedInformation', e.target.value)}
+                placeholder="Explain how these sustainability-related financial effects connect to the audited financial statements for the same period."
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Persistence Button Bar */}
       <div className="border-t border-navy-100 pt-6 flex items-center justify-between">
@@ -1087,13 +1357,120 @@ export function IfrsS2Form() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Internal Shadow Carbon Pricing</label>
+                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Carbon Pricing — How It's Applied in Decision-Making</label>
                 <textarea
                   rows={4}
                   value={sections.metricsTargets.carbonPricing}
                   onChange={(e) => updateSectionField('metricsTargets', 'carbonPricing', e.target.value)}
                   className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
                 />
+              </div>
+
+              {/* IFRS S2's 7 cross-industry metrics: GHG emissions are captured in the ledger below;
+                  carbon price value/currency and the 5 fields here complete the set. */}
+              <div className="md:col-span-3 border-t border-navy-50 pt-5 mt-1 space-y-4">
+                <label className="text-[10px] font-bold text-navy-400 uppercase tracking-widest font-mono block">
+                  Cross-Industry Metrics
+                </label>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-navy-400 uppercase tracking-wider block">% Assets Vulnerable to Transition Risk</label>
+                    <input
+                      type="text"
+                      value={sections.metricsTargets.transitionRiskAssetPct}
+                      onChange={(e) => updateSectionField('metricsTargets', 'transitionRiskAssetPct', e.target.value)}
+                      placeholder="e.g. 18.5"
+                      className="w-full px-3 py-2 border border-navy-200 rounded-xl text-xs font-bold text-navy-950 outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white bg-navy-50/10"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-navy-400 uppercase tracking-wider block">% Assets Vulnerable to Physical Risk</label>
+                    <input
+                      type="text"
+                      value={sections.metricsTargets.physicalRiskAssetPct}
+                      onChange={(e) => updateSectionField('metricsTargets', 'physicalRiskAssetPct', e.target.value)}
+                      placeholder="e.g. 12"
+                      className="w-full px-3 py-2 border border-navy-200 rounded-xl text-xs font-bold text-navy-950 outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white bg-navy-50/10"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-navy-400 uppercase tracking-wider block">% Assets Aligned with Climate Opportunities</label>
+                    <input
+                      type="text"
+                      value={sections.metricsTargets.climateOpportunityAssetPct}
+                      onChange={(e) => updateSectionField('metricsTargets', 'climateOpportunityAssetPct', e.target.value)}
+                      placeholder="e.g. 9"
+                      className="w-full px-3 py-2 border border-navy-200 rounded-xl text-xs font-bold text-navy-950 outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white bg-navy-50/10"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Capex/Financing Deployed Toward Climate Risks & Opportunities</label>
+                    <div className="flex rounded-xl overflow-hidden border border-navy-200">
+                      <select
+                        value={sections.metricsTargets.climateCapexCurrency}
+                        onChange={(e) => updateSectionField('metricsTargets', 'climateCapexCurrency', e.target.value)}
+                        className="px-2 py-2 bg-navy-50 text-[11px] font-bold text-navy-600 border-r border-navy-200 outline-none cursor-pointer"
+                      >
+                        <option value="MYR">MYR</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={sections.metricsTargets.climateCapex}
+                        onChange={(e) => updateSectionField('metricsTargets', 'climateCapex', e.target.value)}
+                        placeholder="e.g. 2400000"
+                        className="w-full px-3 py-2 text-xs font-bold text-navy-950 outline-none focus:bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Internal Carbon Price (per tCO2e)</label>
+                    <div className="flex rounded-xl overflow-hidden border border-navy-200">
+                      <select
+                        value={sections.metricsTargets.carbonPriceCurrency}
+                        onChange={(e) => updateSectionField('metricsTargets', 'carbonPriceCurrency', e.target.value)}
+                        className="px-2 py-2 bg-navy-50 text-[11px] font-bold text-navy-600 border-r border-navy-200 outline-none cursor-pointer"
+                      >
+                        <option value="MYR">MYR</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={sections.metricsTargets.carbonPriceValue}
+                        onChange={(e) => updateSectionField('metricsTargets', 'carbonPriceValue', e.target.value)}
+                        placeholder="e.g. 35"
+                        className="w-full px-3 py-2 text-xs font-bold text-navy-950 outline-none focus:bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sections.metricsTargets.executiveRemunerationLinked}
+                      onChange={(e) => updateSectionField('metricsTargets', 'executiveRemunerationLinked', e.target.checked)}
+                      className="rounded text-primary-600 focus:ring-primary-500 w-3.5 h-3.5 cursor-pointer"
+                    />
+                    <span className="text-[10px] text-navy-400 uppercase tracking-wider">Executive remuneration is linked to climate performance</span>
+                  </label>
+                  {sections.metricsTargets.executiveRemunerationLinked && (
+                    <textarea
+                      rows={2}
+                      value={sections.metricsTargets.executiveRemunerationDescription}
+                      onChange={(e) => updateSectionField('metricsTargets', 'executiveRemunerationDescription', e.target.value)}
+                      placeholder="Describe how — e.g. % of short-term incentive tied to which target..."
+                      className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+                    />
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1216,6 +1593,12 @@ export function IfrsS2Form() {
                     <span className="text-navy-400 text-xs shrink-0 select-none">↳</span>
                     <span className="truncate max-w-[200px]" title={cat.name}>{cat.name}</span>
 
+                    {cat.mandatory && (
+                      <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0" title="Mandatory financed-emissions category for financial institutions under IFRS S2">
+                        Mandatory
+                      </span>
+                    )}
+
                     {/* Tooltip Info Icon — only shown when the category actually has a description */}
                     {cat.tooltip && (
                     <div className="relative inline-block shrink-0">
@@ -1276,6 +1659,10 @@ export function IfrsS2Form() {
                           Cancel
                         </button>
                       </div>
+                    ) : cat.mandatory ? (
+                      <span className="p-1 text-navy-200 inline-block" title="Mandatory categories can't be removed">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </span>
                     ) : (
                       <button
                         type="button"

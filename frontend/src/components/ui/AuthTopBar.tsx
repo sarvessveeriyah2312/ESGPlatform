@@ -5,10 +5,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, RefreshCw, ChevronDown, Settings, LogOut, LifeBuoy } from 'lucide-react';
+import { Bell, Search, RefreshCw, ChevronDown, Settings, LogOut, LifeBuoy, Building2, Check } from 'lucide-react';
 import { usePlan, PlanType } from '../../contexts/PlanContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { canAccess, TENANT_ROLES } from '../../permissions';
+import { canAccess, TENANT_ROLES, MANAGEMENT_ROLES } from '../../permissions';
+import { companyApi, CompanyGroupMember } from '../../api/companyApi';
 
 interface AuthTopBarProps {
   breadcrumbs: string[]; // e.g. ["Workspace", "ESG Dashboard"]
@@ -31,6 +32,12 @@ export default function AuthTopBar({
   const [value, setValue] = useState(searchValue);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  const canSwitchCompany = canAccess(user?.role, MANAGEMENT_ROLES);
+  const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
+  const [companyMembers, setCompanyMembers] = useState<CompanyGroupMember[]>([]);
+  const [switchingCompanyId, setSwitchingCompanyId] = useState<string | null>(null);
+  const companyMenuRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
@@ -64,6 +71,33 @@ export default function AuthTopBar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [profileMenuOpen]);
 
+  // Company admins can switch between the companies in their group (see Settings > Companies)
+  useEffect(() => {
+    if (!canSwitchCompany) return;
+    companyApi.getGroup().then(setCompanyMembers).catch(() => setCompanyMembers([]));
+  }, [canSwitchCompany]);
+
+  useEffect(() => {
+    if (!companyMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (companyMenuRef.current && !companyMenuRef.current.contains(e.target as Node)) {
+        setCompanyMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [companyMenuOpen]);
+
+  const currentCompanyName = companyMembers.find((m) => m.current)?.name ?? user?.company ?? 'Workspace';
+
+  const handleSwitchCompany = (member: CompanyGroupMember) => {
+    if (member.current || switchingCompanyId) return;
+    setSwitchingCompanyId(member.id);
+    companyApi.switchCompany(member.id)
+      .then(() => window.location.reload())
+      .catch(() => setSwitchingCompanyId(null));
+  };
+
   const userInitials = user?.name
     ? user.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase()
     : 'SV';
@@ -96,7 +130,60 @@ export default function AuthTopBar({
 
       {/* 2. Right-side items */}
       <div className="flex items-center space-x-4 shrink-0">
-        
+
+        {/* Company Switcher */}
+        {canSwitchCompany && (
+          <div className="relative" ref={companyMenuRef}>
+            <button
+              onClick={() => setCompanyMenuOpen((open) => !open)}
+              className="flex items-center space-x-1.5 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-full transition-colors cursor-pointer max-w-[200px]"
+              aria-label="Switch company"
+              aria-expanded={companyMenuOpen}
+            >
+              <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
+              <span className="truncate">{currentCompanyName}</span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${companyMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {companyMenuOpen && (
+              <div className="absolute left-0 top-full mt-2 w-72 bg-white border border-gray-100 rounded-2xl shadow-lg py-2 z-40 animate-fade-in">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Switch Company</p>
+                </div>
+                <div className="py-1 max-h-72 overflow-y-auto">
+                  {companyMembers.map((member) => (
+                    <button
+                      key={member.id}
+                      onClick={() => handleSwitchCompany(member)}
+                      disabled={switchingCompanyId === member.id}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 disabled:opacity-60 cursor-pointer transition-colors"
+                    >
+                      <span className="truncate">{member.name}</span>
+                      {member.current ? (
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      ) : switchingCompanyId === member.id ? (
+                        <span className="text-[10px] text-gray-400 shrink-0">Switching…</span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+                <div className="pt-1 mt-1 border-t border-gray-100">
+                  <button
+                    onClick={() => {
+                      setCompanyMenuOpen(false);
+                      navigate('/settings?tab=company');
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <Settings className="w-4 h-4 mr-2.5 text-gray-400" />
+                    Manage Companies
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <button className="p-2 text-gray-400 hover:text-gray-800 hover:bg-gray-50 rounded-full transition-all cursor-pointer">
           <RefreshCw className="w-4 h-4" />
         </button>

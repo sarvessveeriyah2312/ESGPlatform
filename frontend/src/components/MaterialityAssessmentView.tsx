@@ -274,10 +274,10 @@ export default function MaterialityAssessmentView() {
           HIGH PRIORITY
         </text>
         <text x={getX(1.8)} y={getY(4.7)} fill="#475569" fontSize="9" fontWeight="semibold" textAnchor="middle" opacity="0.6">
-          STAKEHOLDER FOCUS
+          IMPACT FOCUS
         </text>
         <text x={getX(4.3)} y={getY(1.8)} fill="#475569" fontSize="9" fontWeight="semibold" textAnchor="middle" opacity="0.6">
-          BUSINESS FOCUS
+          FINANCIAL FOCUS
         </text>
         <text x={getX(1.8)} y={getY(1.8)} fill="#94A3B8" fontSize="9" fontWeight="semibold" textAnchor="middle" opacity="0.6">
           LOW PRIORITY
@@ -307,10 +307,10 @@ export default function MaterialityAssessmentView() {
 
         {/* Axis Labels */}
         <text x={width / 2} y={height - 15} fill="#1E293B" fontSize="11" fontWeight="bold" textAnchor="middle">
-          Importance to Business Operations (Impact) →
+          Financial Materiality (Effect on the Business) →
         </text>
         <text x={15} y={height / 2} fill="#1E293B" fontSize="11" fontWeight="bold" textAnchor="middle" transform={`rotate(-90 15 ${height / 2})`}>
-          Importance to Stakeholders (Influence) →
+          Impact Materiality (Effect on Economy, Environment & People) →
         </text>
 
         {/* Plotted Dots */}
@@ -319,7 +319,9 @@ export default function MaterialityAssessmentView() {
           const cx = getX(mScore.impact);
           const cy = getY(mScore.influence);
           const pInfo = getPriorityInfo(mScore.impact, mScore.influence);
-          const labelAbbr = `${matter.category[0]}${index + 1}`;
+          // Read-only mode receives mattersList pre-sorted by rank, so a plain index+1 lines up
+          // exactly with the Priority Rankings table's "#N" column — the legend depends on this.
+          const labelAbbr = isReadOnly ? `${index + 1}` : `${matter.category[0]}${index + 1}`;
 
           return (
             <g key={matter.id} className="cursor-pointer group">
@@ -329,14 +331,20 @@ export default function MaterialityAssessmentView() {
                 r="8"
                 className={`${pInfo.color} transition-all duration-300 stroke-white`}
                 strokeWidth="1.5"
-                title={`${matter.name}: (${mScore.impact}, ${mScore.influence})`}
-              />
-              <text x={cx} y={cy + 2.5} fill="#FFF" fontSize="6.5" fontWeight="bold" textAnchor="middle">
+              >
+                <title>{`${matter.name}: (${mScore.impact}, ${mScore.influence})`}</title>
+              </circle>
+              <text x={cx} y={cy + 2.5} fill="#FFF" fontSize="6.5" fontWeight="bold" textAnchor="middle" className="pointer-events-none">
                 {labelAbbr}
               </text>
-              <text x={cx + 12} y={cy + 3} fill="#0F172A" fontSize="8.5" fontWeight="semibold" className="group-hover:font-extrabold transition-all">
-                {matter.name.length > 25 ? `${matter.name.substring(0, 22)}...` : matter.name}
-              </text>
+              {/* Read-only snapshots render many points that often share coordinates — an inline name
+                  label per dot overlaps illegibly, so history view relies on hover + the ranked table
+                  instead (see MaterialityAssessmentView's history detail panel). */}
+              {!isReadOnly && (
+                <text x={cx + 12} y={cy + 3} fill="#0F172A" fontSize="8.5" fontWeight="semibold" className="group-hover:font-extrabold transition-all">
+                  {matter.name.length > 25 ? `${matter.name.substring(0, 22)}...` : matter.name}
+                </text>
+              )}
             </g>
           );
         })}
@@ -408,53 +416,74 @@ export default function MaterialityAssessmentView() {
          ============================================== */}
       {(activeTab === 'history' || selectedHistoryAssessment) && (
         <div className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Snapshots Index list (Left rail) */}
-            <div className="lg:col-span-4 space-y-4">
-              <h3 className="text-sm font-bold text-navy-900 uppercase tracking-wider block mb-1">Saved Snapshots</h3>
-              <div className="space-y-3">
-                {savedAssessments.map((asmt) => (
-                  <button
-                    key={asmt.id}
-                    onClick={() => handleSelectHistoryAssessment(asmt.id)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer block ${
-                      selectedHistoryAssessment?.id === asmt.id
-                        ? 'bg-white border-primary-500 shadow-md ring-1 ring-primary-500/20'
-                        : 'bg-white/60 hover:bg-white border-navy-100 hover:border-navy-200'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-1.5">
-                      <span className="text-xs font-bold text-navy-950 block truncate max-w-[180px]">{asmt.name}</span>
-                      <span className="text-[9px] font-bold text-navy-400 font-mono">{asmt.assessmentDate}</span>
-                    </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            {/* Snapshots Index (Left rail) — a ledger-style timeline, newest first */}
+            <div className="lg:col-span-3 space-y-5">
+              <h3 className="text-[10px] font-extrabold text-navy-400 uppercase tracking-widest block ml-0.5">Saved Snapshots</h3>
 
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      <span className="text-[9px] font-bold bg-navy-50 px-2 py-0.5 rounded border border-navy-100/50 text-navy-600 uppercase">
-                        {asmt.planAtCapture === 'ISSUER_READY' ? `Bursa ${asmt.marketAtCapture === 'ACE_MARKET' ? 'ACE' : 'Main'}` : 'SEDG CORE'}
-                      </span>
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase ${
-                        asmt.status === 'VALIDATED'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                          : 'bg-amber-50 text-amber-700 border-amber-100'
-                      }`}>
-                        {asmt.status === 'VALIDATED' ? 'Validated' : 'Draft'}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-
-                {savedAssessments.length === 0 && (
-                  <div className="text-center py-8 bg-white border border-navy-100/50 rounded-2xl text-xs text-navy-400">
-                    No assessments saved yet. Complete the wizard to generate your first baseline snapshot.
+              {savedAssessments.length > 0 && (
+                <div className="relative pl-0.5">
+                  <div className="absolute left-[5px] top-1.5 bottom-1.5 w-px bg-navy-100" aria-hidden="true" />
+                  <div>
+                    {savedAssessments.map((asmt) => {
+                      const isSelected = selectedHistoryAssessment?.id === asmt.id;
+                      return (
+                        <button
+                          key={asmt.id}
+                          onClick={() => handleSelectHistoryAssessment(asmt.id)}
+                          title={asmt.name}
+                          className={`relative w-full text-left flex items-start gap-3.5 py-2.5 pr-2 -ml-2 pl-2 cursor-pointer group rounded-xl transition-colors ${
+                            isSelected ? 'bg-primary-50/60' : 'hover:bg-navy-50/60'
+                          }`}
+                        >
+                          <span
+                            className={`relative z-10 mt-1 w-[11px] h-[11px] rounded-full border-2 shrink-0 transition-colors ${
+                              isSelected
+                                ? 'bg-primary-600 border-primary-600'
+                                : asmt.status === 'VALIDATED'
+                                  ? 'bg-white border-emerald-500'
+                                  : 'bg-white border-amber-500'
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-[10px] font-bold font-mono ${isSelected ? 'text-primary-700' : 'text-navy-400'}`}>
+                              {asmt.assessmentDate}
+                            </div>
+                            <div className="text-xs font-bold text-navy-950 leading-snug line-clamp-2 mt-0.5">{asmt.name}</div>
+                            {asmt.createdByName && (
+                              <span className="text-[10px] text-navy-400 block mt-0.5">Captured by {asmt.createdByName}</span>
+                            )}
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              <span className="text-[9px] font-bold bg-white px-2 py-0.5 rounded-full border border-navy-100 text-navy-500 uppercase">
+                                {asmt.planAtCapture === 'ISSUER_READY' ? `Bursa ${asmt.marketAtCapture === 'ACE_MARKET' ? 'ACE' : 'Main'}` : 'SEDG CORE'}
+                              </span>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase ${
+                                asmt.status === 'VALIDATED'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                  : 'bg-amber-50 text-amber-700 border-amber-100'
+                              }`}>
+                                {asmt.status === 'VALIDATED' ? 'Validated' : 'Draft'}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              <Card className="bg-gradient-to-br from-primary-50/50 to-emerald-50/50 border-primary-100/30 p-5 space-y-3">
-                <Sparkles className="w-5 h-5 text-primary-600" />
+              {savedAssessments.length === 0 && (
+                <div className="text-center py-8 bg-white border border-navy-100/50 rounded-2xl text-xs text-navy-400">
+                  No assessments saved yet. Complete the wizard to generate your first baseline snapshot.
+                </div>
+              )}
+
+              <div className="bg-gradient-to-br from-primary-50/60 to-emerald-50/40 border border-primary-100/50 rounded-2xl p-4 space-y-2.5">
+                <Sparkles className="w-4 h-4 text-primary-600" />
                 <h4 className="text-xs font-bold text-navy-950">Conduct fresh audit</h4>
                 <p className="text-[11px] text-navy-500 leading-relaxed">
-                  Start the multi-step guided wizard to map stakeholders, update disclosure scores, and record a new compliant version.
+                  Start the guided wizard to update disclosure scores and record a new compliant version.
                 </p>
                 <button
                   onClick={() => {
@@ -467,11 +496,11 @@ export default function MaterialityAssessmentView() {
                   <span>Launch Wizard</span>
                   <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                 </button>
-              </Card>
+              </div>
             </div>
 
             {/* Snapshot Detailed Read-Only Display (Right) */}
-            <div className="lg:col-span-8">
+            <div className="lg:col-span-9">
               {selectedHistoryAssessment ? (
                 <div className="space-y-6 animate-fade-in">
                   <Card className="bg-white border-navy-100/80 p-6">
@@ -538,64 +567,113 @@ export default function MaterialityAssessmentView() {
                     </div>
                   </Card>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="bg-white border-navy-100 p-6 flex flex-col justify-between">
-                      <div className="mb-4">
-                        <h4 className="text-sm font-bold text-navy-950">Double Materiality Grid</h4>
-                        <p className="text-xs text-navy-400">Visualization plotted based on the archived snapshot values.</p>
-                      </div>
+                  {(() => {
+                    const rankedScores = [...selectedHistoryAssessment.scores]
+                      .sort((a, b) => (b.impact + b.influence) - (a.impact + a.influence));
+                    const highPriority = rankedScores.filter((s) => isHighPriority(s.impact, s.influence));
+                    const otherCount = rankedScores.length - highPriority.length;
 
-                      {renderMatrixSVG(
-                        Object.fromEntries(selectedHistoryAssessment.scores.map((s) => [s.matterId, { impact: s.impact, influence: s.influence }])),
-                        selectedHistoryAssessment.scores.map((s) => ({ id: s.matterId, name: s.matterName, category: s.category[0] })),
-                        true
-                      )}
-                    </Card>
+                    return (
+                      <div className="space-y-6">
+                        <Card className="bg-white border-navy-100 p-6">
+                          <div className="flex flex-wrap justify-between items-start gap-5 mb-5">
+                            <div>
+                              <h4 className="text-sm font-bold text-navy-950">Double Materiality Grid</h4>
+                              <p className="text-xs text-navy-400 mt-0.5">Financial materiality × impact materiality — plotted from archived scores.</p>
+                            </div>
+                            <div className="flex items-center gap-5 shrink-0">
+                              <div className="text-right">
+                                <div className="text-lg font-extrabold text-rose-600 leading-none">{highPriority.length}</div>
+                                <div className="text-[9px] font-bold text-navy-400 uppercase tracking-wider mt-1.5">High Priority</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg font-extrabold text-navy-900 leading-none">{otherCount}</div>
+                                <div className="text-[9px] font-bold text-navy-400 uppercase tracking-wider mt-1.5">Other</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg font-extrabold text-navy-900 leading-none">{rankedScores.length}</div>
+                                <div className="text-[9px] font-bold text-navy-400 uppercase tracking-wider mt-1.5">Total Matters</div>
+                              </div>
+                            </div>
+                          </div>
 
-                    <Card className="bg-white border-navy-100 p-0 overflow-hidden" padded="none">
-                      <div className="p-5 border-b border-navy-50">
-                        <h4 className="text-sm font-bold text-navy-950">Priority Rankings</h4>
-                        <p className="text-xs text-navy-400 mt-0.5">Scored matters ordered by total combined score.</p>
-                      </div>
-
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                          <thead>
-                            <tr className="border-b border-navy-100 bg-navy-50/50 text-[10px] text-navy-400 uppercase tracking-wider font-mono">
-                              <th className="px-4 py-2 font-bold">Rank</th>
-                              <th className="px-4 py-2 font-bold">Matter</th>
-                              <th className="px-4 py-2 font-bold text-center">Impact</th>
-                              <th className="px-4 py-2 font-bold text-center">Stakeholder</th>
-                              <th className="px-4 py-2 font-bold">Tier</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-navy-50 text-xs">
-                            {[...selectedHistoryAssessment.scores]
-                              .sort((a, b) => (b.impact + b.influence) - (a.impact + a.influence))
-                              .map((s, idx) => (
-                                <tr key={s.matterId} className="hover:bg-navy-50/20">
-                                  <td className="px-4 py-3 font-mono font-bold text-navy-500 text-center">#{idx + 1}</td>
-                                  <td className="px-4 py-3">
-                                    <span className="font-bold text-navy-900 block leading-tight">{s.matterName}</span>
-                                    <span className="text-[9px] text-navy-400 font-bold block mt-0.5 uppercase tracking-wider">{s.category}</span>
-                                    {s.rationale && (
-                                      <span className="text-[10px] text-navy-500 italic block mt-1 leading-snug max-w-xs">{s.rationale}</span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-3 text-center font-mono font-bold text-navy-700">{s.impact}</td>
-                                  <td className="px-4 py-3 text-center font-mono font-bold text-navy-700">{s.influence}</td>
-                                  <td className="px-4 py-3">
-                                    <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase border ${PRIORITY_STYLES[s.priorityTier]?.bgLight ?? ''}`}>
-                                      {s.priorityTier.split(' ')[0]}
-                                    </span>
-                                  </td>
-                                </tr>
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-7 items-center">
+                            <div>
+                              {renderMatrixSVG(
+                                Object.fromEntries(rankedScores.map((s) => [s.matterId, { impact: s.impact, influence: s.influence }])),
+                                rankedScores.map((s) => ({ id: s.matterId, name: s.matterName, category: s.category[0] })),
+                                true
+                              )}
+                            </div>
+                            <div className="space-y-3">
+                              {highPriority.map((s) => (
+                                <div key={s.matterId} className="flex items-start gap-2.5">
+                                  <span className="w-2 h-2 rounded-full bg-rose-600 mt-1 shrink-0" />
+                                  <span className="text-[11px] text-navy-600 leading-snug">
+                                    <strong className="text-navy-900 font-bold">#{rankedScores.indexOf(s) + 1}</strong> {s.matterName}
+                                  </span>
+                                </div>
                               ))}
-                          </tbody>
-                        </table>
+                              {otherCount > 0 && (
+                                <div className="flex items-start gap-2.5">
+                                  <span className="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0" />
+                                  <span className="text-[11px] text-navy-500 leading-snug">
+                                    {otherCount} other matter{otherCount !== 1 ? 's' : ''} scored Medium or Low — see the ranked table below.
+                                  </span>
+                                </div>
+                              )}
+                              <p className="text-[10px] text-navy-400 pt-2.5 border-t border-navy-50">Numbers on the chart match the Rank column below.</p>
+                            </div>
+                          </div>
+                        </Card>
+
+                        <Card className="bg-white border-navy-100 p-0 overflow-hidden min-w-0" padded="none">
+                          <div className="p-5 border-b border-navy-50">
+                            <h4 className="text-sm font-bold text-navy-950">Priority Rankings</h4>
+                            <p className="text-xs text-navy-400 mt-0.5">Scored matters ordered by total combined score.</p>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="border-b border-navy-100 bg-navy-50/50 text-[10px] text-navy-400 uppercase tracking-wider font-mono">
+                                  <th className="px-5 py-3 font-bold">Rank</th>
+                                  <th className="px-5 py-3 font-bold">Matter</th>
+                                  <th className="px-5 py-3 font-bold text-center whitespace-nowrap">Financial</th>
+                                  <th className="px-5 py-3 font-bold text-center whitespace-nowrap">Impact</th>
+                                  <th className="px-5 py-3 font-bold whitespace-nowrap">Tier</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-navy-50 text-xs">
+                                {rankedScores.map((s, idx) => (
+                                  <tr key={s.matterId} className="hover:bg-navy-50/20">
+                                    <td className="relative px-5 py-4 font-mono font-bold text-navy-500 text-center">
+                                      <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${PRIORITY_STYLES[s.priorityTier]?.color ?? 'bg-navy-200'}`} />
+                                      #{idx + 1}
+                                    </td>
+                                    <td className="px-5 py-4 max-w-md">
+                                      <span className="font-bold text-navy-900 block leading-tight">{s.matterName}</span>
+                                      <span className="text-[9px] text-navy-400 font-bold block mt-0.5 uppercase tracking-wider">{s.category}</span>
+                                      {s.rationale && (
+                                        <span className="text-[10px] text-navy-500 italic block mt-1.5 leading-snug">{s.rationale}</span>
+                                      )}
+                                    </td>
+                                    <td className="px-5 py-4 text-center font-mono font-bold text-navy-700">{s.impact}</td>
+                                    <td className="px-5 py-4 text-center font-mono font-bold text-navy-700">{s.influence}</td>
+                                    <td className="px-5 py-4 whitespace-nowrap">
+                                      <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase border ${PRIORITY_STYLES[s.priorityTier]?.bgLight ?? ''}`}>
+                                        {s.priorityTier.split(' ')[0]}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </Card>
                       </div>
-                    </Card>
-                  </div>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center p-12 bg-white border border-dashed border-navy-200 rounded-3xl text-center min-h-[400px]">
@@ -684,7 +762,7 @@ export default function MaterialityAssessmentView() {
                     Under standard Malaysian SEDG and CSRD guidelines, materiality requires mapping the interests of core stakeholder circles.
                   </p>
                   <p className="text-xs text-navy-500 leading-relaxed">
-                    Identify all stakeholder groups relevant to your company's operations. The ratings you input in Step 2 represent the aggregated influence of these selected groups.
+                    Identify all stakeholder groups relevant to your company's operations. Consulting these groups is how you evidence the Impact Materiality rating you assign in Step 2 — the effect your company has on the economy, environment, and people, as they experience it.
                   </p>
 
                   <div className="bg-navy-50/50 rounded-2xl p-4.5 border border-navy-100/50">
@@ -869,9 +947,9 @@ export default function MaterialityAssessmentView() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
                       <div className="space-y-4 p-5 bg-slate-50/40 rounded-2xl border border-navy-100/30">
                         <div>
-                          <label className="text-xs font-bold text-navy-900 block">1. Business Impact</label>
+                          <label className="text-xs font-bold text-navy-900 block">1. Financial Materiality</label>
                           <span className="text-[10px] text-navy-400 mt-0.5 block leading-normal">
-                            Significance of financial, operational, or legal impacts of this topic on your business strategy.
+                            Significance of financial, operational, or legal impacts of this topic on your business strategy and enterprise value.
                           </span>
                         </div>
 
@@ -899,9 +977,9 @@ export default function MaterialityAssessmentView() {
 
                       <div className="space-y-4 p-5 bg-slate-50/40 rounded-2xl border border-navy-100/30">
                         <div>
-                          <label className="text-xs font-bold text-navy-900 block">2. Stakeholder Influence</label>
+                          <label className="text-xs font-bold text-navy-900 block">2. Impact Materiality</label>
                           <span className="text-[10px] text-navy-400 mt-0.5 block leading-normal">
-                            How much does this topic influence the decisions and assessments of your selected stakeholders?
+                            How significant is this topic's effect on the economy, environment, and people — caused or contributed to by your company's own operations and value chain? Informed by your stakeholder consultations.
                           </span>
                         </div>
 
@@ -989,7 +1067,7 @@ export default function MaterialityAssessmentView() {
                     <div>
                       <h3 className="text-sm font-extrabold text-navy-950">Corporate Materiality Matrix</h3>
                       <p className="text-xs text-navy-400 mt-0.5">
-                        Double-materiality plotting combining operations impact with stakeholder priorities.
+                        Double-materiality plotting: financial materiality (effect on the business) against impact materiality (effect on economy, environment & people).
                       </p>
                     </div>
 
@@ -1025,8 +1103,8 @@ export default function MaterialityAssessmentView() {
                           <tr className="border-b border-navy-100 bg-navy-50/50 text-[10px] text-navy-400 uppercase tracking-wider font-mono">
                             <th className="px-6 py-3 font-bold">Rank</th>
                             <th className="px-6 py-3 font-bold">Sustainability Matter</th>
-                            <th className="px-6 py-3 font-bold text-center">Business</th>
-                            <th className="px-6 py-3 font-bold text-center">Stakeholders</th>
+                            <th className="px-6 py-3 font-bold text-center">Financial</th>
+                            <th className="px-6 py-3 font-bold text-center">Impact</th>
                             <th className="px-6 py-3 font-bold text-right">Priority Class</th>
                           </tr>
                         </thead>
@@ -1163,7 +1241,7 @@ export default function MaterialityAssessmentView() {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <span className="text-[10px] font-mono font-bold text-rose-600 block">Impact: {mScore.impact} | Influence: {mScore.influence}</span>
+                                <span className="text-[10px] font-mono font-bold text-rose-600 block">Financial: {mScore.impact} | Impact: {mScore.influence}</span>
                                 <span className="text-[9px] text-rose-500 font-extrabold uppercase">Critical</span>
                               </div>
                             </div>

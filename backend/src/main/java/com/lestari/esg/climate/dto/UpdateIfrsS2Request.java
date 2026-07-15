@@ -1,7 +1,10 @@
 package com.lestari.esg.climate.dto;
 
+import com.lestari.esg.climate.Currency;
 import com.lestari.esg.climate.IntegrationLevel;
 import com.lestari.esg.climate.ReviewFrequency;
+
+import java.math.BigDecimal;
 
 public record UpdateIfrsS2Request(
         String oversightDescription,
@@ -15,6 +18,15 @@ public record UpdateIfrsS2Request(
         String trackedMetrics,
         String reductionTargets,
         String carbonPricing,
+        BigDecimal transitionRiskAssetPct,
+        BigDecimal physicalRiskAssetPct,
+        BigDecimal climateOpportunityAssetPct,
+        BigDecimal climateCapex,
+        Currency climateCapexCurrency,
+        Boolean executiveRemunerationLinked,
+        String executiveRemunerationDescription,
+        BigDecimal carbonPriceValue,
+        Currency carbonPriceCurrency,
         String linkedTargetId
 ) {
 }

@@ -36,6 +36,17 @@ export interface UpsertS1ItemRequest {
   currency: Currency;
 }
 
+export interface IfrsS1DisclosureResponse {
+  oversightDescription: string | null;
+  reviewFrequency: ReviewFrequency | null;
+  responsibleCommittee: string | null;
+  identificationProcess: string | null;
+  integrationLevel: IntegrationLevel | null;
+  trackedMetrics: string | null;
+  targetsSummary: string | null;
+  connectedInformation: string | null;
+}
+
 export interface IfrsS2Response {
   oversightDescription: string | null;
   reviewFrequency: ReviewFrequency | null;
@@ -48,6 +59,15 @@ export interface IfrsS2Response {
   trackedMetrics: string | null;
   reductionTargets: string | null;
   carbonPricing: string | null;
+  transitionRiskAssetPct: number | null;
+  physicalRiskAssetPct: number | null;
+  climateOpportunityAssetPct: number | null;
+  climateCapex: number | null;
+  climateCapexCurrency: Currency | null;
+  executiveRemunerationLinked: boolean | null;
+  executiveRemunerationDescription: string | null;
+  carbonPriceValue: number | null;
+  carbonPriceCurrency: Currency | null;
   linkedTargetId: string | null;
 }
 
@@ -66,6 +86,8 @@ export interface Scope3CategoryResponse {
   id: string;
   name: string;
   tooltip: string | null;
+  standardCategoryNumber: number | null;
+  mandatory: boolean;
   values: Scope3ValuePoint[];
 }
 
@@ -107,6 +129,10 @@ export const climateApi = {
   updateItem: (itemId: string, data: UpsertS1ItemRequest) =>
     apiClient.put<S1ItemResponse>(`/api/v1/ifrs/s1/items/${itemId}`, data),
   deleteItem: (itemId: string) => apiClient.delete<void>(`/api/v1/ifrs/s1/items/${itemId}`),
+
+  getS1Disclosure: () => apiClient.get<IfrsS1DisclosureResponse>('/api/v1/ifrs/s1/disclosure'),
+  updateS1Disclosure: (data: IfrsS1DisclosureResponse) =>
+    apiClient.put<IfrsS1DisclosureResponse>('/api/v1/ifrs/s1/disclosure', data),
 
   getS2: () => apiClient.get<IfrsS2Response>('/api/v1/ifrs/s2'),
   updateS2: (data: IfrsS2Response) => apiClient.put<IfrsS2Response>('/api/v1/ifrs/s2', data),

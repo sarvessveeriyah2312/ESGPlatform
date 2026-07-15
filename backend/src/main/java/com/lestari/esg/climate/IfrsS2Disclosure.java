@@ -15,6 +15,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 /**
  * One singleton row per company covering the ISSB 4 pillars: governance, strategy,
  * risk management, metrics & targets. No per-section audit requirement, so kept flat
@@ -61,6 +63,37 @@ public class IfrsS2Disclosure extends TenantOwnedEntity {
 
     @Column(name = "carbon_pricing", columnDefinition = "TEXT")
     private String carbonPricing;
+
+    // --- Cross-industry metrics beyond GHG emissions and carbon pricing narrative ---
+
+    @Column(name = "transition_risk_asset_pct", precision = 5, scale = 2)
+    private BigDecimal transitionRiskAssetPct;
+
+    @Column(name = "physical_risk_asset_pct", precision = 5, scale = 2)
+    private BigDecimal physicalRiskAssetPct;
+
+    @Column(name = "climate_opportunity_asset_pct", precision = 5, scale = 2)
+    private BigDecimal climateOpportunityAssetPct;
+
+    @Column(name = "climate_capex", precision = 18, scale = 2)
+    private BigDecimal climateCapex;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "climate_capex_currency", length = 10)
+    private Currency climateCapexCurrency;
+
+    @Column(name = "executive_remuneration_linked")
+    private Boolean executiveRemunerationLinked;
+
+    @Column(name = "executive_remuneration_description", columnDefinition = "TEXT")
+    private String executiveRemunerationDescription;
+
+    @Column(name = "carbon_price_value", precision = 10, scale = 2)
+    private BigDecimal carbonPriceValue;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "carbon_price_currency", length = 10)
+    private Currency carbonPriceCurrency;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "linked_target_id")

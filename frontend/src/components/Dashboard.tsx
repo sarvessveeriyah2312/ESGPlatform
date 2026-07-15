@@ -540,7 +540,7 @@ export default function Dashboard() {
             <div className="divide-y divide-gray-50">
               {sortedCompliancePolicies.map((p) => (
                 <button
-                  key={p.policyKey}
+                  key={p.id}
                   onClick={() => navigate('/governance')}
                   className="w-full flex items-center justify-between py-2 hover:bg-gray-50/50 transition-colors cursor-pointer text-left"
                 >

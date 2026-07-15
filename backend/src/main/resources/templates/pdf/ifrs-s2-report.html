@@ -199,17 +199,40 @@
         </tr>
     </table>
 
-    <h3 class="subsection-title">Strategy &amp; Risk Management</h3>
+    <h3 class="subsection-title">Strategy</h3>
     <p class="section-intro" th:text="'Physical Risks: ' + (${s2.physicalRisks} != null ? ${s2.physicalRisks} : 'Not disclosed.')">Physical risks</p>
     <p class="section-intro" th:text="'Transition Plan: ' + (${s2.transitionPlan} != null ? ${s2.transitionPlan} : 'Not disclosed.')">Transition plan</p>
     <p class="section-intro" th:text="'Climate Resilience: ' + (${s2.climateResilience} != null ? ${s2.climateResilience} : 'Not disclosed.')">Climate resilience</p>
+
+    <h3 class="subsection-title">Risk Management</h3>
     <p class="section-intro" th:text="'Risk Identification Process: ' + (${s2.identificationProcess} != null ? ${s2.identificationProcess} : 'Not disclosed.')">Identification process</p>
     <p class="section-intro" th:text="'Integration Level: ' + (${s2.integrationLevel} != null ? ${s2.integrationLevel} : 'Not set')">Integration level</p>
 
     <h3 class="subsection-title">Metrics &amp; Targets</h3>
     <p class="section-intro" th:text="'Tracked Metrics: ' + (${s2.trackedMetrics} != null ? ${s2.trackedMetrics} : 'Not disclosed.')">Tracked metrics</p>
     <p class="section-intro" th:text="'Reduction Targets: ' + (${s2.reductionTargets} != null ? ${s2.reductionTargets} : 'Not disclosed.')">Reduction targets</p>
-    <p class="section-intro" th:text="'Internal Carbon Pricing: ' + (${s2.carbonPricing} != null ? ${s2.carbonPricing} : 'Not disclosed.')">Carbon pricing</p>
+    <p class="section-intro" th:text="'Internal Carbon Price: ' + (${s2.carbonPriceValue} != null ? (${s2.carbonPriceValue} + ' ' + ${s2.carbonPriceCurrency} + ' per tCO2e') : 'Not disclosed')">Carbon price</p>
+    <p class="section-intro" th:text="'Carbon Pricing in Decision-Making: ' + (${s2.carbonPricing} != null ? ${s2.carbonPricing} : 'Not disclosed.')">Carbon pricing narrative</p>
+
+    <h4 class="subsection-title" style="font-size: 11px;">Cross-Industry Metrics</h4>
+    <table class="meta-table">
+        <tr>
+            <td class="label">% Assets Vulnerable — Transition Risk</td>
+            <td th:text="${s2.transitionRiskAssetPct != null ? s2.transitionRiskAssetPct + '%' : 'Not disclosed'}">%</td>
+            <td class="label">% Assets Vulnerable — Physical Risk</td>
+            <td th:text="${s2.physicalRiskAssetPct != null ? s2.physicalRiskAssetPct + '%' : 'Not disclosed'}">%</td>
+        </tr>
+        <tr>
+            <td class="label">% Assets Aligned with Climate Opportunities</td>
+            <td th:text="${s2.climateOpportunityAssetPct != null ? s2.climateOpportunityAssetPct + '%' : 'Not disclosed'}">%</td>
+            <td class="label">Capex/Financing Toward Climate</td>
+            <td th:text="${s2.climateCapex != null ? (s2.climateCapex + ' ' + s2.climateCapexCurrency) : 'Not disclosed'}">Capex</td>
+        </tr>
+        <tr>
+            <td class="label">Executive Remuneration Linked to Climate</td>
+            <td colspan="3" th:text="${s2.executiveRemunerationLinked != null and s2.executiveRemunerationLinked ? (s2.executiveRemunerationDescription != null ? s2.executiveRemunerationDescription : 'Yes') : 'Not linked'}">Remuneration</td>
+        </tr>
+    </table>
 
     <h3 class="subsection-title" th:text="'Greenhouse Gas Emissions &#8212; FY' + ${fiscalYear}">GHG Emissions</h3>
     <table class="data-table">

@@ -117,8 +117,27 @@ export default function GovernanceView() {
     refreshCompliancePolicies();
   }, []);
 
-  const handleMarkReviewed = (policyKey: string) => {
-    compliancePolicyApi.markReviewed(policyKey).then(refreshCompliancePolicies).catch((e) => console.error(e));
+  const handleMarkReviewed = (id: string) => {
+    compliancePolicyApi.markReviewed(id).then(refreshCompliancePolicies).catch((e) => console.error(e));
+  };
+
+  const [newPolicyName, setNewPolicyName] = useState('');
+  const [newPolicyReviewCycle, setNewPolicyReviewCycle] = useState('12');
+  const [confirmDeletePolicyId, setConfirmDeletePolicyId] = useState<string | null>(null);
+
+  const handleCreatePolicy = () => {
+    const name = newPolicyName.trim();
+    const reviewCycleMonths = parseInt(newPolicyReviewCycle, 10);
+    if (!name || isNaN(reviewCycleMonths) || reviewCycleMonths < 1) return;
+    compliancePolicyApi.create({ name, reviewCycleMonths }).then(() => {
+      setNewPolicyName('');
+      setNewPolicyReviewCycle('12');
+      refreshCompliancePolicies();
+    }).catch((e) => console.error(e));
+  };
+
+  const handleDeletePolicy = (id: string) => {
+    compliancePolicyApi.remove(id).then(refreshCompliancePolicies).catch((e) => console.error(e)).finally(() => setConfirmDeletePolicyId(null));
   };
 
   // Track save indicators for each row or input to give high-fidelity visual feedback
@@ -414,7 +433,7 @@ export default function GovernanceView() {
           {compliancePolicies.map((p) => {
             const style = COMPLIANCE_STATUS_STYLES[p.status];
             return (
-              <Card key={p.policyKey} className="bg-white border-navy-100 p-5 space-y-3">
+              <Card key={p.id} className="bg-white border-navy-100 p-5 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <h4 className="text-xs font-bold text-navy-950 leading-snug">{p.name}</h4>
                   <span className={`text-[9px] font-bold border rounded-md px-2 py-0.5 shrink-0 uppercase tracking-wider ${style.className}`}>
@@ -429,20 +448,81 @@ export default function GovernanceView() {
                   <div>Next due: {p.nextReviewDueAt ? new Date(p.nextReviewDueAt).toLocaleDateString() : '—'}</div>
                 </div>
                 {canManageCompliance && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleMarkReviewed(p.policyKey)}
-                    className="w-full text-[11px] font-bold"
-                    icon={<Check className="w-3.5 h-3.5" />}
-                  >
-                    Mark as Reviewed
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleMarkReviewed(p.id)}
+                      className="flex-1 text-[11px] font-bold"
+                      icon={<Check className="w-3.5 h-3.5" />}
+                    >
+                      Mark as Reviewed
+                    </Button>
+                    {!p.mandatory && (
+                      confirmDeletePolicyId === p.id ? (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePolicy(p.id)}
+                            className="px-2 py-1.5 text-[10px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg cursor-pointer"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeletePolicyId(null)}
+                            className="px-2 py-1.5 text-[10px] font-bold text-navy-500 hover:text-navy-700 rounded-lg cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeletePolicyId(p.id)}
+                          className="p-2 text-navy-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors shrink-0"
+                          title="Remove policy"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )
+                    )}
+                  </div>
                 )}
               </Card>
             );
           })}
         </div>
+
+        {canManageCompliance && (
+          <div className="bg-white border border-dashed border-navy-200 rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <input
+              type="text"
+              placeholder="Add a custom compliance policy (e.g. Data Protection Policy)..."
+              value={newPolicyName}
+              onChange={(e) => setNewPolicyName(e.target.value)}
+              className="flex-1 px-3 py-2 text-xs font-semibold text-navy-950 bg-navy-50/40 border border-navy-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none"
+            />
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                type="text"
+                placeholder="Review cycle (months)"
+                value={newPolicyReviewCycle}
+                onChange={(e) => setNewPolicyReviewCycle(e.target.value)}
+                className="w-40 px-3 py-2 text-xs font-semibold text-navy-950 bg-navy-50/40 border border-navy-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCreatePolicy}
+                disabled={!newPolicyName.trim()}
+                icon={<Plus className="w-4 h-4" />}
+              >
+                Add Policy
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* SECTION 2: MATTER OWNERSHIP TABLE */}

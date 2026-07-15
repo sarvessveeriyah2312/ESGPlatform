@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { referenceApi } from '../api/referenceApi';
 import { categoryFromBackend, FrontendMatterCategory } from '../api/mappers';
 
@@ -25,7 +25,7 @@ export function useApplicableMatters() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchMatters = useCallback(() => {
     let cancelled = false;
     setLoading(true);
     referenceApi
@@ -53,5 +53,7 @@ export function useApplicableMatters() {
     };
   }, []);
 
-  return { matters, loading, error };
+  useEffect(() => fetchMatters(), [fetchMatters]);
+
+  return { matters, loading, error, refetch: fetchMatters };
 }

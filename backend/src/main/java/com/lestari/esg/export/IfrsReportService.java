@@ -4,6 +4,7 @@ import com.lestari.esg.climate.EmissionsService;
 import com.lestari.esg.climate.IfrsService;
 import com.lestari.esg.climate.dto.BusinessSegmentResponse;
 import com.lestari.esg.climate.dto.EmissionsResponse;
+import com.lestari.esg.climate.dto.IfrsS1DisclosureResponse;
 import com.lestari.esg.climate.dto.IfrsS2Response;
 import com.lestari.esg.common.exceptions.NotFoundException;
 import com.lestari.esg.export.dto.LogExportRequest;
@@ -59,9 +60,11 @@ public class IfrsReportService {
         Company company = requireCompany();
         AppUser reviewer = currentReviewer();
         List<BusinessSegmentResponse> segments = ifrsService.listSegments();
+        IfrsS1DisclosureResponse s1Disclosure = ifrsService.getS1Disclosure();
 
         Context ctx = baseContext(company, fiscalYear, reviewer);
         ctx.setVariable("segments", segments);
+        ctx.setVariable("s1", s1Disclosure);
 
         byte[] pdf = pdfRenderer.render("ifrs-s1-report", ctx);
         exportService.logClientGeneratedExport(new LogExportRequest("IFRS S1 Report", ExportFormat.PDF, fiscalYear));

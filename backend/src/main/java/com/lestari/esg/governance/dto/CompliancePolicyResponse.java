@@ -5,8 +5,10 @@ import com.lestari.esg.governance.ComplianceStatus;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 public record CompliancePolicyResponse(
+        UUID id,
         String policyKey,
         String name,
         String description,
@@ -14,7 +16,10 @@ public record CompliancePolicyResponse(
         Instant lastReviewedAt,
         Instant nextReviewDueAt,
         String documentUrl,
-        ComplianceStatus status
+        ComplianceStatus status,
+        /** True for the Bursa/MACC-mandated defaults — these can't be deleted. Company-added
+         *  custom policies (policyKey == null) are always deletable. */
+        boolean mandatory
 ) {
     private static final long DUE_SOON_WINDOW_DAYS = 60;
     private static final long DAYS_PER_MONTH = 30;
@@ -40,8 +45,8 @@ public record CompliancePolicyResponse(
         }
 
         return new CompliancePolicyResponse(
-                p.getPolicyKey().name(), p.getName(), p.getDescription(), p.getReviewCycleMonths(),
-                lastReviewed, nextDue, p.getDocumentUrl(), status
+                p.getId(), p.getPolicyKey(), p.getName(), p.getDescription(), p.getReviewCycleMonths(),
+                lastReviewed, nextDue, p.getDocumentUrl(), status, p.getPolicyKey() != null
         );
     }
 }

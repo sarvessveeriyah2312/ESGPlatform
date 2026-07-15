@@ -3,26 +3,27 @@ package com.lestari.esg.governance;
 import com.lestari.esg.common.TenantOwnedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
 
+/** Policies are no longer capped at the 3 Bursa/MACC-mandated defaults (anti-corruption,
+ *  whistleblowing, board gender diversity) — companies can add their own beyond those, scoped to
+ *  whatever's material to them. {@code policyKey} is now just an optional tag identifying one of
+ *  the seeded defaults (null for a company-added custom policy); see
+ *  {@link CompliancePolicyService#DEFAULT_POLICIES}. */
 @Entity
-@Table(name = "compliance_policy", uniqueConstraints = @UniqueConstraint(columnNames = {"company_id", "policy_key"}))
+@Table(name = "compliance_policy")
 @Getter
 @Setter
 @NoArgsConstructor
 public class CompliancePolicy extends TenantOwnedEntity {
 
-    @Column(name = "policy_key", nullable = false, length = 30)
-    @Enumerated(EnumType.STRING)
-    private CompliancePolicyKey policyKey;
+    @Column(name = "policy_key", length = 30)
+    private String policyKey;
 
     @Column(nullable = false, length = 200)
     private String name;

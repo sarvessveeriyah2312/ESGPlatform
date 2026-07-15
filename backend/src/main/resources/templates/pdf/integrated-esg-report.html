@@ -300,7 +300,7 @@
 </table>
 
 <h2 class="section-title">1. Disclosure Completion Overview</h2>
-<p class="section-intro">Data integrity readiness across the three fundamental pillars of the Simplified ESG Disclosure Guide (SEDG).</p>
+<p class="section-intro" th:text="'Data integrity readiness across the three fundamental pillars of the ' + ${frameworkLabel} + '.'">Data integrity readiness across the three fundamental pillars.</p>
 <table class="stat-table">
     <tr>
         <td>
@@ -320,7 +320,7 @@
 
 <h2 class="section-title">2. Prioritized Materiality Matters</h2>
 <p class="section-intro" th:if="${latestAssessment != null}"
-   th:text="'Sourced from assessment &#8220;' + ${latestAssessment.name} + '&#8221; (' + ${latestAssessment.status} + '), scored on Business Impact and Stakeholder Influence (1&#8211;5 scale).'">
+   th:text="'Sourced from assessment &#8220;' + ${latestAssessment.name} + '&#8221; (' + ${latestAssessment.status} + '), scored on Financial Materiality and Impact Materiality (1&#8211;5 scale).'">
     Assessment summary
 </p>
 <table class="data-table" th:if="${!#lists.isEmpty(materialityScores)}">
@@ -328,8 +328,8 @@
         <tr>
             <th style="width: 30%;">Sustainability Matter</th>
             <th style="width: 18%;">Category</th>
+            <th class="col-score" style="width: 12%;">Financial</th>
             <th class="col-score" style="width: 12%;">Impact</th>
-            <th class="col-score" style="width: 12%;">Influence</th>
             <th>Priority</th>
         </tr>
     </thead>
@@ -413,9 +413,32 @@
 </table>
 <p th:if="${#lists.isEmpty(indicators)}" class="empty-note">No indicators logged yet.</p>
 
-<h2 class="section-title">5. IFRS S1 &#8212; Climate-Related Risks &amp; Opportunities</h2>
+<h2 class="section-title">5. IFRS S1 &#8212; General Sustainability-related Disclosures</h2>
 <div th:if="${climateUnlocked}">
-    <p class="section-intro">Financially material climate risks and opportunities identified per principal business segment.</p>
+    <div th:if="${s1 != null}">
+        <h3 class="subsection-title">Governance</h3>
+        <p class="section-intro" th:text="${s1.oversightDescription != null ? s1.oversightDescription : 'Not disclosed.'}">Oversight</p>
+        <table class="meta-table">
+            <tr>
+                <td class="label">Review Frequency</td>
+                <td th:text="${s1.reviewFrequency != null ? s1.reviewFrequency : 'Not set'}">Frequency</td>
+                <td class="label">Responsible Committee</td>
+                <td th:text="${s1.responsibleCommittee != null ? s1.responsibleCommittee : 'Not set'}">Committee</td>
+            </tr>
+        </table>
+
+        <h3 class="subsection-title">Risk Management</h3>
+        <p class="section-intro" th:text="'Identification & Prioritisation Process: ' + (${s1.identificationProcess} != null ? ${s1.identificationProcess} : 'Not disclosed.')">Identification process</p>
+        <p class="section-intro" th:text="'Integration Level: ' + (${s1.integrationLevel} != null ? ${s1.integrationLevel} : 'Not set')">Integration level</p>
+
+        <h3 class="subsection-title">Metrics, Targets &amp; Connected Information</h3>
+        <p class="section-intro" th:text="'Tracked Metrics: ' + (${s1.trackedMetrics} != null ? ${s1.trackedMetrics} : 'Not disclosed.')">Tracked metrics</p>
+        <p class="section-intro" th:text="'Targets Summary: ' + (${s1.targetsSummary} != null ? ${s1.targetsSummary} : 'Not disclosed.')">Targets summary</p>
+        <p class="section-intro" th:text="'Connected Information: ' + (${s1.connectedInformation} != null ? ${s1.connectedInformation} : 'Not disclosed.')">Connected information</p>
+    </div>
+
+    <h3 class="subsection-title">Strategy &#8212; Risks &amp; Opportunities by Business Segment</h3>
+    <p class="section-intro">Financially material sustainability risks and opportunities identified per principal business segment.</p>
     <div th:each="segment : ${segments}">
         <h3 class="subsection-title" th:text="${segment.name}">Segment</h3>
         <table class="data-table" th:if="${!#lists.isEmpty(segment.items)}">
@@ -460,17 +483,40 @@
         </tr>
     </table>
 
-    <h3 class="subsection-title">Strategy &amp; Risk Management</h3>
+    <h3 class="subsection-title">Strategy</h3>
     <p class="section-intro" th:text="'Physical Risks: ' + (${s2.physicalRisks} != null ? ${s2.physicalRisks} : 'Not disclosed.')">Physical risks</p>
     <p class="section-intro" th:text="'Transition Plan: ' + (${s2.transitionPlan} != null ? ${s2.transitionPlan} : 'Not disclosed.')">Transition plan</p>
     <p class="section-intro" th:text="'Climate Resilience: ' + (${s2.climateResilience} != null ? ${s2.climateResilience} : 'Not disclosed.')">Climate resilience</p>
+
+    <h3 class="subsection-title">Risk Management</h3>
     <p class="section-intro" th:text="'Risk Identification Process: ' + (${s2.identificationProcess} != null ? ${s2.identificationProcess} : 'Not disclosed.')">Identification process</p>
     <p class="section-intro" th:text="'Integration Level: ' + (${s2.integrationLevel} != null ? ${s2.integrationLevel} : 'Not set')">Integration level</p>
 
     <h3 class="subsection-title">Metrics &amp; Targets</h3>
     <p class="section-intro" th:text="'Tracked Metrics: ' + (${s2.trackedMetrics} != null ? ${s2.trackedMetrics} : 'Not disclosed.')">Tracked metrics</p>
     <p class="section-intro" th:text="'Reduction Targets: ' + (${s2.reductionTargets} != null ? ${s2.reductionTargets} : 'Not disclosed.')">Reduction targets</p>
-    <p class="section-intro" th:text="'Internal Carbon Pricing: ' + (${s2.carbonPricing} != null ? ${s2.carbonPricing} : 'Not disclosed.')">Carbon pricing</p>
+    <p class="section-intro" th:text="'Internal Carbon Price: ' + (${s2.carbonPriceValue} != null ? (${s2.carbonPriceValue} + ' ' + ${s2.carbonPriceCurrency} + ' per tCO2e') : 'Not disclosed')">Carbon price</p>
+    <p class="section-intro" th:text="'Carbon Pricing in Decision-Making: ' + (${s2.carbonPricing} != null ? ${s2.carbonPricing} : 'Not disclosed.')">Carbon pricing narrative</p>
+
+    <h4 class="subsection-title" style="font-size: 11px;">Cross-Industry Metrics</h4>
+    <table class="meta-table">
+        <tr>
+            <td class="label">% Assets Vulnerable — Transition Risk</td>
+            <td th:text="${s2.transitionRiskAssetPct != null ? s2.transitionRiskAssetPct + '%' : 'Not disclosed'}">%</td>
+            <td class="label">% Assets Vulnerable — Physical Risk</td>
+            <td th:text="${s2.physicalRiskAssetPct != null ? s2.physicalRiskAssetPct + '%' : 'Not disclosed'}">%</td>
+        </tr>
+        <tr>
+            <td class="label">% Assets Aligned with Climate Opportunities</td>
+            <td th:text="${s2.climateOpportunityAssetPct != null ? s2.climateOpportunityAssetPct + '%' : 'Not disclosed'}">%</td>
+            <td class="label">Capex/Financing Toward Climate</td>
+            <td th:text="${s2.climateCapex != null ? (s2.climateCapex + ' ' + s2.climateCapexCurrency) : 'Not disclosed'}">Capex</td>
+        </tr>
+        <tr>
+            <td class="label">Executive Remuneration Linked to Climate</td>
+            <td colspan="3" th:text="${s2.executiveRemunerationLinked != null and s2.executiveRemunerationLinked ? (s2.executiveRemunerationDescription != null ? s2.executiveRemunerationDescription : 'Yes') : 'Not linked'}">Remuneration</td>
+        </tr>
+    </table>
 
     <h3 class="subsection-title" th:text="'Greenhouse Gas Emissions &#8212; FY' + ${fiscalYear}">GHG Emissions</h3>
     <table class="data-table">
@@ -514,10 +560,45 @@
 <p th:unless="${climateUnlocked}" class="empty-note">IFRS S1/S2 climate disclosures require the Issuer-Ready plan &#8212; not included in this disclosure cycle.</p>
 
 <h2 class="section-title">7. Assurance &amp; Verification</h2>
-<p class="section-intro">This document is prepared via the Lestari ESG compliance platform and is ready for corporate sign-off.</p>
+<p class="section-intro">This document is prepared via the Lestari ESG compliance platform.</p>
+
+<table class="meta-table" th:if="${signOff != null}">
+    <tr>
+        <td class="label">Sign-Off Status</td>
+        <td>
+            <span th:if="${signOff.status().name() == 'SIGNED'}" class="status-badge status-current">Signed</span>
+            <span th:if="${signOff.status().name() == 'REVOKED'}" class="status-badge status-overdue">Revoked</span>
+        </td>
+        <td class="label">Assurance Level</td>
+        <td th:switch="${signOff.assuranceLevel() != null ? signOff.assuranceLevel().name() : 'NONE'}">
+            <span th:case="'INTERNAL_REVIEW'">Internal Review</span>
+            <span th:case="'EXTERNAL_LIMITED'">External Limited Assurance</span>
+            <span th:case="'EXTERNAL_REASONABLE'">External Reasonable Assurance</span>
+            <span th:case="*">Not set</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="label">Signed By</td>
+        <td th:text="${signOff.signerName() != null ? signOff.signerName() + (signOff.signerTitle() != null ? ' (' + signOff.signerTitle() + ')' : '') : 'Not yet signed'}">Signer</td>
+        <td class="label">Signed On</td>
+        <td th:text="${signOff.signedAt() != null ? #temporals.format(signOff.signedAt(), 'dd MMMM yyyy') : 'N/A'}">Date</td>
+    </tr>
+    <tr>
+        <td class="label">External Assurer</td>
+        <td th:text="${signOff.externalAssurerName() != null ? signOff.externalAssurerName() : 'Not disclosed'}">Assurer</td>
+        <td class="label">Standard Referenced</td>
+        <td th:text="${signOff.standardReferenced() != null ? signOff.standardReferenced() : 'Not disclosed'}">Standard</td>
+    </tr>
+    <tr th:if="${signOff.nextExternalAssuranceDeadline() != null}">
+        <td class="label">Mandatory External Assurance Due</td>
+        <td colspan="3" th:text="${#temporals.format(signOff.nextExternalAssuranceDeadline(), 'dd MMMM yyyy')} + ' — Bursa Malaysia phased requirement for reasonable assurance over Scope 1/2 emissions.'">Deadline</td>
+    </tr>
+</table>
+<p th:if="${signOff == null}" class="empty-note">No sign-off record exists for FY<span th:text="${fiscalYear}">2026</span> yet &#8212; this disclosure has not been through corporate sign-off.</p>
+
 <div class="assurance-block">
     <div>Verification Checksum: <span class="checksum" th:text="'LESTARI-SHA256-' + ${checksum}">LESTARI-SHA256-XXXXXXXXXXXX</span></div>
-    <div class="status-line">Status: Draft &#8212; Ready for Corporate Sign-Off (see Export History for sign-off record)</div>
+    <div class="status-line" th:text="${signOff != null and signOff.status().name() == 'SIGNED'} ? 'Status: Signed and verified &#8212; see Export History for the full sign-off audit trail.' : 'Status: Draft &#8212; Ready for Corporate Sign-Off (see Export History for sign-off record)'">Status</div>
 </div>
 
 <div class="footer-note">

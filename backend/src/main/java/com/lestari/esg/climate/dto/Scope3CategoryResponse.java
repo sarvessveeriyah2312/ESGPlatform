@@ -7,6 +7,8 @@ public record Scope3CategoryResponse(
         UUID id,
         String name,
         String tooltip,
+        Integer standardCategoryNumber,
+        boolean mandatory,
         List<Scope3ValuePointDto> values
 ) {
 }

@@ -1,7 +1,9 @@
 package com.lestari.esg.governance;
 
+import com.lestari.esg.common.exceptions.ConflictException;
 import com.lestari.esg.common.exceptions.NotFoundException;
 import com.lestari.esg.governance.dto.CompliancePolicyResponse;
+import com.lestari.esg.governance.dto.CreateCompliancePolicyRequest;
 import com.lestari.esg.security.CurrentUserProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,18 +16,21 @@ import java.util.UUID;
 @Service
 public class CompliancePolicyService {
 
-    private static final Map<CompliancePolicyKey, Object[]> DEFAULT_POLICIES = Map.of(
-            CompliancePolicyKey.ANTI_CORRUPTION, new Object[]{
+    /** Bursa/MACC-mandated policies every listed issuer must maintain — seeded once per company
+     *  and protected from deletion (see {@link #deletePolicy}). Companies can add further custom
+     *  policies beyond these via {@link #createPolicy}, scoped to whatever's material to them. */
+    private static final Map<String, Object[]> DEFAULT_POLICIES = Map.of(
+            "ANTI_CORRUPTION", new Object[]{
                     "Anti-Corruption Policy (Section 17A MACC Act)",
                     "Section 17A of the Malaysian Anti-Corruption Commission Act 2009 requires listed issuers to establish and maintain adequate anti-corruption procedures, reviewed at least once every 3 years and published on the company website.",
                     36
             },
-            CompliancePolicyKey.WHISTLEBLOWING, new Object[]{
+            "WHISTLEBLOWING", new Object[]{
                     "Whistleblowing Policy & Procedures",
                     "Bursa Malaysia Listing Requirements mandate whistle-blowing policies and procedures be established, maintained, periodically reviewed (at least every 3 years), and published on the company website.",
                     36
             },
-            CompliancePolicyKey.BOARD_GENDER_DIVERSITY, new Object[]{
+            "BOARD_GENDER_DIVERSITY", new Object[]{
                     "Board Gender Diversity Policy (≥30% women directors)",
                     "Bursa Malaysia requires listed issuer boards to have at least 30% women directors, with the board's gender diversity policy disclosed in the annual report.",
                     12
@@ -60,10 +65,33 @@ public class CompliancePolicyService {
     }
 
     @Transactional
-    public CompliancePolicyResponse markReviewed(CompliancePolicyKey key, String documentUrl) {
+    public CompliancePolicyResponse createPolicy(CreateCompliancePolicyRequest request) {
         UUID companyId = currentUserProvider.requireCompanyId();
-        CompliancePolicy policy = repository.findByCompanyIdAndPolicyKey(companyId, key)
-                .orElseThrow(() -> new NotFoundException("Unknown compliance policy: " + key));
+        CompliancePolicy policy = new CompliancePolicy();
+        policy.setCompanyId(companyId);
+        policy.setPolicyKey(null);
+        policy.setName(request.name());
+        policy.setDescription(request.description());
+        policy.setReviewCycleMonths(request.reviewCycleMonths());
+        return CompliancePolicyResponse.from(repository.save(policy));
+    }
+
+    @Transactional
+    public void deletePolicy(UUID id) {
+        UUID companyId = currentUserProvider.requireCompanyId();
+        CompliancePolicy policy = repository.findByIdAndCompanyId(id, companyId)
+                .orElseThrow(() -> new NotFoundException("Compliance policy not found"));
+        if (policy.getPolicyKey() != null) {
+            throw new ConflictException("This policy is a Bursa/MACC-mandated default and cannot be removed");
+        }
+        repository.delete(policy);
+    }
+
+    @Transactional
+    public CompliancePolicyResponse markReviewed(UUID id, String documentUrl) {
+        UUID companyId = currentUserProvider.requireCompanyId();
+        CompliancePolicy policy = repository.findByIdAndCompanyId(id, companyId)
+                .orElseThrow(() -> new NotFoundException("Compliance policy not found"));
         policy.setLastReviewedAt(Instant.now());
         if (documentUrl != null && !documentUrl.isBlank()) {
             policy.setDocumentUrl(documentUrl);

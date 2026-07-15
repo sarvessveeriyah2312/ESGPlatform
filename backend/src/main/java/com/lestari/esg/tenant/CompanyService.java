@@ -20,6 +20,7 @@ import com.lestari.esg.tenant.dto.UpdateUserRoleRequest;
 import com.lestari.esg.user.AppUser;
 import com.lestari.esg.user.AppUserRepository;
 import com.lestari.esg.user.Role;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -160,7 +161,20 @@ public class CompanyService {
             throw new ConflictException("Cannot delete a company with users still assigned to it — "
                     + "reassign or remove them first (this also blocks deleting the company you're currently switched into)");
         }
-        companyRepository.delete(target);
+        // Since V46, every other company_id foreign key cascades on delete — removing a subsidiary
+        // permanently deletes all of its indicators, materiality assessments, governance records,
+        // emissions data, sign-offs, exports, invoices, etc. along with it. This is deliberate and
+        // irreversible; the frontend requires typing the company's exact name to confirm before
+        // calling this endpoint. The catch below is a defensive fallback only — it should not
+        // normally trigger, but protects against a future company-scoped table being added without
+        // an explicit ON DELETE action.
+        try {
+            companyRepository.delete(target);
+            companyRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Cannot delete " + target.getName() + " — it still has data referencing it "
+                    + "that isn't set up to cascade. Please contact support.");
+        }
     }
 
     private static final java.util.Set<Role> ASSIGNABLE_ROLES = java.util.Set.of(Role.COMPANY_ADMIN, Role.COMPANY_CONTRIBUTOR, Role.CONSULTANT);
