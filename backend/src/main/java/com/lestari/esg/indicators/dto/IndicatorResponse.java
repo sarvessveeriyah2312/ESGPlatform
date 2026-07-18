@@ -1,5 +1,6 @@
 package com.lestari.esg.indicators.dto;
 
+import com.lestari.esg.reference.AggregationRule;
 import com.lestari.esg.reference.SustainabilityMatterCategory;
 import com.lestari.esg.reference.TargetDirection;
 
@@ -17,7 +18,9 @@ public record IndicatorResponse(
         BigDecimal effectiveTarget,
         TargetDirection effectiveTargetDirection,
         boolean enabled,
+        AggregationRule aggregationRule,
         List<IndicatorValuePointDto> values,
+        List<IndicatorMonthlyValueDto> monthlyValues,
         List<AuditEntryDto> history
 ) {
 }

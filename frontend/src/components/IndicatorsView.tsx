@@ -34,7 +34,7 @@ import { canAccess, MANAGEMENT_ROLES } from '../permissions';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { useApplicableMatters } from '../hooks/useApplicableMatters';
-import { indicatorsApi, IndicatorResponse, IndicatorValueStatus } from '../api/indicatorsApi';
+import { indicatorsApi, IndicatorResponse, IndicatorValueStatus, AggregationRule } from '../api/indicatorsApi';
 import { companyApi } from '../api/companyApi';
 import { TenantUserResponse } from '../api/tenantAdminApi';
 import { exportApi, downloadCsv } from '../api/exportApi';
@@ -43,6 +43,7 @@ import { categoryFromBackend } from '../api/mappers';
 // TypeScript Types
 export interface AuditTrailEntry {
   id: string;
+  month: number | null;
   value: number;
   enteredBy: string;
   timestamp: string;
@@ -56,6 +57,8 @@ export interface IndicatorValueCell {
   status: IndicatorValueStatus;
   approvedByName: string | null;
   approvedAt: string | null;
+  isComputed: boolean;
+  monthsReported: number;
 }
 
 export interface Indicator {
@@ -66,21 +69,33 @@ export interface Indicator {
   category: 'Environmental' | 'Social' | 'Governance';
   isSectorSpecific?: boolean;
   sectorName?: string;
+  aggregationRule: AggregationRule;
   values: Record<string, IndicatorValueCell | null>; // year e.g. "FY2023" -> cell
+  monthlyByYear: Record<string, (number | null)[]>; // year -> 12-length array, index 0 = Jan
   target: number | null; // effective target value (tenant override or reference default)
   targetDirection: 'up' | 'down'; // 'down' means lower is better (e.g. emissions), 'up' means higher is better
   history: AuditTrailEntry[];
 }
 
 const years = ['FY2023', 'FY2024', 'FY2025', 'FY2026'];
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function toFrontendIndicator(r: IndicatorResponse): Indicator {
   const values: Record<string, IndicatorValueCell | null> = {};
   years.forEach((y) => { values[y] = null; });
   r.values.forEach((v) => {
     values[`FY${v.fiscalYear}`] = v.value !== null
-      ? { value: v.value, status: v.status, approvedByName: v.approvedByName, approvedAt: v.approvedAt }
+      ? { value: v.value, status: v.status, approvedByName: v.approvedByName, approvedAt: v.approvedAt, isComputed: v.isComputed, monthsReported: v.monthsReported }
       : null;
+  });
+
+  const monthlyByYear: Record<string, (number | null)[]> = {};
+  years.forEach((y) => { monthlyByYear[y] = new Array(12).fill(null); });
+  r.monthlyValues.forEach((m) => {
+    const yearKey = `FY${m.fiscalYear}`;
+    if (monthlyByYear[yearKey]) {
+      monthlyByYear[yearKey][m.month - 1] = m.value;
+    }
   });
 
   return {
@@ -91,11 +106,14 @@ function toFrontendIndicator(r: IndicatorResponse): Indicator {
     category: categoryFromBackend(r.category),
     isSectorSpecific: r.sectorSpecific,
     sectorName: r.sectorCode ?? undefined,
+    aggregationRule: r.aggregationRule,
     values,
+    monthlyByYear,
     target: r.effectiveTarget,
     targetDirection: r.effectiveTargetDirection === 'UP' ? 'up' : 'down',
     history: r.history.map((h) => ({
       id: h.id,
+      month: h.month,
       value: h.value,
       enteredBy: h.enteredBy,
       timestamp: new Date(h.enteredAt).toLocaleString(),
@@ -108,6 +126,15 @@ function toFrontendIndicator(r: IndicatorResponse): Indicator {
 
 function fiscalYearNumber(yearKey: string): number {
   return parseInt(yearKey.replace('FY', ''), 10);
+}
+
+type EvidencePreviewKind = 'image' | 'pdf' | 'unsupported';
+
+function classifyEvidenceFile(filename: string): EvidencePreviewKind {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') return 'image';
+  if (ext === 'pdf') return 'pdf';
+  return 'unsupported';
 }
 
 export default function IndicatorsView() {
@@ -126,6 +153,7 @@ export default function IndicatorsView() {
   const [newAuditVal, setNewAuditVal] = useState<string>('');
   const [newAuditComment, setNewAuditComment] = useState<string>('');
   const [newAuditUser, setNewAuditUser] = useState<string>('');
+  const [newAuditMonth, setNewAuditMonth] = useState<number>(1);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isSavingAudit, setIsSavingAudit] = useState<boolean>(false);
 
@@ -143,6 +171,12 @@ export default function IndicatorsView() {
 
   // Real company users, for the "Authorizing Officer" picker (used to be a hardcoded fake list)
   const [companyUsers, setCompanyUsers] = useState<TenantUserResponse[]>([]);
+
+  // Evidence document preview modal state
+  const [previewEntry, setPreviewEntry] = useState<AuditTrailEntry | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewKind, setPreviewKind] = useState<EvidencePreviewKind | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   const refreshIndicators = () => {
     indicatorsApi.list().then((data) => setIndicators(data.map(toFrontendIndicator)));
@@ -292,6 +326,22 @@ export default function IndicatorsView() {
   };
 
   // --- AUDIT TRAIL SIDEBAR PANEL OPERATIONS ---
+  // `year` is the specific column the user clicked (if any) — the panel and Focus Year selector
+  // must both follow it, rather than silently continuing to reflect whatever year was previously
+  // focused (which looked like the Focus Year selector had no effect on drill-down).
+  const openHistoryPanel = (indicator: Indicator, year?: string) => {
+    const effectiveYear = year ?? focusYear;
+    if (year && year !== focusYear) {
+      setFocusYear(year);
+    }
+    setSelectedIndicatorForHistory(indicator);
+    if (indicator.aggregationRule !== 'DIRECT_ANNUAL') {
+      const monthly = indicator.monthlyByYear[effectiveYear] ?? [];
+      const firstOpenMonth = monthly.findIndex((v) => v === null);
+      setNewAuditMonth(firstOpenMonth >= 0 ? firstOpenMonth + 1 : 1);
+    }
+  };
+
   const handleAddManualAuditLog = () => {
     if (!selectedIndicatorForHistory) return;
     const num = Number(newAuditVal.trim());
@@ -300,13 +350,18 @@ export default function IndicatorsView() {
       return;
     }
 
+    const isMonthly = selectedIndicatorForHistory.aggregationRule !== 'DIRECT_ANNUAL';
     const baseComment = newAuditComment.trim() || 'Manual adjustment override';
     const comment = `${baseComment} | Authorizing officer: ${newAuditUser}`;
     const indicatorId = selectedIndicatorForHistory.id;
     const fileToUpload = pendingFile;
 
     setIsSavingAudit(true);
-    indicatorsApi.setValue(indicatorId, fiscalYearNumber(focusYear), num, undefined, comment)
+    const request = isMonthly
+      ? indicatorsApi.setMonthlyValue(indicatorId, fiscalYearNumber(focusYear), newAuditMonth, num, undefined, comment)
+      : indicatorsApi.setValue(indicatorId, fiscalYearNumber(focusYear), num, undefined, comment);
+
+    request
       .then((updated) => {
         const newEntryId = updated.history[0]?.id;
         if (fileToUpload && newEntryId) {
@@ -318,6 +373,11 @@ export default function IndicatorsView() {
         const converted = toFrontendIndicator(finalIndicator);
         setIndicators(prev => prev.map(ind => (ind.id === finalIndicator.id ? converted : ind)));
         setSelectedIndicatorForHistory(converted);
+        if (isMonthly) {
+          const monthly = converted.monthlyByYear[focusYear] ?? [];
+          const nextOpenMonth = monthly.findIndex((v) => v === null);
+          setNewAuditMonth(nextOpenMonth >= 0 ? nextOpenMonth + 1 : 1);
+        }
       })
       .catch(() => alert('Failed to save — check your value and evidence file, then try again.'))
       .finally(() => setIsSavingAudit(false));
@@ -337,17 +397,39 @@ export default function IndicatorsView() {
     });
   };
 
-  const handleDownloadEvidence = (auditEntryId: string, filename: string) => {
-    indicatorsApi.downloadEvidence(auditEntryId).then((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
+  // --- EVIDENCE DOCUMENT PREVIEW MODAL ---
+  const handlePreviewEvidence = (entry: AuditTrailEntry) => {
+    if (!entry.sourceDocName) return;
+    setPreviewEntry(entry);
+    setPreviewKind(classifyEvidenceFile(entry.sourceDocName));
+    setIsPreviewLoading(true);
+    indicatorsApi.downloadEvidence(entry.id)
+      .then((blob) => {
+        setPreviewUrl(URL.createObjectURL(blob));
+      })
+      .catch(() => {
+        alert('Failed to load the evidence file preview.');
+        setPreviewEntry(null);
+        setPreviewKind(null);
+      })
+      .finally(() => setIsPreviewLoading(false));
+  };
+
+  const handleClosePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewEntry(null);
+    setPreviewKind(null);
+  };
+
+  const handleDownloadFromPreview = () => {
+    if (!previewUrl || !previewEntry?.sourceDocName) return;
+    const a = document.createElement('a');
+    a.href = previewUrl;
+    a.download = previewEntry.sourceDocName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   // --- CSV DATA EXPORT (backed by the real /exports/csv endpoint) ---
@@ -674,7 +756,32 @@ export default function IndicatorsView() {
                                       isFocus ? 'bg-primary-50/10' : ''
                                     }`}
                                   >
-                                    {isEditing ? (
+                                    {indicator.aggregationRule !== 'DIRECT_ANNUAL' ? (
+                                      <button
+                                        onClick={() => openHistoryPanel(indicator, y)}
+                                        className="w-full py-2 text-center rounded-xl cursor-pointer transition-all hover:bg-navy-50"
+                                        title="View monthly entries"
+                                      >
+                                        {cell !== null ? (
+                                          <div className="flex flex-col items-center gap-1">
+                                            <span className="font-bold font-mono text-navy-900">{cell.value}</span>
+                                            <span
+                                              title={cell.status === 'APPROVED' && cell.approvedByName ? `Approved by ${cell.approvedByName}` : undefined}
+                                              className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                                                cell.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                                              }`}
+                                            >
+                                              <span>{cell.status === 'APPROVED' ? 'Approved' : 'Draft'}</span>
+                                            </span>
+                                            <span className="text-[8px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded font-mono">
+                                              Σ {cell.monthsReported}/12 mo
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <span className="text-[10px] text-navy-400 font-mono font-bold">Not started</span>
+                                        )}
+                                      </button>
+                                    ) : isEditing ? (
                                       <div className="flex flex-col items-center space-y-1 max-w-[100px] mx-auto">
                                         <input
                                           type="text"
@@ -803,7 +910,7 @@ export default function IndicatorsView() {
                               <td className="px-6 py-4.5 text-center">
                                 <button
                                   type="button"
-                                  onClick={() => setSelectedIndicatorForHistory(indicator)}
+                                  onClick={() => openHistoryPanel(indicator)}
                                   className="p-1.5 text-navy-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg cursor-pointer transition-colors"
                                   title="Open audit logs"
                                 >
@@ -889,6 +996,30 @@ export default function IndicatorsView() {
                   </div>
                 </div>
 
+                {selectedIndicatorForHistory.aggregationRule !== 'DIRECT_ANNUAL' && (
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-bold text-navy-400 uppercase tracking-widest block font-mono">
+                      Monthly Breakdown ({focusYear})
+                    </h4>
+                    <div className="grid grid-cols-4 gap-2">
+                      {MONTH_LABELS.map((label, idx) => {
+                        const val = selectedIndicatorForHistory.monthlyByYear[focusYear]?.[idx] ?? null;
+                        return (
+                          <div
+                            key={label}
+                            className={`p-2 rounded-xl border text-center ${
+                              val !== null ? 'bg-primary-50/40 border-primary-100' : 'bg-navy-50/40 border-navy-100 border-dashed'
+                            }`}
+                          >
+                            <span className="text-[9px] font-bold text-navy-400 uppercase block">{label}</span>
+                            <span className="text-xs font-black text-navy-900 font-mono">{val !== null ? val : '—'}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   <h4 className="text-[10px] font-bold text-navy-400 uppercase tracking-widest block font-mono">
                     Historical Audit Logs
@@ -905,7 +1036,7 @@ export default function IndicatorsView() {
                         <div className="space-y-1 text-xs">
                           <div className="flex items-center justify-between">
                             <span className="font-extrabold text-navy-900 font-mono text-[11px]">
-                              Value: {entry.value} {selectedIndicatorForHistory.unit}
+                              {entry.month ? `${MONTH_LABELS[entry.month - 1]}: ` : 'Value: '}{entry.value} {selectedIndicatorForHistory.unit}
                             </span>
                             <span className="text-[10px] text-navy-400 font-mono font-bold">
                               {entry.timestamp}
@@ -923,9 +1054,9 @@ export default function IndicatorsView() {
                               entry.hasEvidenceFile ? (
                                 <button
                                   type="button"
-                                  onClick={() => handleDownloadEvidence(entry.id, entry.sourceDocName!)}
+                                  onClick={() => handlePreviewEvidence(entry)}
                                   className="inline-flex items-center space-x-1 text-primary-600 font-extrabold hover:underline cursor-pointer"
-                                  title="Download evidence file"
+                                  title="Preview evidence file"
                                 >
                                   <FileText className="w-3 h-3" />
                                   <span className="truncate max-w-[120px]">{entry.sourceDocName}</span>
@@ -952,12 +1083,29 @@ export default function IndicatorsView() {
                 <div className="border-t border-navy-100 pt-6 space-y-4">
                   <h4 className="text-xs font-bold text-navy-950 uppercase tracking-wider flex items-center space-x-1">
                     <Sparkles className="w-4 h-4 text-primary-500" />
-                    <span>Post Audited Adjustment</span>
+                    <span>{selectedIndicatorForHistory.aggregationRule !== 'DIRECT_ANNUAL' ? 'Log Monthly Entry' : 'Post Audited Adjustment'}</span>
                   </h4>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className={`grid gap-4 ${selectedIndicatorForHistory.aggregationRule !== 'DIRECT_ANNUAL' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                    {selectedIndicatorForHistory.aggregationRule !== 'DIRECT_ANNUAL' && (
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Month</label>
+                        <select
+                          value={newAuditMonth}
+                          onChange={(e) => setNewAuditMonth(Number(e.target.value))}
+                          className="w-full px-2 py-2 text-xs font-semibold text-navy-900 bg-navy-50/50 border border-navy-100 rounded-xl focus:bg-white outline-none"
+                        >
+                          {MONTH_LABELS.map((label, idx) => (
+                            <option key={label} value={idx + 1}>{label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Corrected Value ({selectedIndicatorForHistory.unit})</label>
+                      <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">
+                        {selectedIndicatorForHistory.aggregationRule !== 'DIRECT_ANNUAL' ? `Value (${selectedIndicatorForHistory.unit})` : `Corrected Value (${selectedIndicatorForHistory.unit})`}
+                      </label>
                       <input
                         type="text"
                         value={newAuditVal}
@@ -1040,6 +1188,70 @@ export default function IndicatorsView() {
                 </Button>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EVIDENCE DOCUMENT PREVIEW MODAL */}
+      {previewEntry && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-navy-950/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-navy-100 bg-navy-50/50">
+              <div className="flex items-center space-x-2 min-w-0">
+                <FileText className="w-5 h-5 text-primary-600 shrink-0" />
+                <h3 className="text-sm font-bold text-navy-900 truncate">{previewEntry.sourceDocName}</h3>
+              </div>
+              <button
+                onClick={handleClosePreview}
+                className="p-1.5 text-navy-400 hover:text-navy-700 hover:bg-navy-100 rounded-lg transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 bg-navy-100/30 p-4 flex items-center justify-center overflow-auto">
+              {isPreviewLoading ? (
+                <div className="flex flex-col items-center space-y-2 text-navy-400">
+                  <div className="w-6 h-6 border-2 border-navy-200 border-t-primary-500 rounded-full animate-spin" />
+                  <span className="text-xs font-semibold">Loading preview…</span>
+                </div>
+              ) : previewKind === 'pdf' && previewUrl ? (
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full rounded shadow-sm border border-navy-200 bg-white"
+                  title="Evidence document preview"
+                />
+              ) : previewKind === 'image' && previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt={previewEntry.sourceDocName}
+                  className="max-w-full max-h-full rounded shadow-sm border border-navy-200 bg-white object-contain"
+                />
+              ) : (
+                <div className="flex flex-col items-center space-y-3 text-center px-6">
+                  <FileText className="w-10 h-10 text-navy-300" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-navy-700">No inline preview available for this file type</p>
+                    <p className="text-[11px] text-navy-400">Download the document below to view it.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-navy-100 bg-white flex justify-end space-x-3 shrink-0">
+              <Button variant="secondary" onClick={handleClosePreview} className="font-bold">
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleDownloadFromPreview}
+                disabled={!previewUrl}
+                icon={<Download className="w-4 h-4" />}
+                className="font-bold"
+              >
+                Download
+              </Button>
             </div>
           </div>
         </div>

@@ -44,4 +44,8 @@ public class IndicatorValue extends TenantOwnedEntity {
 
     @Column(name = "approved_at")
     private Instant approvedAt;
+
+    /** True when this value was rolled up from IndicatorMonthlyValue rows rather than hand-entered. */
+    @Column(name = "is_computed", nullable = false)
+    private Boolean computed = false;
 }

@@ -10,6 +10,8 @@ public record IndicatorValuePointDto(
         BigDecimal value,
         IndicatorValueStatus status,
         String approvedByName,
-        Instant approvedAt
+        Instant approvedAt,
+        boolean isComputed,
+        int monthsReported
 ) {
 }

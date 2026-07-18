@@ -4,7 +4,10 @@ import com.lestari.esg.indicators.dto.IndicatorResponse;
 import com.lestari.esg.indicators.dto.SetIndicatorTargetRequest;
 import com.lestari.esg.indicators.dto.SetIndicatorValueRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,6 +19,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/indicators")
+@Validated
 public class IndicatorController {
 
     private final IndicatorService indicatorService;
@@ -39,6 +43,14 @@ public class IndicatorController {
                                        @PathVariable int fiscalYear,
                                        @Valid @RequestBody SetIndicatorValueRequest request) {
         return indicatorService.setValue(indicatorId, fiscalYear, request);
+    }
+
+    @PatchMapping("/{indicatorId}/monthly/{fiscalYear}/{month}")
+    public IndicatorResponse setMonthlyValue(@PathVariable String indicatorId,
+                                              @PathVariable int fiscalYear,
+                                              @PathVariable @Min(1) @Max(12) int month,
+                                              @Valid @RequestBody SetIndicatorValueRequest request) {
+        return indicatorService.setMonthlyValue(indicatorId, fiscalYear, month, request);
     }
 
     @PatchMapping("/{indicatorId}/target")

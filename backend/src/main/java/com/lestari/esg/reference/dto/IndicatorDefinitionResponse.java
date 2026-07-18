@@ -1,5 +1,6 @@
 package com.lestari.esg.reference.dto;
 
+import com.lestari.esg.reference.AggregationRule;
 import com.lestari.esg.reference.IndicatorDefinition;
 import com.lestari.esg.reference.SustainabilityMatterCategory;
 import com.lestari.esg.reference.TargetDirection;
@@ -15,7 +16,8 @@ public record IndicatorDefinitionResponse(
         boolean sectorSpecific,
         String sectorCode,
         BigDecimal defaultTarget,
-        TargetDirection defaultTargetDirection
+        TargetDirection defaultTargetDirection,
+        AggregationRule aggregationRule
 ) {
     public static IndicatorDefinitionResponse from(IndicatorDefinition d) {
         return new IndicatorDefinitionResponse(
@@ -27,7 +29,8 @@ public record IndicatorDefinitionResponse(
                 Boolean.TRUE.equals(d.getSectorSpecific()),
                 d.getSector() != null ? d.getSector().getCode() : null,
                 d.getDefaultTarget(),
-                d.getDefaultTargetDirection()
+                d.getDefaultTargetDirection(),
+                d.getAggregationRule()
         );
     }
 }

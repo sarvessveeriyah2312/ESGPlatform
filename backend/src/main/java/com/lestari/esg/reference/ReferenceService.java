@@ -123,6 +123,7 @@ public class ReferenceService {
         def.setSectorSpecific(request.sectorSpecific());
         def.setDefaultTarget(request.defaultTarget());
         def.setDefaultTargetDirection(request.defaultTargetDirection());
+        def.setAggregationRule(request.aggregationRule());
 
         if (request.sectorCode() != null && !request.sectorCode().isBlank()) {
             Sector sector = sectorRepository.findById(request.sectorCode())

@@ -54,4 +54,8 @@ public class IndicatorDefinition {
     @Enumerated(EnumType.STRING)
     @Column(name = "default_target_direction", length = 10)
     private TargetDirection defaultTargetDirection;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "aggregation_rule", nullable = false, length = 20)
+    private AggregationRule aggregationRule = AggregationRule.DIRECT_ANNUAL;
 }

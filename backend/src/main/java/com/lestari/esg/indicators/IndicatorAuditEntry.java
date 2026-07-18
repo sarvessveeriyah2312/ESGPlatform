@@ -32,6 +32,10 @@ public class IndicatorAuditEntry extends TenantOwnedEntity {
     @Column(name = "fiscal_year", nullable = false)
     private Integer fiscalYear;
 
+    /** Null for an annual correction (today's behavior); 1-12 for a correction to one month's entry. */
+    @Column
+    private Integer month;
+
     @Column(nullable = false, precision = 18, scale = 4)
     private BigDecimal value;
 

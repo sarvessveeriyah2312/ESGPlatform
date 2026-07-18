@@ -8,6 +8,7 @@ import java.time.Instant;
 public record AuditEntryDto(
         java.util.UUID id,
         int fiscalYear,
+        Integer month,
         BigDecimal value,
         String enteredBy,
         Instant enteredAt,
@@ -16,6 +17,6 @@ public record AuditEntryDto(
         String comment
 ) {
     public static AuditEntryDto from(IndicatorAuditEntry e) {
-        return new AuditEntryDto(e.getId(), e.getFiscalYear(), e.getValue(), e.getEnteredBy(), e.getCreatedAt(), e.getSourceDocName(), e.getSourceDocPath(), e.getComment());
+        return new AuditEntryDto(e.getId(), e.getFiscalYear(), e.getMonth(), e.getValue(), e.getEnteredBy(), e.getCreatedAt(), e.getSourceDocName(), e.getSourceDocPath(), e.getComment());
     }
 }

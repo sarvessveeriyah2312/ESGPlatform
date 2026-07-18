@@ -1,5 +1,6 @@
 package com.lestari.esg.reference.dto;
 
+import com.lestari.esg.reference.AggregationRule;
 import com.lestari.esg.reference.SustainabilityMatterCategory;
 import com.lestari.esg.reference.TargetDirection;
 import jakarta.validation.constraints.NotBlank;
@@ -16,6 +17,7 @@ public record IndicatorDefinitionUpsertRequest(
         boolean sectorSpecific,
         String sectorCode,
         BigDecimal defaultTarget,
-        TargetDirection defaultTargetDirection
+        TargetDirection defaultTargetDirection,
+        @NotNull AggregationRule aggregationRule
 ) {
 }
