@@ -105,6 +105,23 @@ const TOPIC_OPTIONS: TopicOption[] = [
   { id: 'Health & Safety', name: 'Occupational Health & Safety', category: 'Social', description: 'Log incident rates and training protocols.' }
 ];
 
+// Higher tiers are supersets of lower tiers — a Main Market issuer can select everything an SME
+// can, plus the frameworks/topic budget its listing tier requires. Mirrors PLAN_LEVELS in
+// PlanContext.tsx so onboarding restrictions match the plan gating applied after signup.
+const MARKET_TIER_ORDER: Record<'SME' | 'ACE Market' | 'Main Market', number> = {
+  'SME': 1,
+  'ACE Market': 2,
+  'Main Market': 3
+};
+
+// SME/Starter workspaces get a focused subset of ESG topics; higher listing tiers must cover more
+// ground for Bursa's 9/11-matter and IFRS disclosures, so they unlock a larger (or unlimited) budget.
+const TOPIC_LIMIT_BY_MARKET: Record<'SME' | 'ACE Market' | 'Main Market', number> = {
+  'SME': 3,
+  'ACE Market': 5,
+  'Main Market': TOPIC_OPTIONS.length
+};
+
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, completeOnboarding } = useAuth();
@@ -126,7 +143,17 @@ export default function OnboardingPage() {
     return <Navigate to="/admin" replace />;
   }
 
+  // Frameworks reserved for a higher listing tier than the declared market can never be toggled
+  // on, even via a stale click — the visible list is already filtered, but this keeps state
+  // consistent if that ever changes.
+  const availableFrameworks = FRAMEWORK_OPTIONS.filter(
+    (f) => MARKET_TIER_ORDER[f.recommendedFor as keyof typeof MARKET_TIER_ORDER] <= MARKET_TIER_ORDER[market]
+  );
+
+  const topicLimit = TOPIC_LIMIT_BY_MARKET[market];
+
   const handleToggleFramework = (id: string) => {
+    if (!availableFrameworks.some((f) => f.id === id)) return;
     setSelectedFrameworks(prev => {
       if (prev.includes(id)) {
         return prev.filter(f => f !== id);
@@ -140,9 +167,11 @@ export default function OnboardingPage() {
     setSelectedPriorities(prev => {
       if (prev.includes(id)) {
         return prev.filter(p => p !== id);
-      } else {
-        return [...prev, id];
       }
+      if (prev.length >= topicLimit) {
+        return prev;
+      }
+      return [...prev, id];
     });
   };
 
@@ -377,13 +406,13 @@ export default function OnboardingPage() {
                 </div>
                 <h3 className="text-2xl font-black text-gray-900">Select applicable reporting frameworks</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
-                  Based on your classification as a <strong>{market}</strong>, we have pre-selected the recommended reporting frameworks. You can toggle additional frameworks if you intend to cross-report.
+                  Based on your classification as a <strong>{market}</strong>, we have pre-selected the recommended reporting frameworks. Only frameworks available at your listing tier are shown — higher-tier frameworks unlock if you register at a higher market classification.
                 </p>
               </div>
 
               {/* Frameworks Selection List */}
               <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                {FRAMEWORK_OPTIONS.map((f) => {
+                {availableFrameworks.map((f) => {
                   const isChecked = selectedFrameworks.includes(f.id);
                   const isRecommended = 
                     (market === 'SME' && f.recommendedFor === 'SME') ||
@@ -457,20 +486,27 @@ export default function OnboardingPage() {
                 <p className="text-sm text-gray-500 leading-relaxed">
                   Pick key environmental, social, or governance themes that are high priority for your company. We will prepare active indicators with input forms in your dashboard.
                 </p>
+                <p className="text-xs font-bold text-emerald-600">
+                  {market} tier: select up to {topicLimit} focus area{topicLimit === 1 ? '' : 's'} ({selectedPriorities.length} of {topicLimit} selected)
+                </p>
               </div>
 
               {/* Topics Selection Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1">
                 {TOPIC_OPTIONS.map((opt) => {
                   const isChecked = selectedPriorities.includes(opt.id);
+                  const isDisabled = !isChecked && selectedPriorities.length >= topicLimit;
                   return (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => handleTogglePriority(opt.id)}
-                      className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex items-start space-x-3.5 ${
-                        isChecked 
-                          ? 'bg-white border-emerald-500 ring-1 ring-emerald-500/20 shadow-md' 
+                      disabled={isDisabled}
+                      className={`p-4 rounded-xl border text-left transition-all flex items-start space-x-3.5 ${
+                        isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                      } ${
+                        isChecked
+                          ? 'bg-white border-emerald-500 ring-1 ring-emerald-500/20 shadow-md'
                           : 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:bg-white'
                       }`}
                     >

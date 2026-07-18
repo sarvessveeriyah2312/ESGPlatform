@@ -11,8 +11,10 @@ import com.lestari.esg.reference.dto.UpdateFeatureFlagRequest;
 import com.lestari.esg.security.CurrentUserProvider;
 import com.lestari.esg.tenant.Company;
 import com.lestari.esg.tenant.CompanyRepository;
+import com.lestari.esg.tenant.PlanPricingRepository;
 import com.lestari.esg.tenant.Sector;
 import com.lestari.esg.tenant.SectorRepository;
+import com.lestari.esg.tenant.dto.PlanPricingResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class ReferenceService {
     private final CurrentUserProvider currentUserProvider;
     private final CompanyRepository companyRepository;
     private final FeatureFlagRepository featureFlagRepository;
+    private final PlanPricingRepository planPricingRepository;
 
     public ReferenceService(SustainabilityMatterRepository matterRepository,
                              IndicatorDefinitionRepository indicatorDefinitionRepository,
@@ -35,7 +38,8 @@ public class ReferenceService {
                              MatterSetResolverService matterSetResolverService,
                              CurrentUserProvider currentUserProvider,
                              CompanyRepository companyRepository,
-                             FeatureFlagRepository featureFlagRepository) {
+                             FeatureFlagRepository featureFlagRepository,
+                             PlanPricingRepository planPricingRepository) {
         this.matterRepository = matterRepository;
         this.indicatorDefinitionRepository = indicatorDefinitionRepository;
         this.sectorRepository = sectorRepository;
@@ -43,6 +47,7 @@ public class ReferenceService {
         this.currentUserProvider = currentUserProvider;
         this.companyRepository = companyRepository;
         this.featureFlagRepository = featureFlagRepository;
+        this.planPricingRepository = planPricingRepository;
     }
 
     @Transactional(readOnly = true)
@@ -141,6 +146,11 @@ public class ReferenceService {
     @Transactional(readOnly = true)
     public List<FeatureFlagResponse> listFeatureFlags() {
         return featureFlagRepository.findAll().stream().map(FeatureFlagResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlanPricingResponse> listPlanPricing() {
+        return planPricingRepository.findAll().stream().map(PlanPricingResponse::from).toList();
     }
 
     @Transactional

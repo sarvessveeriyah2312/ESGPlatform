@@ -4,6 +4,7 @@ import com.lestari.esg.reference.dto.FeatureFlagResponse;
 import com.lestari.esg.reference.dto.IndicatorDefinitionResponse;
 import com.lestari.esg.reference.dto.MatterResponse;
 import com.lestari.esg.reference.dto.SectorResponse;
+import com.lestari.esg.tenant.dto.PlanPricingResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -49,5 +50,10 @@ public class ReferenceController {
     @GetMapping("/feature-flags")
     public List<FeatureFlagResponse> featureFlags() {
         return referenceService.listFeatureFlags();
+    }
+
+    @GetMapping("/plan-pricing")
+    public List<PlanPricingResponse> planPricing() {
+        return referenceService.listPlanPricing();
     }
 }

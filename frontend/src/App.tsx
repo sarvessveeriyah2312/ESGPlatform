@@ -74,7 +74,6 @@ import CompanyDetailsView from './components/settings/CompanyDetailsView';
 
 // Import all sub-views from PlaceholderViews
 import {
-  BillingView,
   SettingsView
 } from './components/PlaceholderViews';
 
@@ -303,8 +302,7 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
                   {managementsItems.map(item => {
                     if (item.gated && !isFeatureVisible(item.key)) return null;
                     if (item.requiresManagement && !canManageWorkspace) return null;
-                    // TEMP: plan gating disabled for dev — delete this line to re-enable enforcement.
-                    if (false && item.premiumOnly && plan !== 'issuer-ready') return null;
+                    if (item.premiumOnly && plan !== 'issuer-ready') return null;
                     const isActive = location.pathname === item.path;
                     return (
                       <button
@@ -559,7 +557,7 @@ function AppContent() {
         path="/governance"
         element={
           <AuthenticatedLayout allowedRoles={TENANT_ROLES}>
-            <UpgradeGate feature="governance" onUpgrade={() => navigate('/billing')}>
+            <UpgradeGate feature="governance" onUpgrade={() => navigate('/settings?tab=billing')}>
               <GovernanceView />
             </UpgradeGate>
           </AuthenticatedLayout>
@@ -580,7 +578,7 @@ function AppContent() {
         path="/targets"
         element={
           <AuthenticatedLayout allowedRoles={TENANT_ROLES}>
-            <UpgradeGate feature="targets" onUpgrade={() => navigate('/billing')}>
+            <UpgradeGate feature="targets" onUpgrade={() => navigate('/settings?tab=billing')}>
               <TargetsView />
             </UpgradeGate>
           </AuthenticatedLayout>
@@ -620,7 +618,7 @@ function AppContent() {
         path="/ifrs-s1-s2"
         element={
           <AuthenticatedLayout allowedRoles={TENANT_ROLES}>
-            <UpgradeGate feature="ifrs-s1-s2" onUpgrade={() => navigate('/billing')}>
+            <UpgradeGate feature="ifrs-s1-s2" onUpgrade={() => navigate('/settings?tab=billing')}>
               <IfrsS1S2View />
             </UpgradeGate>
           </AuthenticatedLayout>
@@ -632,7 +630,7 @@ function AppContent() {
         path="/assurance-workspace"
         element={
           <AuthenticatedLayout allowedRoles={TENANT_ROLES}>
-            <UpgradeGate feature="assurance-workspace" onUpgrade={() => navigate('/billing')}>
+            <UpgradeGate feature="assurance-workspace" onUpgrade={() => navigate('/settings?tab=billing')}>
               <AssuranceWorkspaceView />
             </UpgradeGate>
           </AuthenticatedLayout>
@@ -658,14 +656,8 @@ function AppContent() {
           </AuthenticatedLayout>
         }
       />
-      <Route
-        path="/billing"
-        element={
-          <AuthenticatedLayout allowedRoles={MANAGEMENT_ROLES}>
-            <BillingView />
-          </AuthenticatedLayout>
-        }
-      />
+      {/* Billing now lives inside Profile & Settings — redirect the old standalone route there. */}
+      <Route path="/billing" element={<Navigate to="/settings?tab=billing" replace />} />
       {/* No allowedRoles — every authenticated role can reach Profile & Settings; SettingsView itself
           hides admin-only sub-tabs (e.g. SMTP) internally based on role. */}
       <Route

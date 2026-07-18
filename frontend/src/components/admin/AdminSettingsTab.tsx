@@ -74,13 +74,13 @@ export default function AdminSettingsTab({ showToast }: AdminSettingsTabProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="w-full max-w-[1200px] mx-auto pb-16">
+      <div className="mb-6">
         <h2 className="text-2xl font-bold tracking-tight text-gray-900">Platform Settings</h2>
         <p className="text-sm text-gray-500 mt-1">Platform-wide defaults — used across every tenant workspace unless a company configures its own override.</p>
       </div>
 
-      <div className="border-b border-gray-100 overflow-x-auto">
+      <div className="border-b border-gray-100 mb-8 overflow-x-auto">
         <nav className="flex items-center gap-1 min-w-max">
           {SUB_TABS.map((tab) => {
             const Icon = tab.icon;

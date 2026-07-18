@@ -261,15 +261,19 @@ export default function TargetsView() {
       targetsApi.update(editingTargetId, payload).then((updated) => {
         setTargets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
         setProgressDrafts((prev) => ({ ...prev, [updated.id]: String(updated.currentProgress) }));
+        closeModal();
+      }).catch((err) => {
+        setFormError(err?.details?.[0] || err?.message || 'Failed to save target. Please check your inputs and try again.');
       });
     } else {
       targetsApi.create(payload).then((created) => {
         setTargets((prev) => [...prev, created]);
         setProgressDrafts((prev) => ({ ...prev, [created.id]: String(created.currentProgress) }));
+        closeModal();
+      }).catch((err) => {
+        setFormError(err?.details?.[0] || err?.message || 'Failed to save target. Please check your inputs and try again.');
       });
     }
-
-    closeModal();
   };
 
   const statusCounts: Record<TargetStatus, number> = {
@@ -646,6 +650,7 @@ export default function TargetsView() {
                     required
                     value={form.baselineYear}
                     onChange={(e) => setForm((prev) => ({ ...prev, baselineYear: e.target.value }))}
+                    onFocus={(e) => e.target.select()}
                     className="w-full px-3 py-2 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
@@ -656,6 +661,7 @@ export default function TargetsView() {
                     required
                     value={form.targetYear}
                     onChange={(e) => setForm((prev) => ({ ...prev, targetYear: e.target.value }))}
+                    onFocus={(e) => e.target.select()}
                     className="w-full px-3 py-2 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
@@ -691,7 +697,7 @@ export default function TargetsView() {
                 <label className="text-[10px] text-navy-400 uppercase tracking-wider">Link to Indicator (optional)</label>
                 <select
                   value={form.indicatorId}
-                  onChange={(e) => setForm((prev) => ({ ...prev, indicatorId: e.target.value }))}
+                  onChange={(e) => setForm((prev) => ({ ...prev, indicatorId: e.target.value, currentProgress: e.target.value ? '' : prev.currentProgress }))}
                   className="w-full px-3 py-2 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
                 >
                   <option value="">No linked indicator (manual progress entry)</option>

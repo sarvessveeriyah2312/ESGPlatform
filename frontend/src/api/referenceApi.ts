@@ -41,6 +41,11 @@ export interface FeatureFlagResponse {
   visibleOnlyAtMinPlan: boolean;
 }
 
+export interface PublicPlanPricingResponse {
+  plan: BackendSubscriptionPlan;
+  monthlyPrice: number;
+}
+
 export const referenceApi = {
   sectors: () => apiClient.get<SectorResponse[]>('/api/v1/reference/sectors'),
 
@@ -54,4 +59,6 @@ export const referenceApi = {
   applicableIndicators: () => apiClient.get<IndicatorDefinitionResponse[]>('/api/v1/reference/indicators/applicable'),
 
   featureFlags: () => apiClient.get<FeatureFlagResponse[]>('/api/v1/reference/feature-flags'),
+
+  planPricing: () => apiClient.get<PublicPlanPricingResponse[]>('/api/v1/reference/plan-pricing'),
 };

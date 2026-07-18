@@ -27,9 +27,6 @@ public class PlanGateService {
     }
 
     public boolean check(String featureKey) {
-        // TEMP: plan gating disabled for dev — delete this line to re-enable enforcement.
-        if (true) return true;
-
         FeatureFlag flag = featureFlagRepository.findById(featureKey).orElse(null);
         if (flag == null) {
             return true; // unlisted features default open, mirrors frontend's hasFeature() default

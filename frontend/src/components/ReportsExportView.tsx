@@ -1027,7 +1027,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
           </Card>
 
           {/* Card 2: CSI-Compatible Export (Issuer-Ready only, wrapped in UpgradeGate) */}
-          <UpgradeGate feature="csi-export" onUpgrade={() => navigate('/billing')}>
+          <UpgradeGate feature="csi-export" onUpgrade={() => navigate('/settings?tab=billing')}>
             <Card className="bg-gradient-to-br from-purple-50/40 via-white to-indigo-50/40 border border-purple-200/80 p-6 space-y-4 relative overflow-hidden shadow-sm">
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
               
@@ -1076,7 +1076,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
       )}
 
       {activeReportTab === 'ifrs-s1' && (
-        <UpgradeGate feature="ifrs-s1-s2" onUpgrade={() => navigate('/billing')}>
+        <UpgradeGate feature="ifrs-s1-s2" onUpgrade={() => navigate('/settings?tab=billing')}>
           <Card className="bg-white border-navy-100 p-6 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-navy-50 pb-4">
               <div>
@@ -1122,7 +1122,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
       )}
 
       {activeReportTab === 'ifrs-s2' && (
-        <UpgradeGate feature="ifrs-s1-s2" onUpgrade={() => navigate('/billing')}>
+        <UpgradeGate feature="ifrs-s1-s2" onUpgrade={() => navigate('/settings?tab=billing')}>
           <Card className="bg-white border-navy-100 p-6 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-navy-50 pb-4">
               <div>

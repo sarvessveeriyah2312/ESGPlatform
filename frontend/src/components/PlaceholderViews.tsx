@@ -4,12 +4,11 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   User, Shield, Link as LinkIcon, Calendar, Building,
   FileText,
   CreditCard,
-  Settings as SettingsIcon,
   ShieldAlert,
   Sparkles,
   CheckCircle2,
@@ -32,11 +31,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { canAccess, MANAGEMENT_ROLES } from '../permissions';
 import { authApi } from '../api/authApi';
 import { emailSettingsApi, EmailSettingsResponse } from '../api/emailSettingsApi';
+import { referenceApi, PublicPlanPricingResponse } from '../api/referenceApi';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import SecuritySettingsTab from './settings/SecuritySettingsTab';
 import CompanyTab from './settings/CompanyTab';
 import PrivacyDataTab from './settings/PrivacyDataTab';
+import NotificationsTab from './settings/NotificationsTab';
 
 // 1. MATERIALITY ASSESSMENT
 export function MaterialityAssessmentView() {
@@ -86,20 +87,63 @@ export function MaterialityAssessmentView() {
 
 // 4. TARGETS (moved to standalone TargetsView.tsx — real API-backed feature)
 
-// 11. BILLING & PLAN (Dynamic plan toggling sandbox)
+// 11. BILLING & PLAN (read-only — plan is fixed by the target market chosen at onboarding)
+const PLAN_COPY: Record<PlanType, { title: string; subtitle: string; description: string; accent: string; ring: string; badge: string }> = {
+  'starter': {
+    title: 'Starter Plan',
+    subtitle: 'SME & Vendor Focused',
+    description: 'Excellent for micro-enterprises. Satisfy basic tier-1 ESG disclosure inquiries with SEDG templates.',
+    accent: 'border-emerald-500',
+    ring: 'ring-emerald-500/30',
+    badge: 'text-emerald-700 bg-emerald-50 border-emerald-200'
+  },
+  'growth': {
+    title: 'Growth Plan',
+    subtitle: 'Mid-Market Corp',
+    description: 'Define custom targets, complete boards governance audits, and compile multi-user disclosures.',
+    accent: 'border-primary-500',
+    ring: 'ring-primary-500/30',
+    badge: 'text-primary-700 bg-primary-50 border-primary-200'
+  },
+  'issuer-ready': {
+    title: 'Issuer-Ready',
+    subtitle: 'Listed Corporations',
+    description: 'Complete IFRS Scope 3, assurance logs, and direct uploads to Bursa’s Centralised Intelligence (CSI) system.',
+    accent: 'border-purple-500',
+    ring: 'ring-purple-500/30',
+    badge: 'text-purple-700 bg-purple-50 border-purple-200'
+  }
+};
+
 export function BillingView() {
-  const { plan, setPlan } = usePlan();
+  const { plan } = usePlan();
+  const navigate = useNavigate();
+  const [pricing, setPricing] = useState<Record<PlanType, number> | null>(null);
+
+  useEffect(() => {
+    referenceApi.planPricing()
+      .then((rows: PublicPlanPricingResponse[]) => {
+        const byPlan = {} as Record<PlanType, number>;
+        rows.forEach((r) => {
+          if (r.plan === 'STARTER') byPlan['starter'] = r.monthlyPrice;
+          if (r.plan === 'GROWTH') byPlan['growth'] = r.monthlyPrice;
+          if (r.plan === 'ISSUER_READY') byPlan['issuer-ready'] = r.monthlyPrice;
+        });
+        setPricing(byPlan);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-gray-900 to-primary-950 border border-gray-800 rounded-2xl p-6 text-white relative overflow-hidden shadow-md">
         <div className="absolute top-0 right-0 w-44 h-44 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
-        
+
         <div className="relative z-10 max-w-2xl">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-primary-400 bg-primary-950/80 px-2 py-0.5 rounded border border-primary-900">Sandbox Account Context</span>
-          <h3 className="text-2xl font-black tracking-tight mt-3 mb-2">Configure Workspace Plan</h3>
+          <span className="text-[9px] font-bold uppercase tracking-widest text-primary-400 bg-primary-950/80 px-2 py-0.5 rounded border border-primary-900">Workspace Plan</span>
+          <h3 className="text-2xl font-black tracking-tight mt-3 mb-2">Your Subscription</h3>
           <p className="text-xs text-gray-200 leading-relaxed mb-6">
-            Lestari ESG includes three tiered compliance structures. Leverage this interactive panel to change your active workspace level dynamically—this will immediately adjust the left sidebar options and reveal locked Growth or Issuer-Ready interfaces across the application.
+            Your plan tier is determined by the target market you registered under and is fixed for the life of the account. To change markets or upgrade your tier, contact support — this is not a self-service toggle.
           </p>
 
           <div className="flex items-center space-x-2 bg-white/5 border border-white/10 rounded-xl p-3.5 max-w-md text-xs">
@@ -114,113 +158,58 @@ export function BillingView() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-        
-        {/* Starter Card */}
-        <Card className={`flex flex-col justify-between p-6 bg-white border ${plan === 'starter' ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500/30' : 'border-gray-100 hover:border-gray-200'}`} padded="none">
-          <div className="space-y-4 p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="text-sm font-extrabold text-gray-900">Starter Plan</h4>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mt-1">SME & Vendor Focused</p>
-              </div>
-              {plan === 'starter' && (
-                <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded uppercase">Active</span>
-              )}
-            </div>
-            <div className="flex items-baseline space-x-1.5 pt-2">
-              <span className="text-2xl font-black text-gray-900 font-mono">RM 0</span>
-              <span className="text-xs text-gray-400">/ month</span>
-            </div>
-            <p className="text-xs text-gray-500 leading-relaxed">Excellent for micro-enterprises. Satisfy basic tier-1 ESG disclosure inquiries with SEDG templates.</p>
-          </div>
-          <div className="p-6 bg-gray-50/50 border-t border-gray-100">
-            <button 
-              onClick={() => setPlan('starter')}
-              disabled={plan === 'starter'}
-              className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                plan === 'starter' 
-                  ? 'bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed' 
-                  : 'bg-gray-900 hover:bg-gray-800 text-white shadow-sm'
-              }`}
+        {(Object.keys(PLAN_COPY) as PlanType[]).map((tier) => {
+          const copy = PLAN_COPY[tier];
+          const isActive = plan === tier;
+          return (
+            <Card
+              key={tier}
+              className={`flex flex-col justify-between p-6 bg-white border ${isActive ? `${copy.accent} shadow-md ring-1 ${copy.ring}` : 'border-gray-100'}`}
+              padded="none"
             >
-              {plan === 'starter' ? 'Currently Active' : 'Switch to Starter'}
-            </button>
-          </div>
-        </Card>
-
-        {/* Growth Card */}
-        <Card className={`flex flex-col justify-between p-6 bg-white border ${plan === 'growth' ? 'border-primary-500 shadow-md ring-1 ring-primary-500/30' : 'border-gray-100 hover:border-gray-200'}`} padded="none">
-          <div className="space-y-4 p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="text-sm font-extrabold text-gray-900">Growth Plan</h4>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mt-1">Mid-Market Corp</p>
+              <div className="space-y-4 p-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="text-sm font-extrabold text-gray-900">{copy.title}</h4>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mt-1">{copy.subtitle}</p>
+                  </div>
+                  {isActive && (
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase border ${copy.badge}`}>Active</span>
+                  )}
+                </div>
+                <div className="flex items-baseline space-x-1.5 pt-2">
+                  <span className="text-2xl font-black text-gray-900 font-mono">
+                    {pricing ? `RM ${pricing[tier].toFixed(0)}` : '—'}
+                  </span>
+                  <span className="text-xs text-gray-400">/ month</span>
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed">{copy.description}</p>
               </div>
-              {plan === 'growth' && (
-                <span className="text-[10px] font-black text-primary-700 bg-primary-50 border border-primary-200 px-2 py-0.5 rounded uppercase">Active</span>
-              )}
-            </div>
-            <div className="flex items-baseline space-x-1.5 pt-2">
-              <span className="text-2xl font-black text-gray-900 font-mono">RM 349</span>
-              <span className="text-xs text-gray-400">/ month</span>
-            </div>
-            <p className="text-xs text-gray-500 leading-relaxed">Define custom targets, complete boards governance audits, and compile multi-user disclosures.</p>
-          </div>
-          <div className="p-6 bg-gray-50/50 border-t border-gray-100">
-            <button 
-              onClick={() => setPlan('growth')}
-              disabled={plan === 'growth'}
-              className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                plan === 'growth' 
-                  ? 'bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed' 
-                  : 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm shadow-primary-500/10'
-              }`}
-            >
-              {plan === 'growth' ? 'Currently Active' : 'Switch to Growth'}
-            </button>
-          </div>
-        </Card>
-
-        {/* Issuer-Ready Card */}
-        <Card className={`flex flex-col justify-between p-6 bg-white border ${plan === 'issuer-ready' ? 'border-purple-500 shadow-md ring-1 ring-purple-500/30' : 'border-gray-100 hover:border-gray-200'}`} padded="none">
-          <div className="space-y-4 p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="text-sm font-extrabold text-gray-900">Issuer-Ready</h4>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mt-1">Listed Corporations</p>
+              <div className="p-6 bg-gray-50/50 border-t border-gray-100">
+                <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-500 border border-gray-200">
+                  {isActive ? 'Your Current Plan' : `Requires ${copy.title}`}
+                </div>
               </div>
-              {plan === 'issuer-ready' && (
-                <span className="text-[10px] font-black text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded uppercase">Active</span>
-              )}
-            </div>
-            <div className="flex items-baseline space-x-1.5 pt-2">
-              <span className="text-2xl font-black text-gray-900 font-mono">RM 899</span>
-              <span className="text-xs text-gray-400">/ month</span>
-            </div>
-            <p className="text-xs text-gray-500 leading-relaxed">Complete IFRS Scope 3, assurance logs, and direct uploads to Bursa’s Centralised Intelligence (CSI) system.</p>
-          </div>
-          <div className="p-6 bg-gray-50/50 border-t border-gray-100">
-            <button 
-              onClick={() => setPlan('issuer-ready')}
-              disabled={plan === 'issuer-ready'}
-              className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                plan === 'issuer-ready' 
-                  ? 'bg-gray-200 text-gray-600 border border-gray-300 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm shadow-purple-500/20'
-              }`}
-            >
-              {plan === 'issuer-ready' ? 'Currently Active' : 'Switch to Issuer-Ready'}
-            </button>
-          </div>
-        </Card>
+            </Card>
+          );
+        })}
+      </div>
 
+      <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-5">
+        <div>
+          <h4 className="text-sm font-bold text-gray-900">Need a different plan?</h4>
+          <p className="text-xs text-gray-500 mt-0.5">Plan changes go through support since they involve re-classifying your registered target market.</p>
+        </div>
+        <Button variant="primary" size="sm" onClick={() => navigate('/support', { state: { openNewTicket: true } })}>
+          Contact Support
+        </Button>
       </div>
     </div>
   );
 }
 
 // 12. SETTINGS
-type SettingsTabId = 'profile' | 'security' | 'preferences' | 'notifications' | 'smtp' | 'company' | 'billing' | 'privacy';
+type SettingsTabId = 'profile' | 'security' | 'notifications' | 'smtp' | 'company' | 'billing' | 'privacy';
 
 interface SettingsTab {
   id: SettingsTabId;
@@ -234,7 +223,6 @@ interface SettingsTab {
 const SETTINGS_TABS: SettingsTab[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'security', label: 'Security', icon: Shield },
-  { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'smtp', label: 'Email (SMTP)', icon: Mail, adminOnly: true },
   { id: 'company', label: 'Company', icon: Building, adminOnly: true },
@@ -294,7 +282,7 @@ export function SettingsView() {
         </nav>
       </div>
 
-      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && activeTab !== 'company' && activeTab !== 'privacy' && (
+      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && activeTab !== 'company' && activeTab !== 'privacy' && activeTab !== 'notifications' && activeTab !== 'billing' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center text-center space-y-3">
           <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
             {React.createElement(SETTINGS_TABS.find((t) => t.id === activeTab)!.icon, { className: 'w-5 h-5 text-gray-400' })}
@@ -306,6 +294,8 @@ export function SettingsView() {
 
       {activeTab === 'profile' && <ProfileTab />}
       {activeTab === 'security' && <SecuritySettingsTab />}
+      {activeTab === 'notifications' && <NotificationsTab />}
+      {activeTab === 'billing' && <BillingView />}
       {activeTab === 'smtp' && canManage && <SmtpSettingsTab />}
       {activeTab === 'company' && canManage && <CompanyTab />}
       {activeTab === 'privacy' && canManage && <PrivacyDataTab />}

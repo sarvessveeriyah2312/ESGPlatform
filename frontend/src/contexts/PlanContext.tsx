@@ -93,9 +93,6 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasFeature = (featureKey: string): boolean => {
-    // TEMP: plan gating disabled for dev — delete this line to re-enable enforcement.
-    return true;
-    // eslint-disable-next-line no-unreachable
     const flag = featureFlags[featureKey];
     if (!flag) return true; // Default true for unlisted features
 
@@ -103,9 +100,6 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isFeatureVisible = (featureKey: string): boolean => {
-    // TEMP: plan gating disabled for dev — delete this line to re-enable enforcement.
-    return true;
-    // eslint-disable-next-line no-unreachable
     const flag = featureFlags[featureKey];
     if (!flag) return true;
 
