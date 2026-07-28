@@ -60,6 +60,7 @@ export default function NotificationsTab() {
   }, []);
 
   const toggle = (key: keyof UpdateNotificationPreferencesRequest, value: boolean) => {
+    const previous = prefs;
     const next = { ...prefs, [key]: value };
     setPrefs(next);
     setSaving(true);
@@ -74,7 +75,7 @@ export default function NotificationsTab() {
         showMessage('Notification preferences saved.', 'success');
       })
       .catch(() => {
-        setPrefs(prefs);
+        setPrefs(previous);
         showMessage('Failed to save notification preferences.', 'warning');
       })
       .finally(() => setSaving(false));
@@ -103,10 +104,15 @@ export default function NotificationsTab() {
           <div className="space-y-4">
             {TOGGLES.map((item) => (
               <div key={item.key} className="flex items-start justify-between gap-4">
-                <div onClick={() => !saving && toggle(item.key, !prefs[item.key])} className="cursor-pointer">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => toggle(item.key, !prefs[item.key])}
+                  className="text-left cursor-pointer disabled:cursor-not-allowed"
+                >
                   <span className="text-sm font-semibold text-gray-900 block">{item.label}</span>
                   <span className="text-[11px] text-gray-500">{item.description}</span>
-                </div>
+                </button>
                 <Switch
                   checked={prefs[item.key]}
                   disabled={saving}

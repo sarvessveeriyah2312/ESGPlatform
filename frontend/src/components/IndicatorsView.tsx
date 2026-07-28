@@ -599,12 +599,13 @@ export default function IndicatorsView() {
               activeClassName="bg-primary-500"
               inactiveClassName="bg-navy-200"
             />
-            <span
+            <button
+              type="button"
               onClick={toggleSectorModule}
               className="text-[11px] font-bold text-navy-700 select-none cursor-pointer"
             >
               Sector Module Enabled (Manufacturing)
-            </span>
+            </button>
           </div>
         </div>
       </div>

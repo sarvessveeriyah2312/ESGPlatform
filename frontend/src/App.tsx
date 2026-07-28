@@ -559,7 +559,7 @@ function AppContent() {
         path="/governance"
         element={
           <AuthenticatedLayout allowedRoles={TENANT_ROLES}>
-            <UpgradeGate feature="governance" onUpgrade={() => navigate('/settings?tab=billing')}>
+            <UpgradeGate feature="governance" variant="page" onUpgrade={() => navigate('/settings?tab=billing')}>
               <GovernanceView />
             </UpgradeGate>
           </AuthenticatedLayout>
@@ -580,7 +580,7 @@ function AppContent() {
         path="/targets"
         element={
           <AuthenticatedLayout allowedRoles={TENANT_ROLES}>
-            <UpgradeGate feature="targets" onUpgrade={() => navigate('/settings?tab=billing')}>
+            <UpgradeGate feature="targets" variant="page" onUpgrade={() => navigate('/settings?tab=billing')}>
               <TargetsView />
             </UpgradeGate>
           </AuthenticatedLayout>

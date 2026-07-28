@@ -138,17 +138,17 @@ export default function PrivacyDataTab() {
         ) : (
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-4">
-              <div onClick={toggleMarketingConsent} className="cursor-pointer">
+              <button type="button" disabled={savingConsent} onClick={toggleMarketingConsent} className="text-left cursor-pointer disabled:cursor-not-allowed">
                 <span className="text-sm font-semibold text-gray-900 block">Marketing communications</span>
                 <span className="text-[11px] text-gray-500">Product updates, webinars, and Bursa compliance guidance by email.</span>
-              </div>
+              </button>
               <Switch checked={marketingConsent} disabled={savingConsent} onChange={toggleMarketingConsent} className="mt-1 shrink-0" />
             </div>
             <div className="flex items-start justify-between gap-4">
-              <div onClick={toggleAnalyticsConsent} className="cursor-pointer">
+              <button type="button" disabled={savingConsent} onClick={toggleAnalyticsConsent} className="text-left cursor-pointer disabled:cursor-not-allowed">
                 <span className="text-sm font-semibold text-gray-900 block">Product analytics</span>
                 <span className="text-[11px] text-gray-500">Usage data that helps us improve the reporting workflow.</span>
-              </div>
+              </button>
               <Switch checked={analyticsConsent} disabled={savingConsent} onChange={toggleAnalyticsConsent} className="mt-1 shrink-0" />
             </div>
           </div>
