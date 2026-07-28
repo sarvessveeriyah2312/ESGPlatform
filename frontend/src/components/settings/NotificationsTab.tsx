@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
 import { notificationSettingsApi, UpdateNotificationPreferencesRequest } from '../../api/notificationSettingsApi';
+import Switch from '../ui/Switch';
 
 const TOGGLES: { key: keyof UpdateNotificationPreferencesRequest; label: string; description: string }[] = [
   {
@@ -101,19 +102,18 @@ export default function NotificationsTab() {
         ) : (
           <div className="space-y-4">
             {TOGGLES.map((item) => (
-              <label key={item.key} className="flex items-start justify-between gap-4 cursor-pointer">
-                <div>
+              <div key={item.key} className="flex items-start justify-between gap-4">
+                <div onClick={() => !saving && toggle(item.key, !prefs[item.key])} className="cursor-pointer">
                   <span className="text-sm font-semibold text-gray-900 block">{item.label}</span>
                   <span className="text-[11px] text-gray-500">{item.description}</span>
                 </div>
-                <input
-                  type="checkbox"
+                <Switch
                   checked={prefs[item.key]}
                   disabled={saving}
-                  onChange={(e) => toggle(item.key, e.target.checked)}
-                  className="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+                  onChange={(next) => toggle(item.key, next)}
+                  className="mt-1 shrink-0"
                 />
-              </label>
+              </div>
             ))}
           </div>
         )}
