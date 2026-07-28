@@ -232,7 +232,7 @@ export default function GovernanceView() {
   }, []);
 
   return (
-    <div className="space-y-8 max-w-7xl w-full mx-auto pb-16 font-sans">
+    <div className="space-y-8 w-full pb-16 font-sans">
 
       {/* HEADER BAR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-navy-100/40">

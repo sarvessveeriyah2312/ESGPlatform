@@ -120,8 +120,9 @@ Package root `com.lestari.esg`. See the plan/design notes for the full rationale
 ## Known simplifications (documented, not accidental)
 
 - No refresh tokens — a bumped `tokenVersion` invalidates all of a user's existing tokens instead.
-- No Word (.docx) export generation — PDF (via Thymeleaf) and CSV are covered; Word export is
-  client-side plain text today.
+- No Word (.docx) export generation — PDF (via Thymeleaf) and CSV are covered server-side; the
+  frontend's "Word" format option is client-side plain text downloaded as `.txt`, not a real
+  `.docx`/OOXML file.
 - Consultant multi-tenant access is not built — one `AppUser` belongs to exactly one `Company`.
 - No Testcontainers — dev/manual testing runs against a real local Postgres; the `test` Spring
   profile uses H2 in PostgreSQL-compatibility mode for any future slice tests.

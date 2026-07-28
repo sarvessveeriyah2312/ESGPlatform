@@ -514,7 +514,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Lestari_ESG_Integrated_Report_${period}.docx.txt`; // appending txt for simple browser readable format
+      link.download = `Lestari_ESG_Integrated_Report_${period}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -611,7 +611,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Lestari_Archived_${item.type.replace(/\s+/g, '_')}_${item.period}.${item.format.includes('CSV') ? 'csv' : 'docx'}.txt`;
+        link.download = `Lestari_Archived_${item.type.replace(/\s+/g, '_')}_${item.period}.${item.format.includes('CSV') ? 'csv' : 'txt'}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -621,7 +621,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-6 py-4 relative">
+    <div className="space-y-6 w-full px-4 md:px-6 py-4 relative">
       
       {/* Toast Notification */}
       {toast && (
@@ -806,15 +806,15 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
                   <button
                     onClick={() => {
                       setFormat('Word');
-                      triggerToast('Selected export format: Word DOCX (Review Optimised)', 'success');
+                      triggerToast('Selected export format: Word (Plain Text)', 'success');
                     }}
                     className={`px-3 py-1 text-xs font-bold rounded-lg cursor-pointer transition-all ${
-                      format === 'Word' 
-                        ? 'bg-white text-navy-950 shadow-sm' 
+                      format === 'Word'
+                        ? 'bg-white text-navy-950 shadow-sm'
                         : 'text-navy-500 hover:text-navy-800'
                     }`}
                   >
-                    Word (.docx)
+                    Word (.txt)
                   </button>
                 </div>
               </div>
@@ -831,7 +831,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
                     </div>
                     <span className="text-navy-300">|</span>
                     <span className="text-navy-700 truncate">
-                      Lestari_Sustainability_Disclosure_Report_{period}.{format === 'PDF' ? 'pdf' : 'docx'}
+                      Lestari_Sustainability_Disclosure_Report_{period}.{format === 'PDF' ? 'pdf' : 'txt'}
                     </span>
                   </div>
                   <span className="text-[10px] text-primary-600 bg-primary-50 px-2 py-0.5 rounded font-bold font-sans shrink-0">

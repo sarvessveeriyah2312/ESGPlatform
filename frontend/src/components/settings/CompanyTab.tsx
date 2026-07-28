@@ -5,19 +5,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Check, AlertCircle, Plus, Trash2, ChevronRight, ShieldAlert } from 'lucide-react';
+import { Building2, Check, AlertCircle, Plus, Trash2, ChevronRight, ShieldAlert, Search, X } from 'lucide-react';
 import { companyApi, CompanyGroupMember } from '../../api/companyApi';
 import { marketFromBackend } from '../../api/mappers';
 import { ApiError } from '../../api/client';
+import AddCompanyModal from './AddCompanyModal';
 
 export default function CompanyTab() {
   const navigate = useNavigate();
   const [members, setMembers] = useState<CompanyGroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'warning' } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [newCompanyName, setNewCompanyName] = useState('');
-  const [creating, setCreating] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CompanyGroupMember | null>(null);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -38,20 +39,12 @@ export default function CompanyTab() {
     loadGroup();
   }, []);
 
-  const submitCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = newCompanyName.trim();
-    if (!name) return;
-    setCreating(true);
-    companyApi.createSubsidiary(name)
-      .then((created) => {
-        setMembers((prev) => [...prev, created]);
-        setNewCompanyName('');
-        showMessage(`${created.name} added to your company group.`, 'success');
-      })
-      .catch(() => showMessage('Failed to add the company — please try again.', 'warning'))
-      .finally(() => setCreating(false));
+  const handleCompanyCreated = (created: CompanyGroupMember) => {
+    setMembers((prev) => [...prev, created]);
+    showMessage(`${created.name} added to your company group.`, 'success');
   };
+
+  const filteredMembers = members.filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleDelete = () => {
     if (!deleteTarget || deleteConfirmInput !== deleteTarget.name) return;
@@ -87,10 +80,36 @@ export default function CompanyTab() {
           Manage subsidiaries or group entities. Reporting, indicators, and disclosures are kept fully separate per company — use the company switcher in the top bar to change which one you&apos;re working in.
         </p>
 
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search companies by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-9 py-2 bg-white border border-gray-200 hover:border-gray-300 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-900 placeholder-gray-400 transition-all"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setAddModalOpen(true)}
+            className="flex items-center justify-center gap-1.5 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-full cursor-pointer transition-all shadow-sm shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            Add Company
+          </button>
+        </div>
+
         {loading ? (
           <p className="text-sm text-gray-400">Loading…</p>
         ) : (
-          <div className="overflow-x-auto mb-6 border border-gray-100 rounded-xl">
+          <div className="overflow-x-auto border border-gray-100 rounded-xl">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/60 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
@@ -101,7 +120,14 @@ export default function CompanyTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
-                {members.map((member) => (
+                {filteredMembers.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-center text-gray-400 text-sm">
+                      No companies match &quot;{searchQuery}&quot;.
+                    </td>
+                  </tr>
+                )}
+                {filteredMembers.map((member) => (
                   <tr key={member.id} className="hover:bg-gray-50/40 transition-colors">
                     <td className="px-4 py-3">
                       <button
@@ -140,25 +166,11 @@ export default function CompanyTab() {
             </table>
           </div>
         )}
-
-        <form onSubmit={submitCreate} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-4 border-t border-gray-100">
-          <input
-            type="text"
-            placeholder="Add a subsidiary or group company..."
-            value={newCompanyName}
-            onChange={(e) => setNewCompanyName(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors"
-          />
-          <button
-            type="submit"
-            disabled={creating || !newCompanyName.trim()}
-            className="flex items-center justify-center gap-1.5 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 disabled:opacity-60 text-white text-sm font-semibold rounded-full cursor-pointer transition-all shadow-sm shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            {creating ? 'Adding…' : 'Add Company'}
-          </button>
-        </form>
       </div>
+
+      {addModalOpen && (
+        <AddCompanyModal onClose={() => setAddModalOpen(false)} onCreated={handleCompanyCreated} />
+      )}
 
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

@@ -353,7 +353,7 @@ export default function MaterialityAssessmentView() {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl w-full mx-auto pb-16 font-sans">
+    <div className="space-y-8 w-full pb-16 font-sans">
       {/* SUCCESS TOAST FOR SNAPSHOT SAVE */}
       {saveSuccessMessage && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fade-in shrink-0">

@@ -249,7 +249,7 @@ export function SettingsView() {
   const [activeTab, setActiveTab] = useState<SettingsTabId>(initialTab);
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto pb-16">
+    <div className="w-full pb-16">
 
       <div className="mb-6">
         <h2 className="text-2xl font-bold tracking-tight text-gray-900">Settings</h2>

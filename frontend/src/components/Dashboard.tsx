@@ -301,7 +301,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6 w-full max-w-[1200px] mx-auto pb-16">
+    <div className="space-y-6 w-full pb-16">
 
       {/* 1. Dashboard Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">

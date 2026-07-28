@@ -39,6 +39,7 @@ import { companyApi } from '../api/companyApi';
 import { TenantUserResponse } from '../api/tenantAdminApi';
 import { exportApi, downloadCsv } from '../api/exportApi';
 import { categoryFromBackend } from '../api/mappers';
+import Switch from './ui/Switch';
 
 // TypeScript Types
 export interface AuditTrailEntry {
@@ -481,7 +482,7 @@ export default function IndicatorsView() {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl w-full mx-auto pb-24 font-sans relative">
+    <div className="space-y-8 w-full pb-24 font-sans relative">
 
       {/* 1. HEADER SECTION WITH METRICS AND ACTIONS */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 pb-6 border-b border-navy-100/40">
@@ -591,17 +592,20 @@ export default function IndicatorsView() {
 
         {/* Sector Module Toggle */}
         <div className="flex flex-wrap items-center gap-3 py-2">
-          <label className="flex items-center space-x-2 bg-navy-50 border border-navy-100 hover:bg-navy-100/30 px-3 py-1.5 rounded-xl cursor-pointer transition-colors">
-            <input
-              type="checkbox"
+          <div className="flex items-center space-x-2.5 bg-navy-50 border border-navy-100 hover:bg-navy-100/30 px-3 py-1.5 rounded-xl transition-colors">
+            <Switch
               checked={isSectorEnabled}
               onChange={toggleSectorModule}
-              className="rounded text-primary-600 focus:ring-primary-500 w-3.5 h-3.5 cursor-pointer"
+              activeClassName="bg-primary-500"
+              inactiveClassName="bg-navy-200"
             />
-            <span className="text-[11px] font-bold text-navy-700 select-none">
+            <span
+              onClick={toggleSectorModule}
+              className="text-[11px] font-bold text-navy-700 select-none cursor-pointer"
+            >
               Sector Module Enabled (Manufacturing)
             </span>
-          </label>
+          </div>
         </div>
       </div>
 

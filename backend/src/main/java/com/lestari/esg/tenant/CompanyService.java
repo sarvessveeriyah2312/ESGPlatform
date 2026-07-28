@@ -127,6 +127,27 @@ public class CompanyService {
         subsidiary.setOnboardingCompleted(true);
         subsidiary.setActive(true);
         subsidiary.setParentCompany(root);
+
+        if (request.sectorCode() != null && !request.sectorCode().isBlank()) {
+            Sector sector = sectorRepository.findById(request.sectorCode())
+                    .orElseThrow(() -> new NotFoundException("Unknown sector code: " + request.sectorCode()));
+            subsidiary.setSector(sector);
+        }
+
+        subsidiary.setRegistrationNumber(request.registrationNumber());
+        subsidiary.setTickerCode(request.tickerCode());
+        subsidiary.setDateOfIncorporation(request.dateOfIncorporation());
+        subsidiary.setCountryOfIncorporation(request.countryOfIncorporation());
+        subsidiary.setListingBoard(request.listingBoard());
+        subsidiary.setCompanyType(request.companyType());
+        subsidiary.setRegisteredOfficeAddress(request.registeredOfficeAddress());
+        subsidiary.setBusinessAddress(request.businessAddress());
+        subsidiary.setContactPersonName(request.contactPersonName());
+        subsidiary.setContactPersonDesignation(request.contactPersonDesignation());
+        subsidiary.setContactPersonEmail(request.contactPersonEmail());
+        subsidiary.setContactPersonPhone(request.contactPersonPhone());
+        subsidiary.setTaxIdentificationNumber(request.taxIdentificationNumber());
+
         subsidiary = companyRepository.save(subsidiary);
 
         return CompanyGroupMemberResponse.from(subsidiary, false);

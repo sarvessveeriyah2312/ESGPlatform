@@ -9,6 +9,7 @@ import { ArrowLeft, Building2, Check, AlertCircle, Trash2, RefreshCw, ShieldAler
 import { companyApi, CompanyGroupMember } from '../../api/companyApi';
 import { marketFromBackend, planFromBackend } from '../../api/mappers';
 import { ApiError } from '../../api/client';
+import { LISTING_BOARDS, COMPANY_TYPES } from './AddCompanyModal';
 
 export default function CompanyDetailsView() {
   const navigate = useNavigate();
@@ -35,6 +36,15 @@ export default function CompanyDetailsView() {
   }, []);
 
   const company = members.find((m) => m.id === companyId);
+
+  const formatDate = (value: string | null): string =>
+    value ? new Date(value).toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+
+  const listingBoardLabel = (value: string | null): string =>
+    LISTING_BOARDS.find((b) => b.value === value)?.label ?? '—';
+
+  const companyTypeLabel = (value: string | null): string =>
+    COMPANY_TYPES.find((t) => t.value === value)?.label ?? '—';
 
   const handleSwitch = () => {
     if (!company || company.current) return;
@@ -63,7 +73,7 @@ export default function CompanyDetailsView() {
   };
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto pb-16">
+    <div className="w-full pb-16">
       <button
         type="button"
         onClick={() => navigate('/settings?tab=company')}
@@ -137,6 +147,77 @@ export default function CompanyDetailsView() {
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Plan</span>
               <span className="text-sm font-semibold text-gray-900">{planFromBackend(company.subscriptionPlan)}</span>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4 border-t border-gray-100">
+            <section className="space-y-3">
+              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Identity</h4>
+              <dl className="space-y-2 text-sm">
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Registration number</dt>
+                  <dd className="text-gray-900">{company.registrationNumber ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Stock / ticker code</dt>
+                  <dd className="text-gray-900">{company.tickerCode ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Date of incorporation</dt>
+                  <dd className="text-gray-900">{formatDate(company.dateOfIncorporation)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Country of incorporation</dt>
+                  <dd className="text-gray-900">{company.countryOfIncorporation ?? '—'}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section className="space-y-3">
+              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Classification</h4>
+              <dl className="space-y-2 text-sm">
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Market / board</dt>
+                  <dd className="text-gray-900">{listingBoardLabel(company.listingBoard)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Company type</dt>
+                  <dd className="text-gray-900">{companyTypeLabel(company.companyType)}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section className="space-y-3">
+              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Contact &amp; Location</h4>
+              <dl className="space-y-2 text-sm">
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Registered office address</dt>
+                  <dd className="text-gray-900 whitespace-pre-line">{company.registeredOfficeAddress ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Business address</dt>
+                  <dd className="text-gray-900 whitespace-pre-line">{company.businessAddress ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contact person</dt>
+                  <dd className="text-gray-900">
+                    {company.contactPersonName ?? '—'}
+                    {company.contactPersonDesignation && <span className="text-gray-400"> · {company.contactPersonDesignation}</span>}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contact email</dt>
+                  <dd className="text-gray-900">{company.contactPersonEmail ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contact phone</dt>
+                  <dd className="text-gray-900">{company.contactPersonPhone ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tax Identification Number (TIN)</dt>
+                  <dd className="text-gray-900">{company.taxIdentificationNumber ?? '—'}</dd>
+                </div>
+              </dl>
+            </section>
           </div>
 
           {!company.current && (

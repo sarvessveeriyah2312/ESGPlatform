@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Check, AlertCircle, Download, ShieldAlert, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { privacyApi, downloadJson } from '../../api/privacyApi';
+import Switch from '../ui/Switch';
 
 export default function PrivacyDataTab() {
   const { user, logout } = useAuth();
@@ -45,6 +46,20 @@ export default function PrivacyDataTab() {
       })
       .catch(() => showMessage('Failed to save privacy preferences.', 'warning'))
       .finally(() => setSavingConsent(false));
+  };
+
+  const toggleMarketingConsent = () => {
+    if (savingConsent) return;
+    const next = !marketingConsent;
+    setMarketingConsent(next);
+    saveConsent(next, analyticsConsent);
+  };
+
+  const toggleAnalyticsConsent = () => {
+    if (savingConsent) return;
+    const next = !analyticsConsent;
+    setAnalyticsConsent(next);
+    saveConsent(marketingConsent, next);
   };
 
   // --- Data export ---
@@ -122,32 +137,20 @@ export default function PrivacyDataTab() {
           <p className="text-sm text-gray-400">Loading…</p>
         ) : (
           <div className="space-y-4">
-            <label className="flex items-start justify-between gap-4 cursor-pointer">
-              <div>
+            <div className="flex items-start justify-between gap-4">
+              <div onClick={toggleMarketingConsent} className="cursor-pointer">
                 <span className="text-sm font-semibold text-gray-900 block">Marketing communications</span>
                 <span className="text-[11px] text-gray-500">Product updates, webinars, and Bursa compliance guidance by email.</span>
               </div>
-              <input
-                type="checkbox"
-                checked={marketingConsent}
-                disabled={savingConsent}
-                onChange={(e) => { setMarketingConsent(e.target.checked); saveConsent(e.target.checked, analyticsConsent); }}
-                className="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-              />
-            </label>
-            <label className="flex items-start justify-between gap-4 cursor-pointer">
-              <div>
+              <Switch checked={marketingConsent} disabled={savingConsent} onChange={toggleMarketingConsent} className="mt-1 shrink-0" />
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <div onClick={toggleAnalyticsConsent} className="cursor-pointer">
                 <span className="text-sm font-semibold text-gray-900 block">Product analytics</span>
                 <span className="text-[11px] text-gray-500">Usage data that helps us improve the reporting workflow.</span>
               </div>
-              <input
-                type="checkbox"
-                checked={analyticsConsent}
-                disabled={savingConsent}
-                onChange={(e) => { setAnalyticsConsent(e.target.checked); saveConsent(marketingConsent, e.target.checked); }}
-                className="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-              />
-            </label>
+              <Switch checked={analyticsConsent} disabled={savingConsent} onChange={toggleAnalyticsConsent} className="mt-1 shrink-0" />
+            </div>
           </div>
         )}
       </div>

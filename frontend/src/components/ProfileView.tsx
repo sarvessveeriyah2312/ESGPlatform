@@ -69,14 +69,14 @@ export default function ProfileView() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-[1200px] mx-auto pb-16 text-center py-16 text-gray-400 text-sm font-medium">
+      <div className="w-full pb-16 text-center py-16 text-gray-400 text-sm font-medium">
         Loading your profile…
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto pb-16">
+    <div className="w-full pb-16">
 
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2.5 bg-navy-950 text-white px-4 py-3 rounded-xl shadow-2xl border border-navy-800 animate-slide-in">

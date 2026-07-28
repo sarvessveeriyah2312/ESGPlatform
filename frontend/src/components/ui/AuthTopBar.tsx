@@ -12,7 +12,6 @@ import { canAccess, TENANT_ROLES, MANAGEMENT_ROLES } from '../../permissions';
 import { companyApi, CompanyGroupMember } from '../../api/companyApi';
 
 interface AuthTopBarProps {
-  breadcrumbs: string[]; // e.g. ["Workspace", "ESG Dashboard"]
   onNotificationClick?: () => void;
   onAskAIClick?: () => void;
   searchValue?: string;
@@ -20,7 +19,6 @@ interface AuthTopBarProps {
 }
 
 export default function AuthTopBar({
-  breadcrumbs,
   onNotificationClick,
   onAskAIClick,
   searchValue = '',

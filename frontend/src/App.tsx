@@ -129,17 +129,15 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
     const mapping: Record<string, string> = {
       'dashboard': 'Dashboard',
       'materiality': 'Materiality Assessment',
-      'governance': 'Governance & Policy',
+      'governance': 'Compliance',
       'indicators': 'ESG Indicators',
       'targets': 'Targets & Decarbonization',
       'reports': 'Reports & Export',
       'support': 'Feedback & Support',
       'ifrs-s1-s2': 'IFRS S1/S2 Module',
-      'climate-module': 'Advanced Climate Tracker',
       'assurance-workspace': 'Assurance Workspace',
-      'csi-export': 'Bursa CSI Export',
+      'api-access': 'API Access',
       'team': 'Team Directory',
-      'billing': 'Billing & Plan',
       'settings': 'Settings',
       'profile': 'My Profile',
       'admin/overview': 'Platform Admin — Overview',
@@ -150,6 +148,11 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
       'admin/plans': 'Platform Admin — Plan Management',
       'admin/settings': 'Platform Admin — Settings'
     };
+
+    if (path.startsWith('settings/companies/')) {
+      return ['Workspace', 'Settings', 'Company Details'];
+    }
+
     return ['Workspace', mapping[path] || path];
   };
 
@@ -187,12 +190,20 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8F9FA] text-gray-900 font-sans">
       
       {/* SIDEBAR */}
-      <aside 
+      <aside
         className={`bg-white border-r border-gray-100 flex flex-col h-full relative transition-all duration-300 z-40 shrink-0 ${
           sidebarCollapsed ? 'w-20' : 'w-64'
         }`}
       >
-        
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          title={sidebarCollapsed ? 'Show Sidebar' : 'Hide Sidebar'}
+          aria-label={sidebarCollapsed ? 'Show Sidebar' : 'Hide Sidebar'}
+          className="absolute top-8 -right-3 w-6 h-6 flex items-center justify-center bg-white border border-gray-200 rounded-full shadow-sm text-gray-400 hover:text-gray-800 hover:border-gray-300 transition-colors cursor-pointer z-50"
+        >
+          {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        </button>
+
         {/* Sidebar Header */}
         <div className="h-[72px] flex items-center px-6 border-b border-transparent shrink-0">
           <div className="flex items-center space-x-3 w-full">
@@ -200,29 +211,10 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
               <Hash className="w-5 h-5" />
             </div>
             {!sidebarCollapsed && (
-              <div className="flex-1 min-w-0 flex justify-between items-center">
-                <span className="font-bold text-gray-900 text-lg truncate">Lestari</span>
-                <button 
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className="p-1 text-gray-400 hover:text-gray-800 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-              </div>
+              <span className="font-bold text-gray-900 text-lg truncate">Lestari</span>
             )}
           </div>
         </div>
-        
-        {sidebarCollapsed && (
-           <div className="flex justify-center mt-4">
-              <button 
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-1.5 text-gray-400 hover:text-gray-800 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-           </div>
-        )}
 
         {/* Scrollable Navigation Area */}
         <div className="flex-1 overflow-y-auto px-4 py-2 custom-scrollbar">
@@ -368,27 +360,37 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
         {/* Dynamic TopBar */}
-        <AuthTopBar 
-          breadcrumbs={getBreadcrumbs()} 
+        <AuthTopBar
           onNotificationClick={() => alert("Notification center is simulated in this ESG Sandbox.")}
           onSearchChange={(val) => console.log('Simulated ESG search query: ', val)}
         />
 
         {/* Scrollable Children Body */}
         <main className="flex-1 overflow-y-auto bg-[#F8F9FA] p-6 md:p-8">
-          <div className="max-w-[1400px] mx-auto">
-            {hasPageAccess ? children : (
-              <div className="flex flex-col items-center justify-center text-center py-24 px-6 bg-white border border-gray-100 rounded-2xl">
-                <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <h2 className="text-lg font-bold text-gray-900 mb-1">You don't have access to this page</h2>
-                <p className="text-sm text-gray-500 max-w-sm">
-                  This area is restricted based on your account role. Contact your workspace admin if you believe this is a mistake.
-                </p>
+          {hasPageAccess && (
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold mb-4">
+              {getBreadcrumbs().map((crumb, index, arr) => {
+                const isLast = index === arr.length - 1;
+                return (
+                  <React.Fragment key={`${crumb}-${index}`}>
+                    {index > 0 && <ChevronRight className="w-3 h-3 text-gray-300 shrink-0" />}
+                    <span className={isLast ? 'text-gray-900' : 'text-gray-400'}>{crumb}</span>
+                  </React.Fragment>
+                );
+              })}
+            </nav>
+          )}
+          {hasPageAccess ? children : (
+            <div className="flex flex-col items-center justify-center text-center py-24 px-6 bg-white border border-gray-100 rounded-2xl">
+              <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
+                <Lock className="w-5 h-5" />
               </div>
-            )}
-          </div>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">You don't have access to this page</h2>
+              <p className="text-sm text-gray-500 max-w-sm">
+                This area is restricted based on your account role. Contact your workspace admin if you believe this is a mistake.
+              </p>
+            </div>
+          )}
         </main>
       </div>
     </div>

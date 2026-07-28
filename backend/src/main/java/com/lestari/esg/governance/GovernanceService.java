@@ -99,7 +99,7 @@ public class GovernanceService {
                 ownership.setCompanyId(companyId);
                 ownership.setMatter(matter);
                 ownership.setOversightLevel(defaultLevelFor(matter.getCategory()));
-                ownership.setOwnerName(defaultOwnerFor(matter.getCategory()));
+                ownership.setOwnerName("");
                 ownership.setNotes("Standard policy baseline tracking");
                 ownershipRepository.save(ownership);
             }
@@ -129,11 +129,4 @@ public class GovernanceService {
         };
     }
 
-    private String defaultOwnerFor(SustainabilityMatterCategory category) {
-        return switch (category) {
-            case ENVIRONMENTAL -> "Ahmad Razali (Facilities & Energy Lead)";
-            case SOCIAL -> "Kamini Naidu (HR Director)";
-            case GOVERNANCE -> "Nor Diana (Legal Counsel)";
-        };
-    }
 }
