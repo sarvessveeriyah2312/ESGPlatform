@@ -22,6 +22,10 @@ export interface PlatformSettingsResponse {
   lastTestAt: string | null;
   lastTestSuccess: boolean | null;
   lastTestMessage: string | null;
+  stripePublishableKey: string | null;
+  stripeSecretKeySet: boolean;
+  stripeWebhookSecretSet: boolean;
+  stripeEnabled: boolean;
 }
 
 export interface UpdatePlatformSettingsRequest {
@@ -36,6 +40,12 @@ export interface UpdatePlatformSettingsRequest {
   platformName: string;
   supportEmail: string;
   require2fa: boolean;
+  stripePublishableKey: string;
+  /** Blank keeps the existing stored secret key. */
+  stripeSecretKey: string;
+  /** Blank keeps the existing stored webhook secret. */
+  stripeWebhookSecret: string;
+  stripeEnabled: boolean;
 }
 
 export interface TestEmailResponse {

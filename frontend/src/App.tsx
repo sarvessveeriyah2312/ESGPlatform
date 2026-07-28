@@ -338,9 +338,9 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
 
         {/* Bottom Actions */}
         <div className="p-4 border-t border-gray-100 shrink-0">
-          {!sidebarCollapsed && (
+          {!sidebarCollapsed && !isPlatformAdmin && (
             <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100 relative group">
-               <button 
+               <button
                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 cursor-pointer"
                >
                  <X className="w-4 h-4" />

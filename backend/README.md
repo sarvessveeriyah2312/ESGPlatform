@@ -32,6 +32,20 @@ Flyway migrations run automatically on startup (`src/main/resources/db/migration
 to be seeded manually — reference data (sustainability matters, indicator definitions, feature
 flags) ships in `V4__reference_seed_data.sql`.
 
+### Default login
+
+`V14__seed_platform_admin.sql` seeds the only way in to `/admin` (there's no invite/role-assignment
+flow yet — self-registration always creates `COMPANY_ADMIN`):
+
+```
+email:    platform.admin@lestari.my
+password: PlatformAdmin#2026
+role:     PLATFORM_ADMIN
+```
+
+Sandbox credentials only — change the password (or delete the seed) before this schema is used
+anywhere reachable outside local dev.
+
 ## API docs
 
 Once running: Swagger UI at `http://localhost:8080/swagger-ui.html`, raw OpenAPI JSON at
@@ -58,6 +72,8 @@ Package root `com.lestari.esg`. See the plan/design notes for the full rationale
   cheap session invalidation, BCrypt passwords. Plan is never embedded in the JWT — every
   plan-gated endpoint re-reads `Company.subscriptionPlan` fresh from the DB via `PlanGateService`
   (`@PreAuthorize("@planGate.check('feature-key')")`), so a downgrade takes effect immediately.
+  `emailverification` (registration tokens), `mfa` (TOTP enrollment + backup codes), and `session`
+  (active-session list/revocation under `/api/v1/sessions`) round out the login flow.
 - **`tenant`** / **`user`** — `Company` (the tenant), `AppUser`, `Sector`.
 - **`reference`** — `SustainabilityMatter`, `IndicatorDefinition`, `FeatureFlag`, `MatterSetRule`,
   `TransitionReliefRule` — all seeded, configurable data (not hard-coded logic), so SEDG/Bursa
@@ -83,6 +99,23 @@ Package root `com.lestari.esg`. See the plan/design notes for the full rationale
 - **`email`** — best-effort transactional email (team invites, SMTP test-send). Resolves a
   per-company SMTP configuration first, falling back to a platform-wide default; SMTP passwords
   are AES/GCM-encrypted at rest.
+- **`platform`** — the singleton `platform_settings` row: platform name/support email/app base
+  URL, the default SMTP sender above, the platform-wide "require 2FA" toggle, and Stripe API keys
+  for subscription billing. Secrets (SMTP password, Stripe secret key, Stripe webhook secret) are
+  AES/GCM-encrypted at rest and only ever exposed to the client as a `*Set` boolean, never in
+  plaintext; the Stripe publishable key is the one field returned as-is, since it's meant to ship
+  to a client anyway. Admin-only (`PLATFORM_ADMIN` / `SUPERADMIN`) via `/api/v1/admin/platform-settings`.
+- **`billing`** — per-company `Invoice` records and the admin view over them
+  (`InvoiceAdminController`). Not yet wired to a payment processor — the Stripe keys in `platform`
+  are configured but no charge/webhook flow calls them yet.
+- **`apiaccess`** — long-lived API tokens (`ApiToken`, scoped via `ApiScope`) that let a company
+  pull its own indicator data externally through `ExternalIndicatorController`, separate from the
+  user-facing JWT auth used by the frontend.
+- **`privacy`** — GDPR-style self-service: consent tracking, a company data export, and account
+  closure.
+- **`support`** — in-app support tickets (`SupportTicket` + threaded `TicketMessage`), with
+  separate tenant-facing (`SupportTicketController`) and admin (`SupportTicketAdminController`)
+  endpoints for status/priority/notes.
 
 ## Known simplifications (documented, not accidental)
 
