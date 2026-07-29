@@ -179,6 +179,18 @@
         <td th:text="${company.subscriptionPlan}">Plan</td>
     </tr>
     <tr>
+        <td class="label">Registration No.</td>
+        <td th:text="${company.registrationNumber != null ? company.registrationNumber : 'Not set'}">Registration No.</td>
+        <td class="label">Listing Board</td>
+        <td th:text="${company.listingBoard != null ? company.listingBoard : 'Not applicable'}">Board</td>
+    </tr>
+    <tr>
+        <td class="label">Fiscal Year End</td>
+        <td th:text="${#strings.capitalize(#strings.toLowerCase(T(java.time.Month).of(company.fiscalYearEndMonth)))}">December</td>
+        <td class="label">Registered Office</td>
+        <td th:text="${company.registeredOfficeAddress != null ? company.registeredOfficeAddress : 'Not set'}">Address</td>
+    </tr>
+    <tr>
         <td class="label">Reporting Cycle</td>
         <td th:text="'Annual (Fiscal Period FY' + ${fiscalYear} + ')'">Annual</td>
         <td class="label">Authorized Reviewer</td>

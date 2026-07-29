@@ -10,4 +10,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     Optional<AppUser> findByEmailIgnoreCase(String email);
     boolean existsByEmailIgnoreCase(String email);
     List<AppUser> findByCompanyId(UUID companyId);
+    boolean existsByCustomRoleId(UUID customRoleId);
+    long countByCompanyIdAndRoleAndActiveTrue(UUID companyId, Role role);
 }

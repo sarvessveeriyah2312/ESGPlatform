@@ -86,7 +86,7 @@ public class ExportController {
     }
 
     @PatchMapping("/history/{id}/sign-off")
-    @PreAuthorize("hasRole('COMPANY_ADMIN')")
+    @PreAuthorize("@perm.check('reports.signoff')")
     public ExportHistoryResponse signOff(@PathVariable UUID id) {
         return exportService.signOff(id);
     }

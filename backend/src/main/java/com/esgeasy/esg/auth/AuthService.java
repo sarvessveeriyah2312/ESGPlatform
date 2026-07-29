@@ -186,6 +186,7 @@ public class AuthService {
         user.setName(request.name());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(invite.getRole());
+        user.setCustomRole(invite.getCustomRole());
         user = appUserRepository.save(user);
 
         invite.setAcceptedAt(Instant.now());
@@ -290,7 +291,8 @@ public class AuthService {
                 user.getAddress(),
                 user.getBio(),
                 user.getAvatarPath() != null,
-                mfaSetupRequired
+                mfaSetupRequired,
+                user.getCustomRole() != null ? user.getCustomRole().getPermissionKeys() : java.util.List.of()
         );
     }
 }

@@ -25,31 +25,41 @@ import {
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { useAuth } from '../contexts/AuthContext';
-import { canAccess, MANAGEMENT_ROLES } from '../permissions';
+import { hasPermission } from '../permissions';
 import { companyApi, TeamInviteResponse } from '../api/companyApi';
 import { TenantUserResponse, BackendRole } from '../api/tenantAdminApi';
+import { customRoleApi, CustomRoleResponse } from '../api/customRoleApi';
+import RolesView from './RolesView';
 
-const ASSIGNABLE_ROLES: BackendRole[] = ['COMPANY_ADMIN', 'COMPANY_CONTRIBUTOR', 'CONSULTANT'];
+/** The coarse admin/member split — custom roles (fetched dynamically) are the real source of a
+ *  Member's permissions now; COMPANY_CONTRIBUTOR is the one canonical "non-admin" enum value
+ *  offered here (CONSULTANT still exists on old data but isn't offered for new assignments,
+ *  since the two have been functionally identical since custom roles were introduced). */
+const BASE_ROLES: BackendRole[] = ['COMPANY_ADMIN', 'COMPANY_CONTRIBUTOR'];
 
 const ROLE_LABELS: Record<string, string> = {
   COMPANY_ADMIN: 'Admin',
-  COMPANY_CONTRIBUTOR: 'Contributor',
-  CONSULTANT: 'Consultant',
+  COMPANY_CONTRIBUTOR: 'Member',
+  CONSULTANT: 'Member',
   PLATFORM_ADMIN: 'Platform Admin',
   SUPERADMIN: 'Superadmin'
 };
 
 export default function TeamView() {
   const { user } = useAuth();
-  const canManage = canAccess(user?.role, MANAGEMENT_ROLES);
+  const canManage = hasPermission(user?.role, user?.permissions, 'team.manage');
+  const canManageRoles = hasPermission(user?.role, user?.permissions, 'roles.manage');
 
+  const [tab, setTab] = useState<'members' | 'roles'>('members');
   const [users, setUsers] = useState<TenantUserResponse[]>([]);
   const [pendingInvites, setPendingInvites] = useState<TeamInviteResponse[]>([]);
+  const [customRoles, setCustomRoles] = useState<CustomRoleResponse[]>([]);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<BackendRole>('COMPANY_CONTRIBUTOR');
+  const [customRoleId, setCustomRoleId] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
 
   const [createdInvite, setCreatedInvite] = useState<TeamInviteResponse | null>(null);
@@ -69,9 +79,14 @@ export default function TeamView() {
     companyApi.listInvites().then(setPendingInvites).catch((e) => console.error(e));
   };
 
+  const refreshRoles = () => {
+    customRoleApi.list().then(setCustomRoles).catch((e) => console.error(e));
+  };
+
   useEffect(() => {
     refreshUsers();
     refreshInvites();
+    refreshRoles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -79,6 +94,7 @@ export default function TeamView() {
     setName('');
     setEmail('');
     setRole('COMPANY_CONTRIBUTOR');
+    setCustomRoleId(customRoles[0]?.id ?? '');
     setFormError(null);
     setCreatedInvite(null);
     setCopied(false);
@@ -91,7 +107,11 @@ export default function TeamView() {
       setFormError('Name and email are required.');
       return;
     }
-    companyApi.createInvite(name.trim(), email.trim(), role)
+    if (role !== 'COMPANY_ADMIN' && !customRoleId) {
+      setFormError('Choose a role for this member — create one first under the Roles tab if none exist yet.');
+      return;
+    }
+    companyApi.createInvite(name.trim(), email.trim(), role, role === 'COMPANY_ADMIN' ? null : customRoleId)
       .then((created) => {
         setCreatedInvite(created);
         refreshInvites();
@@ -130,8 +150,13 @@ export default function TeamView() {
     }).catch((e) => console.error(e));
   };
 
-  const handleRoleChange = (userId: string, newRole: BackendRole) => {
-    companyApi.updateUserRole(userId, newRole).then(refreshUsers).catch((e) => console.error(e));
+  const handleRoleChange = (u: TenantUserResponse, newRole: BackendRole) => {
+    const nextCustomRoleId = newRole === 'COMPANY_ADMIN' ? null : (u.customRoleId ?? customRoles[0]?.id ?? null);
+    companyApi.updateUserRole(u.id, newRole, nextCustomRoleId).then(refreshUsers).catch((e) => console.error(e));
+  };
+
+  const handleCustomRoleChange = (u: TenantUserResponse, newCustomRoleId: string) => {
+    companyApi.updateUserRole(u.id, u.role, newCustomRoleId).then(refreshUsers).catch((e) => console.error(e));
   };
 
   const handleToggleActive = (u: TenantUserResponse) => {
@@ -140,6 +165,8 @@ export default function TeamView() {
       setConfirmDeactivateId(null);
     }).catch((e) => console.error(e));
   };
+
+  const canViewRoles = canManageRoles || hasPermission(user?.role, user?.permissions, 'roles.view');
 
   return (
     <div className="space-y-8 w-full pb-16 font-sans">
@@ -153,13 +180,38 @@ export default function TeamView() {
           </p>
         </div>
 
-        {canManage && (
+        {tab === 'members' && canManage && (
           <Button variant="primary" size="sm" onClick={openInviteModal} icon={<Send className="w-4 h-4" />}>
             Invite Member
           </Button>
         )}
       </div>
 
+      {canViewRoles && (
+        <div className="flex items-center gap-1 border-b border-navy-100/60 -mt-4">
+          <button
+            onClick={() => setTab('members')}
+            className={`px-4 py-2 text-xs font-bold cursor-pointer border-b-2 transition-colors ${
+              tab === 'members' ? 'text-primary-700 border-primary-600' : 'text-navy-400 border-transparent hover:text-navy-700'
+            }`}
+          >
+            Members
+          </button>
+          <button
+            onClick={() => setTab('roles')}
+            className={`px-4 py-2 text-xs font-bold cursor-pointer border-b-2 transition-colors ${
+              tab === 'roles' ? 'text-primary-700 border-primary-600' : 'text-navy-400 border-transparent hover:text-navy-700'
+            }`}
+          >
+            Roles
+          </button>
+        </div>
+      )}
+
+      {tab === 'roles' && canViewRoles ? (
+        <RolesView roles={customRoles} canManage={canManageRoles} onRolesChanged={refreshRoles} />
+      ) : (
+      <>
       {/* USER LIST */}
       <Card className="bg-white border-navy-100 overflow-hidden" padded="none">
         {users.length === 0 ? (
@@ -189,19 +241,33 @@ export default function TeamView() {
                       <td className="px-6 py-4 font-bold text-navy-950">{u.name}{isSelf && <span className="text-[9px] text-navy-400 font-semibold ml-1.5">(you)</span>}</td>
                       <td className="px-6 py-4 text-navy-500">{u.email}</td>
                       <td className="px-6 py-4">
-                        {canManage && !isSelf && ASSIGNABLE_ROLES.includes(u.role) ? (
-                          <select
-                            value={u.role}
-                            onChange={(e) => handleRoleChange(u.id, e.target.value as BackendRole)}
-                            className="px-2 py-1 text-[11px] font-bold text-navy-800 border border-navy-200 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer bg-white"
-                          >
-                            {ASSIGNABLE_ROLES.map((r) => (
-                              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                            ))}
-                          </select>
+                        {canManage && !isSelf && BASE_ROLES.includes(u.role) ? (
+                          <div className="flex items-center gap-1.5">
+                            <select
+                              value={u.role}
+                              onChange={(e) => handleRoleChange(u, e.target.value as BackendRole)}
+                              className="px-2 py-1 text-[11px] font-bold text-navy-800 border border-navy-200 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer bg-white"
+                            >
+                              {BASE_ROLES.map((r) => (
+                                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                              ))}
+                            </select>
+                            {u.role !== 'COMPANY_ADMIN' && (
+                              <select
+                                value={u.customRoleId ?? ''}
+                                onChange={(e) => handleCustomRoleChange(u, e.target.value)}
+                                className="px-2 py-1 text-[11px] font-bold text-navy-800 border border-navy-200 rounded-lg outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer bg-white"
+                              >
+                                {customRoles.length === 0 && <option value="">No roles yet</option>}
+                                {customRoles.map((r) => (
+                                  <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 uppercase tracking-wide">
-                            {ROLE_LABELS[u.role] ?? u.role}
+                            {u.customRoleName ?? ROLE_LABELS[u.role] ?? u.role}
                           </span>
                         )}
                       </td>
@@ -300,7 +366,7 @@ export default function TeamView() {
                       <td className="px-6 py-3.5 text-navy-500">{invite.email}</td>
                       <td className="px-6 py-3.5">
                         <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 uppercase tracking-wide">
-                          {ROLE_LABELS[invite.role] ?? invite.role}
+                          {invite.customRoleName ?? ROLE_LABELS[invite.role] ?? invite.role}
                         </span>
                       </td>
                       <td className="px-6 py-3.5 text-navy-500">{invite.invitedByName ?? 'Unknown'}</td>
@@ -403,7 +469,7 @@ export default function TeamView() {
               <div className="space-y-4 pt-4 text-xs font-semibold">
                 <div className="flex items-start gap-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 font-bold">
                   <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>Share this link with {createdInvite.name} — anyone with it can join {user?.company || 'your workspace'} as {ROLE_LABELS[createdInvite.role] ?? createdInvite.role}.</span>
+                  <span>Share this link with {createdInvite.name} — anyone with it can join {user?.company || 'your workspace'} as {createdInvite.customRoleName ?? ROLE_LABELS[createdInvite.role] ?? createdInvite.role}.</span>
                 </div>
 
                 <div className="flex items-center gap-2 bg-navy-50/50 border border-navy-100 rounded-xl px-3 py-2.5">
@@ -462,11 +528,30 @@ export default function TeamView() {
                     onChange={(e) => setRole(e.target.value as BackendRole)}
                     className="w-full px-3 py-2 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
                   >
-                    {ASSIGNABLE_ROLES.map((r) => (
+                    {BASE_ROLES.map((r) => (
                       <option key={r} value={r}>{ROLE_LABELS[r]}</option>
                     ))}
                   </select>
                 </div>
+
+                {role !== 'COMPANY_ADMIN' && (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-navy-400 uppercase tracking-wider">Custom Role</label>
+                    <select
+                      value={customRoleId}
+                      onChange={(e) => setCustomRoleId(e.target.value)}
+                      className="w-full px-3 py-2 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
+                    >
+                      <option value="">Select a role…</option>
+                      {customRoles.map((r) => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                    {customRoles.length === 0 && (
+                      <p className="text-[10px] text-navy-400">No custom roles yet — create one under the Roles tab first.</p>
+                    )}
+                  </div>
+                )}
 
                 {formError && (
                   <div className="flex items-center gap-2 text-[11px] text-rose-600 font-bold bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
@@ -531,7 +616,7 @@ export default function TeamView() {
                 <BadgeCheck className="w-4 h-4 text-navy-400 shrink-0" />
                 <div>
                   <span className="text-[9px] text-navy-400 uppercase tracking-wider font-bold block">Role</span>
-                  <span className="font-bold text-navy-900">{ROLE_LABELS[viewingUser.role] ?? viewingUser.role}</span>
+                  <span className="font-bold text-navy-900">{viewingUser.customRoleName ?? ROLE_LABELS[viewingUser.role] ?? viewingUser.role}</span>
                 </div>
               </div>
 
@@ -562,6 +647,8 @@ export default function TeamView() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
 
     </div>

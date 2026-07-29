@@ -1,5 +1,6 @@
 package com.esgeasy.esg.reference;
 
+import com.esgeasy.esg.permission.dto.PermissionResponse;
 import com.esgeasy.esg.reference.dto.FeatureFlagResponse;
 import com.esgeasy.esg.reference.dto.IndicatorDefinitionResponse;
 import com.esgeasy.esg.reference.dto.MatterResponse;
@@ -55,5 +56,11 @@ public class ReferenceController {
     @GetMapping("/plan-pricing")
     public List<PlanPricingResponse> planPricing() {
         return referenceService.listPlanPricing();
+    }
+
+    /** The full catalog of grantable custom-role permission keys — see V54__permission_catalog.sql. */
+    @GetMapping("/permissions")
+    public List<PermissionResponse> permissions() {
+        return referenceService.listPermissions();
     }
 }

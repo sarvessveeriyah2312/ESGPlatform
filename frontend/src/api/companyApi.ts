@@ -19,6 +19,8 @@ export interface TeamInviteResponse {
   name: string;
   email: string;
   role: BackendRole;
+  customRoleId: string | null;
+  customRoleName: string | null;
   invitedByName: string | null;
   createdAt: string;
   expiresAt: string;
@@ -94,19 +96,19 @@ export const companyApi = {
 
   listUsers: () => apiClient.get<TenantUserResponse[]>('/api/v1/company/users'),
 
-  createUser: (name: string, email: string, role: BackendRole) =>
-    apiClient.post<CreateTenantUserResponse>('/api/v1/company/users', { name, email, role }),
+  createUser: (name: string, email: string, role: BackendRole, customRoleId?: string | null) =>
+    apiClient.post<CreateTenantUserResponse>('/api/v1/company/users', { name, email, role, customRoleId }),
 
-  updateUserRole: (userId: string, role: BackendRole) =>
-    apiClient.patch<TenantUserResponse>(`/api/v1/company/users/${userId}/role`, { role }),
+  updateUserRole: (userId: string, role: BackendRole, customRoleId?: string | null) =>
+    apiClient.patch<TenantUserResponse>(`/api/v1/company/users/${userId}/role`, { role, customRoleId }),
 
   setUserActive: (userId: string, active: boolean) =>
     apiClient.patch<TenantUserResponse>(`/api/v1/company/users/${userId}/active?active=${active}`),
 
   listInvites: () => apiClient.get<TeamInviteResponse[]>('/api/v1/company/invites'),
 
-  createInvite: (name: string, email: string, role: BackendRole) =>
-    apiClient.post<TeamInviteResponse>('/api/v1/company/invites', { name, email, role }),
+  createInvite: (name: string, email: string, role: BackendRole, customRoleId?: string | null) =>
+    apiClient.post<TeamInviteResponse>('/api/v1/company/invites', { name, email, role, customRoleId }),
 
   resendInvite: (inviteId: string) =>
     apiClient.post<TeamInviteResponse>(`/api/v1/company/invites/${inviteId}/resend`),

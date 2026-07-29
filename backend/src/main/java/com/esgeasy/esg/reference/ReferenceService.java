@@ -1,6 +1,8 @@
 package com.esgeasy.esg.reference;
 
 import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.permission.PermissionRepository;
+import com.esgeasy.esg.permission.dto.PermissionResponse;
 import com.esgeasy.esg.reference.dto.FeatureFlagResponse;
 import com.esgeasy.esg.reference.dto.IndicatorDefinitionResponse;
 import com.esgeasy.esg.reference.dto.IndicatorDefinitionUpsertRequest;
@@ -31,6 +33,7 @@ public class ReferenceService {
     private final CompanyRepository companyRepository;
     private final FeatureFlagRepository featureFlagRepository;
     private final PlanPricingRepository planPricingRepository;
+    private final PermissionRepository permissionRepository;
 
     public ReferenceService(SustainabilityMatterRepository matterRepository,
                              IndicatorDefinitionRepository indicatorDefinitionRepository,
@@ -39,7 +42,8 @@ public class ReferenceService {
                              CurrentUserProvider currentUserProvider,
                              CompanyRepository companyRepository,
                              FeatureFlagRepository featureFlagRepository,
-                             PlanPricingRepository planPricingRepository) {
+                             PlanPricingRepository planPricingRepository,
+                             PermissionRepository permissionRepository) {
         this.matterRepository = matterRepository;
         this.indicatorDefinitionRepository = indicatorDefinitionRepository;
         this.sectorRepository = sectorRepository;
@@ -48,6 +52,7 @@ public class ReferenceService {
         this.companyRepository = companyRepository;
         this.featureFlagRepository = featureFlagRepository;
         this.planPricingRepository = planPricingRepository;
+        this.permissionRepository = permissionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -152,6 +157,11 @@ public class ReferenceService {
     @Transactional(readOnly = true)
     public List<PlanPricingResponse> listPlanPricing() {
         return planPricingRepository.findAll().stream().map(PlanPricingResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PermissionResponse> listPermissions() {
+        return permissionRepository.findAllByOrderByDisplayOrderAsc().stream().map(PermissionResponse::from).toList();
     }
 
     @Transactional

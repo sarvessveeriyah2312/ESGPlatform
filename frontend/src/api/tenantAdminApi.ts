@@ -25,6 +25,8 @@ export interface TenantUserResponse {
   name: string;
   email: string;
   role: BackendRole;
+  customRoleId: string | null;
+  customRoleName: string | null;
   active: boolean;
   createdAt: string;
 }

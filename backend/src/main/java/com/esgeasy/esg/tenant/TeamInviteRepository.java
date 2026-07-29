@@ -13,4 +13,6 @@ public interface TeamInviteRepository extends JpaRepository<TeamInvite, UUID> {
     Optional<TeamInvite> findByToken(String token);
 
     boolean existsByCompanyIdAndEmailIgnoreCaseAndAcceptedAtIsNullAndRevokedAtIsNull(UUID companyId, String email);
+
+    boolean existsByCustomRoleIdAndAcceptedAtIsNullAndRevokedAtIsNull(UUID customRoleId);
 }

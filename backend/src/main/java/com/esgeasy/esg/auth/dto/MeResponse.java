@@ -26,6 +26,7 @@ public record MeResponse(
         String address,
         String bio,
         boolean hasAvatar,
-        boolean mfaSetupRequired
+        boolean mfaSetupRequired,
+        List<String> permissions
 ) {
 }

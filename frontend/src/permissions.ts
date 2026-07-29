@@ -23,6 +23,20 @@ export function canAccess(userRole: Role | undefined, allowed?: Role[]): boolean
 }
 
 /**
+ * Custom per-company RBAC check (module.action keys, e.g. 'team.manage') — the fine-grained
+ * complement to canAccess()'s coarse role-group checks. COMPANY_ADMIN always passes (the fixed
+ * "owner" role — see backend PermissionGateService); PLATFORM_ROLES are out of scope for this
+ * axis entirely and never pass. Everyone else needs the key in their assigned custom role's
+ * granted permission set, fetched once at login onto UserProfile.permissions.
+ */
+export function hasPermission(userRole: Role | undefined, permissions: Set<string> | undefined, key: string): boolean {
+  if (!userRole) return false;
+  if (userRole === 'COMPANY_ADMIN') return true;
+  if (canAccess(userRole, PLATFORM_ROLES)) return false;
+  return permissions?.has(key) ?? false;
+}
+
+/**
  * Where to send a user right after login/registration. Platform-level roles have no company
  * and skip onboarding entirely (there's nothing for them to onboard) — they go straight to the
  * operator console.

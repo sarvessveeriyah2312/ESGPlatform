@@ -202,6 +202,24 @@
 
 <table class="meta-table">
     <tr>
+        <td class="label">Registration No.</td>
+        <td th:text="${company.registrationNumber != null ? company.registrationNumber : 'Not set'}">Registration No.</td>
+        <td class="label">Sector</td>
+        <td th:text="${company.sector != null ? company.sector.name : 'Not set'}">Sector</td>
+    </tr>
+    <tr>
+        <td class="label">Listing Board</td>
+        <td th:text="${company.listingBoard != null ? company.listingBoard : 'Not applicable'}">Board</td>
+        <td class="label">Fiscal Year End</td>
+        <td th:text="${#strings.capitalize(#strings.toLowerCase(T(java.time.Month).of(company.fiscalYearEndMonth)))}">December</td>
+    </tr>
+    <tr>
+        <td class="label">Registered Office</td>
+        <td th:text="${company.registeredOfficeAddress != null ? company.registeredOfficeAddress : 'Not set'}">Address</td>
+        <td class="label"></td>
+        <td></td>
+    </tr>
+    <tr>
         <td class="label">Market Classification</td>
         <td th:text="${company.marketClassification}">Market</td>
         <td class="label">Subscription Plan</td>

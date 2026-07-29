@@ -3,6 +3,8 @@ package com.esgeasy.esg.tenant;
 import com.esgeasy.esg.common.exceptions.ConflictException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.email.EmailService;
+import com.esgeasy.esg.permission.CustomRole;
+import com.esgeasy.esg.permission.CustomRoleService;
 import com.esgeasy.esg.platform.PlatformSettingsService;
 import com.esgeasy.esg.security.CurrentUserProvider;
 import com.esgeasy.esg.tenant.dto.CompanyGroupMemberResponse;
@@ -46,12 +48,14 @@ public class CompanyService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final PlatformSettingsService platformSettingsService;
+    private final CustomRoleService customRoleService;
     private final SecureRandom random = new SecureRandom();
 
     public CompanyService(CompanyRepository companyRepository, SectorRepository sectorRepository,
                            AppUserRepository appUserRepository, TeamInviteRepository teamInviteRepository,
                            CurrentUserProvider currentUserProvider, PasswordEncoder passwordEncoder,
-                           EmailService emailService, PlatformSettingsService platformSettingsService) {
+                           EmailService emailService, PlatformSettingsService platformSettingsService,
+                           CustomRoleService customRoleService) {
         this.companyRepository = companyRepository;
         this.sectorRepository = sectorRepository;
         this.appUserRepository = appUserRepository;
@@ -60,6 +64,36 @@ public class CompanyService {
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.platformSettingsService = platformSettingsService;
+        this.customRoleService = customRoleService;
+    }
+
+    /**
+     * Resolves the custom role to assign for a given target role, enforcing the invariant that
+     * custom roles fully replace any implicit COMPANY_CONTRIBUTOR/CONSULTANT permission set:
+     * COMPANY_ADMIN never has one (implicitly all-permissions, see PermissionGateService), every
+     * other tenant role must have one, resolved against the caller's own company.
+     */
+    private CustomRole resolveCustomRole(Role role, UUID customRoleId) {
+        if (role == Role.COMPANY_ADMIN) {
+            return null;
+        }
+        if (customRoleId == null) {
+            throw new IllegalArgumentException("A custom role is required for non-admin users");
+        }
+        return customRoleService.requireOwnedRole(customRoleId);
+    }
+
+    /**
+     * Lockout-prevention safety net: a company must always retain at least one active
+     * COMPANY_ADMIN able to manage it. Called before demoting or deactivating one.
+     */
+    private void requireNotLastActiveAdmin(UUID companyId, AppUser target) {
+        if (target.getRole() != Role.COMPANY_ADMIN || !Boolean.TRUE.equals(target.getActive())) {
+            return;
+        }
+        if (appUserRepository.countByCompanyIdAndRoleAndActiveTrue(companyId, Role.COMPANY_ADMIN) <= 1) {
+            throw new ConflictException("Cannot remove the last admin — promote another user to Company Admin first");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -208,6 +242,7 @@ public class CompanyService {
         if (!ASSIGNABLE_ROLES.contains(request.role())) {
             throw new IllegalArgumentException("Cannot assign platform-level role: " + request.role());
         }
+        CustomRole customRole = resolveCustomRole(request.role(), request.customRoleId());
 
         String temporaryPassword = generateTemporaryPassword();
 
@@ -217,6 +252,7 @@ public class CompanyService {
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(temporaryPassword));
         user.setRole(request.role());
+        user.setCustomRole(customRole);
         user = appUserRepository.save(user);
 
         return CreateTenantUserResponse.from(user, temporaryPassword);
@@ -242,6 +278,7 @@ public class CompanyService {
         if (!ASSIGNABLE_ROLES.contains(request.role())) {
             throw new IllegalArgumentException("Cannot assign platform-level role: " + request.role());
         }
+        CustomRole customRole = resolveCustomRole(request.role(), request.customRoleId());
 
         Company company = currentCompany();
         AppUser inviter = appUserRepository.findById(currentUserProvider.getPrincipal().userId()).orElse(null);
@@ -251,6 +288,7 @@ public class CompanyService {
         invite.setName(request.name());
         invite.setEmail(request.email());
         invite.setRole(request.role());
+        invite.setCustomRole(customRole);
         invite.setToken(generateInviteToken());
         invite.setInvitedByName(inviter != null ? inviter.getName() : "Unknown");
         invite.setExpiresAt(Instant.now().plus(INVITE_VALIDITY_DAYS, ChronoUnit.DAYS));
@@ -317,7 +355,12 @@ public class CompanyService {
         if (!ASSIGNABLE_ROLES.contains(request.role())) {
             throw new IllegalArgumentException("Cannot assign platform-level role: " + request.role());
         }
+        if (request.role() != Role.COMPANY_ADMIN) {
+            requireNotLastActiveAdmin(user.getCompany().getId(), user);
+        }
+        CustomRole customRole = resolveCustomRole(request.role(), request.customRoleId());
         user.setRole(request.role());
+        user.setCustomRole(customRole);
         return toTenantUserResponse(appUserRepository.save(user));
     }
 
@@ -326,6 +369,9 @@ public class CompanyService {
         AppUser user = requireOwnedUser(userId);
         if (userId.equals(currentUserProvider.getPrincipal().userId())) {
             throw new ConflictException("You cannot deactivate your own account");
+        }
+        if (!active) {
+            requireNotLastActiveAdmin(user.getCompany().getId(), user);
         }
         user.setActive(active);
         return toTenantUserResponse(appUserRepository.save(user));
@@ -343,6 +389,8 @@ public class CompanyService {
 
     private TenantUserResponse toTenantUserResponse(AppUser u) {
         return new TenantUserResponse(u.getId(), u.getName(), u.getEmail(), u.getRole(),
+                u.getCustomRole() != null ? u.getCustomRole().getId() : null,
+                u.getCustomRole() != null ? u.getCustomRole().getName() : null,
                 Boolean.TRUE.equals(u.getActive()), u.getCreatedAt());
     }
 
@@ -377,8 +425,7 @@ public class CompanyService {
     public List<TenantUserResponse> listTenantUsers(UUID companyId) {
         findCompany(companyId);
         return appUserRepository.findByCompanyId(companyId).stream()
-                .map(u -> new TenantUserResponse(u.getId(), u.getName(), u.getEmail(), u.getRole(),
-                        Boolean.TRUE.equals(u.getActive()), u.getCreatedAt()))
+                .map(this::toTenantUserResponse)
                 .toList();
     }
 

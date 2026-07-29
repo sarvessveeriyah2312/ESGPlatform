@@ -46,6 +46,14 @@ export interface PublicPlanPricingResponse {
   monthlyPrice: number;
 }
 
+export interface PermissionResponse {
+  key: string;
+  module: string;
+  action: string;
+  label: string;
+  description: string | null;
+}
+
 export const referenceApi = {
   sectors: () => apiClient.get<SectorResponse[]>('/api/v1/reference/sectors'),
 
@@ -61,4 +69,6 @@ export const referenceApi = {
   featureFlags: () => apiClient.get<FeatureFlagResponse[]>('/api/v1/reference/feature-flags'),
 
   planPricing: () => apiClient.get<PublicPlanPricingResponse[]>('/api/v1/reference/plan-pricing'),
+
+  permissions: () => apiClient.get<PermissionResponse[]>('/api/v1/reference/permissions'),
 };

@@ -45,7 +45,7 @@ import {
 
 import { PlanProvider, usePlan, PlanType } from './contexts/PlanContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { Role, canAccess, MANAGEMENT_ROLES, PLATFORM_ROLES, TENANT_ROLES } from './permissions';
+import { Role, canAccess, hasPermission, MANAGEMENT_ROLES, PLATFORM_ROLES, TENANT_ROLES } from './permissions';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import AcceptInvitePage from './components/AcceptInvitePage';
@@ -80,7 +80,7 @@ import {
 /**
  * 1. Authenticated Layout Component (Sidebar + TopBar + Main Area Wrapper)
  */
-function AuthenticatedLayout({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: Role[] }) {
+function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { children: React.ReactNode; allowedRoles?: Role[]; requiredPermissions?: string[] }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { plan, hasFeature, isFeatureVisible } = usePlan();
@@ -117,7 +117,9 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
   }
 
   const isPlatformAdmin = canAccess(user?.role, PLATFORM_ROLES);
-  const hasPageAccess = canAccess(user?.role, allowedRoles);
+  const hasRequiredPermission = !requiredPermissions
+    || requiredPermissions.some((key) => hasPermission(user?.role, user?.permissions, key));
+  const hasPageAccess = canAccess(user?.role, allowedRoles) && hasRequiredPermission;
 
   const userInitials = user?.name 
     ? user.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase() 
@@ -170,7 +172,7 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
     { key: 'ifrs-s1-s2', label: 'IFRS S1/S2', icon: <Globe className="w-4 h-4" />, path: '/ifrs-s1-s2', premiumOnly: true },
     { key: 'assurance-workspace', label: 'Assurance Workspace', icon: <Lock className="w-4 h-4" />, path: '/assurance-workspace', premiumOnly: true },
     { key: 'api-access', label: 'API Access', icon: <KeyRound className="w-4 h-4" />, path: '/api-access' },
-    { key: 'team', label: 'Team', icon: <Users className="w-4 h-4" />, path: '/team' },
+    { key: 'team', label: 'Team', icon: <Users className="w-4 h-4" />, path: '/team', requiresAnyPermission: ['team.view', 'team.manage', 'roles.view', 'roles.manage'] },
     { key: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" />, path: '/settings', requiresManagement: true },
   ];
 
@@ -294,6 +296,7 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
                   {managementsItems.map(item => {
                     if (item.gated && !isFeatureVisible(item.key)) return null;
                     if (item.requiresManagement && !canManageWorkspace) return null;
+                    if (item.requiresAnyPermission && !item.requiresAnyPermission.some((key) => hasPermission(user?.role, user?.permissions, key))) return null;
                     if (item.premiumOnly && plan !== 'issuer-ready') return null;
                     const isActive = location.pathname === item.path;
                     return (
@@ -700,7 +703,7 @@ function AppContent() {
       <Route
         path="/team"
         element={
-          <AuthenticatedLayout allowedRoles={MANAGEMENT_ROLES}>
+          <AuthenticatedLayout allowedRoles={TENANT_ROLES} requiredPermissions={['team.view', 'team.manage', 'roles.view', 'roles.manage']}>
             <TeamView />
           </AuthenticatedLayout>
         }

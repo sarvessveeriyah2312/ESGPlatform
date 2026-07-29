@@ -25,6 +25,7 @@ export interface MeResponse {
   bio: string | null;
   hasAvatar: boolean;
   mfaSetupRequired: boolean;
+  permissions: string[];
 }
 
 export interface AuthResponse {

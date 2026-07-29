@@ -29,6 +29,8 @@ export interface UserProfile {
   bio: string;
   hasAvatar: boolean;
   mfaSetupRequired: boolean;
+  /** Effective custom-role permission keys (empty for COMPANY_ADMIN — see permissions.hasPermission). */
+  permissions: Set<string>;
 }
 
 function toUserProfile(me: MeResponse): UserProfile {
@@ -49,6 +51,7 @@ function toUserProfile(me: MeResponse): UserProfile {
     bio: me.bio ?? '',
     hasAvatar: me.hasAvatar,
     mfaSetupRequired: me.mfaSetupRequired,
+    permissions: new Set(me.permissions ?? []),
   };
 }
 
