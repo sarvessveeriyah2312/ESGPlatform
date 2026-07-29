@@ -1,4 +1,4 @@
-package com.lestari.esg.config;
+package com.esgeasy.esg.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;

@@ -1,6 +1,6 @@
-package com.lestari.esg.assurance;
+package com.esgeasy.esg.assurance;
 
-import com.lestari.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.common.TenantOwnedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

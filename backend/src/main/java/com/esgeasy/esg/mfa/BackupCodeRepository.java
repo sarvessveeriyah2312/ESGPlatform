@@ -1,4 +1,4 @@
-package com.lestari.esg.mfa;
+package com.esgeasy.esg.mfa;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

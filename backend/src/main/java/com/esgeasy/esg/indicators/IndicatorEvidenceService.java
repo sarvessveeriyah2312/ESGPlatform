@@ -1,8 +1,8 @@
-package com.lestari.esg.indicators;
+package com.esgeasy.esg.indicators;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.indicators.dto.AuditEntryDto;
-import com.lestari.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.indicators.dto.AuditEntryDto;
+import com.esgeasy.esg.security.CurrentUserProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +34,7 @@ public class IndicatorEvidenceService {
 
     public IndicatorEvidenceService(IndicatorAuditEntryRepository auditEntryRepository,
                                      CurrentUserProvider currentUserProvider,
-                                     @Value("${lestari.uploads.dir}") String uploadsDir) {
+                                     @Value("${esgeasy.uploads.dir}") String uploadsDir) {
         this.auditEntryRepository = auditEntryRepository;
         this.currentUserProvider = currentUserProvider;
         this.uploadsRoot = Paths.get(uploadsDir).toAbsolutePath().normalize();

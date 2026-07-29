@@ -2,16 +2,16 @@
 -- assigns COMPANY_ADMIN), so this is currently the only way to get a PLATFORM_ADMIN user to log
 -- in as and exercise /admin.
 --
--- Login: platform.admin@lestari.my / PlatformAdmin#2026
+-- Login: platform.admin@esgeasy.my / PlatformAdmin#2026
 -- Change this password (or delete this seed) before this schema is ever used outside a sandbox.
 
 INSERT INTO app_user (id, company_id, email, password_hash, name, role, token_version, active)
 VALUES (
     gen_random_uuid(),
     NULL,
-    'platform.admin@lestari.my',
+    'platform.admin@esgeasy.my',
     '$2a$10$8pty7TzI23fHt.3qTlkcDOZrBb59Y0/FO0suKUZEn6mEMawhsREmS',
-    'Lestari Platform Admin',
+    'EsgEasy Platform Admin',
     'PLATFORM_ADMIN',
     0,
     TRUE

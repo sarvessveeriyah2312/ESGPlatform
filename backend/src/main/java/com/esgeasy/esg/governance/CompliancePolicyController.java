@@ -1,8 +1,8 @@
-package com.lestari.esg.governance;
+package com.esgeasy.esg.governance;
 
-import com.lestari.esg.governance.dto.CompliancePolicyResponse;
-import com.lestari.esg.governance.dto.CreateCompliancePolicyRequest;
-import com.lestari.esg.governance.dto.MarkPolicyReviewedRequest;
+import com.esgeasy.esg.governance.dto.CompliancePolicyResponse;
+import com.esgeasy.esg.governance.dto.CreateCompliancePolicyRequest;
+import com.esgeasy.esg.governance.dto.MarkPolicyReviewedRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

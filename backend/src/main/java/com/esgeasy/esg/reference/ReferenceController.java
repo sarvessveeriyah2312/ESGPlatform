@@ -1,10 +1,10 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
-import com.lestari.esg.reference.dto.FeatureFlagResponse;
-import com.lestari.esg.reference.dto.IndicatorDefinitionResponse;
-import com.lestari.esg.reference.dto.MatterResponse;
-import com.lestari.esg.reference.dto.SectorResponse;
-import com.lestari.esg.tenant.dto.PlanPricingResponse;
+import com.esgeasy.esg.reference.dto.FeatureFlagResponse;
+import com.esgeasy.esg.reference.dto.IndicatorDefinitionResponse;
+import com.esgeasy.esg.reference.dto.MatterResponse;
+import com.esgeasy.esg.reference.dto.SectorResponse;
+import com.esgeasy.esg.tenant.dto.PlanPricingResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

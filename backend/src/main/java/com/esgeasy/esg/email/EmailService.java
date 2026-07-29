@@ -1,9 +1,9 @@
-package com.lestari.esg.email;
+package com.esgeasy.esg.email;
 
-import com.lestari.esg.email.dto.TestEmailResponse;
-import com.lestari.esg.platform.PlatformSettings;
-import com.lestari.esg.platform.PlatformSettingsRepository;
-import com.lestari.esg.security.SecretCryptoService;
+import com.esgeasy.esg.email.dto.TestEmailResponse;
+import com.esgeasy.esg.platform.PlatformSettings;
+import com.esgeasy.esg.platform.PlatformSettingsRepository;
+import com.esgeasy.esg.security.SecretCryptoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +36,7 @@ public class EmailService {
     private final SecretCryptoService cryptoService;
 
     public EmailService(JavaMailSender platformMailSender,
-                         @Value("${lestari.mail.from}") String platformFromAddress,
+                         @Value("${esgeasy.mail.from}") String platformFromAddress,
                          @Value("${spring.mail.host:}") String platformMailHost,
                          CompanyEmailSettingsRepository companyEmailSettingsRepository,
                          PlatformSettingsRepository platformSettingsRepository,
@@ -59,13 +59,13 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(sender.fromAddress());
             message.setTo(toEmail);
-            message.setSubject(inviterName + " invited you to join " + companyName + " on Lestari");
+            message.setSubject(inviterName + " invited you to join " + companyName + " on EsgEasy");
             message.setText(
                     "Hi " + toName + ",\n\n" +
-                    inviterName + " has invited you to join " + companyName + " on Lestari as a " + role + ".\n\n" +
+                    inviterName + " has invited you to join " + companyName + " on EsgEasy as a " + role + ".\n\n" +
                     "Accept your invite here:\n" + inviteUrl + "\n\n" +
                     "This link expires in 7 days and can only be used once.\n\n" +
-                    "— Lestari ESG Reporting Platform"
+                    "— EsgEasy Reporting Platform"
             );
             sender.mailSender().send(message);
         } catch (Exception e) {
@@ -83,12 +83,12 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(sender.fromAddress());
             message.setTo(toEmail);
-            message.setSubject("Verify your email for Lestari");
+            message.setSubject("Verify your email for EsgEasy");
             message.setText(
                     "Hi " + toName + ",\n\n" +
-                    "Please verify your email address to activate your Lestari account:\n\n" + verifyUrl + "\n\n" +
+                    "Please verify your email address to activate your EsgEasy account:\n\n" + verifyUrl + "\n\n" +
                     "This link expires in 24 hours.\n\n" +
-                    "— Lestari ESG Reporting Platform"
+                    "— EsgEasy Reporting Platform"
             );
             sender.mailSender().send(message);
         } catch (Exception e) {
@@ -107,12 +107,12 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(config.fromAddress());
             message.setTo(toEmail);
-            message.setSubject("Lestari SMTP test email");
+            message.setSubject("EsgEasy SMTP test email");
             message.setText(
                     "This is a test email confirming your SMTP settings are working correctly.\n\n" +
                     "Host: " + config.host() + ":" + config.port() + "\n" +
                     "From: " + config.fromAddress() + "\n\n" +
-                    "— Lestari ESG Reporting Platform"
+                    "— EsgEasy Reporting Platform"
             );
             sender.send(message);
             return new TestEmailResponse(true, "Test email sent successfully to " + toEmail + ".");

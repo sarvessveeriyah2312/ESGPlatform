@@ -1,7 +1,7 @@
-package com.lestari.esg.export;
+package com.esgeasy.esg.export;
 
-import com.lestari.esg.export.dto.ExportHistoryResponse;
-import com.lestari.esg.export.dto.LogExportRequest;
+import com.esgeasy.esg.export.dto.ExportHistoryResponse;
+import com.esgeasy.esg.export.dto.LogExportRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -64,7 +64,7 @@ public class ExportController {
     @PostMapping("/csv")
     public ResponseEntity<byte[]> exportCsv(@RequestParam int fiscalYear) {
         byte[] csv = exportService.generateRawIndicatorCsv(fiscalYear);
-        return csvResponse(csv, "Lestari_Raw_Indicators_Ledger_FY" + fiscalYear + ".csv");
+        return csvResponse(csv, "EsgEasy_Raw_Indicators_Ledger_FY" + fiscalYear + ".csv");
     }
 
     @PostMapping("/csi")

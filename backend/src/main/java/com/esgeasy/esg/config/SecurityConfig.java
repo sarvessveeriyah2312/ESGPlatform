@@ -1,11 +1,11 @@
-package com.lestari.esg.config;
+package com.esgeasy.esg.config;
 
-import com.lestari.esg.apiaccess.ApiTokenRepository;
-import com.lestari.esg.security.ApiTokenAuthenticationFilter;
-import com.lestari.esg.security.JwtAuthenticationFilter;
-import com.lestari.esg.security.JwtService;
-import com.lestari.esg.session.UserSessionRepository;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.apiaccess.ApiTokenRepository;
+import com.esgeasy.esg.security.ApiTokenAuthenticationFilter;
+import com.esgeasy.esg.security.JwtAuthenticationFilter;
+import com.esgeasy.esg.security.JwtService;
+import com.esgeasy.esg.session.UserSessionRepository;
+import com.esgeasy.esg.user.AppUserRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,7 +29,7 @@ public class SecurityConfig {
     private final String[] allowedOrigins;
 
     public SecurityConfig(org.springframework.core.env.Environment env) {
-        String raw = env.getProperty("lestari.cors.allowed-origins", "http://localhost:3000");
+        String raw = env.getProperty("esgeasy.cors.allowed-origins", "http://localhost:3000");
         this.allowedOrigins = raw.split(",");
     }
 

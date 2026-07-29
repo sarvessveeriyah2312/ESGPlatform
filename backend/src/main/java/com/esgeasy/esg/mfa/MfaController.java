@@ -1,11 +1,11 @@
-package com.lestari.esg.mfa;
+package com.esgeasy.esg.mfa;
 
-import com.lestari.esg.mfa.dto.BackupCodesResponse;
-import com.lestari.esg.mfa.dto.DisableTotpRequest;
-import com.lestari.esg.mfa.dto.RegenerateBackupCodesRequest;
-import com.lestari.esg.mfa.dto.TotpEnrollResponse;
-import com.lestari.esg.mfa.dto.TotpStatusResponse;
-import com.lestari.esg.mfa.dto.VerifyTotpRequest;
+import com.esgeasy.esg.mfa.dto.BackupCodesResponse;
+import com.esgeasy.esg.mfa.dto.DisableTotpRequest;
+import com.esgeasy.esg.mfa.dto.RegenerateBackupCodesRequest;
+import com.esgeasy.esg.mfa.dto.TotpEnrollResponse;
+import com.esgeasy.esg.mfa.dto.TotpStatusResponse;
+import com.esgeasy.esg.mfa.dto.VerifyTotpRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -1,6 +1,6 @@
-package com.lestari.esg.climate.dto;
+package com.esgeasy.esg.climate.dto;
 
-import com.lestari.esg.climate.BusinessSegment;
+import com.esgeasy.esg.climate.BusinessSegment;
 
 import java.util.List;
 import java.util.UUID;

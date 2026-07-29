@@ -1,9 +1,9 @@
-package com.lestari.esg.climate;
+package com.esgeasy.esg.climate;
 
-import com.lestari.esg.climate.dto.AddActivityEntryRequest;
-import com.lestari.esg.climate.dto.EmissionActivityEntryResponse;
-import com.lestari.esg.climate.dto.EmissionFactorResponse;
-import com.lestari.esg.climate.dto.EmissionsResponse;
+import com.esgeasy.esg.climate.dto.AddActivityEntryRequest;
+import com.esgeasy.esg.climate.dto.EmissionActivityEntryResponse;
+import com.esgeasy.esg.climate.dto.EmissionFactorResponse;
+import com.esgeasy.esg.climate.dto.EmissionsResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;

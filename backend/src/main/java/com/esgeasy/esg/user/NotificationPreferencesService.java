@@ -1,8 +1,8 @@
-package com.lestari.esg.user;
+package com.esgeasy.esg.user;
 
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.user.dto.NotificationPreferencesResponse;
-import com.lestari.esg.user.dto.UpdateNotificationPreferencesRequest;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.user.dto.NotificationPreferencesResponse;
+import com.esgeasy.esg.user.dto.UpdateNotificationPreferencesRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

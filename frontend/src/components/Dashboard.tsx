@@ -296,7 +296,7 @@ export default function Dashboard() {
 
   const handleExport = () => {
     exportApi.csv(CURRENT_FISCAL_YEAR).then((csv) => {
-      downloadCsv(csv, `Lestari_ESG_Dashboard_FY${CURRENT_FISCAL_YEAR}_Export.csv`);
+      downloadCsv(csv, `EsgEasy_ESG_Dashboard_FY${CURRENT_FISCAL_YEAR}_Export.csv`);
     });
   };
 

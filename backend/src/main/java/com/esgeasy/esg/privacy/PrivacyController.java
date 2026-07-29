@@ -1,9 +1,9 @@
-package com.lestari.esg.privacy;
+package com.esgeasy.esg.privacy;
 
-import com.lestari.esg.privacy.dto.CloseAccountRequest;
-import com.lestari.esg.privacy.dto.CompanyDataExportResponse;
-import com.lestari.esg.privacy.dto.PrivacyConsentResponse;
-import com.lestari.esg.privacy.dto.UpdatePrivacyConsentRequest;
+import com.esgeasy.esg.privacy.dto.CloseAccountRequest;
+import com.esgeasy.esg.privacy.dto.CompanyDataExportResponse;
+import com.esgeasy.esg.privacy.dto.PrivacyConsentResponse;
+import com.esgeasy.esg.privacy.dto.UpdatePrivacyConsentRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

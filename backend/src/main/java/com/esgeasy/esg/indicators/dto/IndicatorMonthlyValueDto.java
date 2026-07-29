@@ -1,4 +1,4 @@
-package com.lestari.esg.indicators.dto;
+package com.esgeasy.esg.indicators.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;

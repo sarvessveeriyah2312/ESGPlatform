@@ -1,6 +1,6 @@
-package com.lestari.esg.user.dto;
+package com.esgeasy.esg.user.dto;
 
-import com.lestari.esg.user.UserNotificationPreferences;
+import com.esgeasy.esg.user.UserNotificationPreferences;
 
 import java.time.Instant;
 

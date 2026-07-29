@@ -1,4 +1,4 @@
-package com.lestari.esg.config;
+package com.esgeasy.esg.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -14,10 +14,10 @@ public class OpenApiConfig {
     private static final String BEARER_SCHEME = "bearerAuth";
 
     @Bean
-    public OpenAPI lestariOpenApi() {
+    public OpenAPI esgeasyOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Lestari ESG API")
+                        .title("EsgEasy API")
                         .description("Multi-tenant ESG disclosure platform backend — SEDG, Bursa Malaysia Common Sustainability Matters, and IFRS S1/S2.")
                         .version("v1"))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))

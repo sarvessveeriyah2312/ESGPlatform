@@ -1,4 +1,4 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
 /**
  * The company's actual stock exchange board — a company-profile detail entered at creation time.

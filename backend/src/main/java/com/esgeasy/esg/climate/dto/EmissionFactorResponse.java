@@ -1,7 +1,7 @@
-package com.lestari.esg.climate.dto;
+package com.esgeasy.esg.climate.dto;
 
-import com.lestari.esg.climate.EmissionFactor;
-import com.lestari.esg.climate.EmissionScope;
+import com.esgeasy.esg.climate.EmissionFactor;
+import com.esgeasy.esg.climate.EmissionScope;
 
 import java.math.BigDecimal;
 

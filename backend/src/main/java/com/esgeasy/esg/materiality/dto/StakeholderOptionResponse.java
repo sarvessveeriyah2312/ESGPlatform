@@ -1,6 +1,6 @@
-package com.lestari.esg.materiality.dto;
+package com.esgeasy.esg.materiality.dto;
 
-import com.lestari.esg.materiality.StakeholderOption;
+import com.esgeasy.esg.materiality.StakeholderOption;
 
 import java.util.UUID;
 

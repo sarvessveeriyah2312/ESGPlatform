@@ -1,6 +1,6 @@
-package com.lestari.esg.session.dto;
+package com.esgeasy.esg.session.dto;
 
-import com.lestari.esg.session.UserSession;
+import com.esgeasy.esg.session.UserSession;
 
 import java.time.Instant;
 import java.util.UUID;

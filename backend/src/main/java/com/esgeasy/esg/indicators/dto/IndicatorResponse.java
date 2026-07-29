@@ -1,8 +1,8 @@
-package com.lestari.esg.indicators.dto;
+package com.esgeasy.esg.indicators.dto;
 
-import com.lestari.esg.reference.AggregationRule;
-import com.lestari.esg.reference.SustainabilityMatterCategory;
-import com.lestari.esg.reference.TargetDirection;
+import com.esgeasy.esg.reference.AggregationRule;
+import com.esgeasy.esg.reference.SustainabilityMatterCategory;
+import com.esgeasy.esg.reference.TargetDirection;
 
 import java.math.BigDecimal;
 import java.util.List;

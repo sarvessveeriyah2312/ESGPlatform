@@ -1,7 +1,7 @@
-package com.lestari.esg.billing.dto;
+package com.esgeasy.esg.billing.dto;
 
-import com.lestari.esg.billing.Invoice;
-import com.lestari.esg.billing.InvoiceStatus;
+import com.esgeasy.esg.billing.Invoice;
+import com.esgeasy.esg.billing.InvoiceStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;

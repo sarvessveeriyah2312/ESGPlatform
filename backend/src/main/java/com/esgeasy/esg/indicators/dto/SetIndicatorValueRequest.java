@@ -1,4 +1,4 @@
-package com.lestari.esg.indicators.dto;
+package com.esgeasy.esg.indicators.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;

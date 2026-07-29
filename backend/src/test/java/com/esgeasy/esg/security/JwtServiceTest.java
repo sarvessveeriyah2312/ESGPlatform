@@ -1,7 +1,7 @@
-package com.lestari.esg.security;
+package com.esgeasy.esg.security;
 
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.Role;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -72,7 +72,7 @@ class JwtServiceTest {
 
     private AppUser testUser() {
         AppUser user = new AppUser();
-        user.setEmail("test@lestari.my");
+        user.setEmail("test@esgeasy.my");
         user.setName("Test User");
         user.setRole(Role.COMPANY_ADMIN);
         user.setTokenVersion(0);
@@ -83,7 +83,7 @@ class JwtServiceTest {
 
     private void setId(AppUser user, UUID id) {
         try {
-            var field = com.lestari.esg.common.BaseEntity.class.getDeclaredField("id");
+            var field = com.esgeasy.esg.common.BaseEntity.class.getDeclaredField("id");
             field.setAccessible(true);
             field.set(user, id);
         } catch (ReflectiveOperationException e) {

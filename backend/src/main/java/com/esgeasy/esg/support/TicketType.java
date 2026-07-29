@@ -1,4 +1,4 @@
-package com.lestari.esg.support;
+package com.esgeasy.esg.support;
 
 public enum TicketType {
     FEEDBACK,

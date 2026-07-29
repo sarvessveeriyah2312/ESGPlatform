@@ -1,16 +1,16 @@
-package com.lestari.esg.governance;
+package com.esgeasy.esg.governance;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.export.ExportFormat;
-import com.lestari.esg.export.ExportService;
-import com.lestari.esg.export.dto.LogExportRequest;
-import com.lestari.esg.governance.dto.CompliancePolicyResponse;
-import com.lestari.esg.governance.dto.GovernanceLevelResponse;
-import com.lestari.esg.governance.dto.MatterOwnershipResponse;
-import com.lestari.esg.pdf.PdfRenderer;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.export.ExportFormat;
+import com.esgeasy.esg.export.ExportService;
+import com.esgeasy.esg.export.dto.LogExportRequest;
+import com.esgeasy.esg.governance.dto.CompliancePolicyResponse;
+import com.esgeasy.esg.governance.dto.GovernanceLevelResponse;
+import com.esgeasy.esg.governance.dto.MatterOwnershipResponse;
+import com.esgeasy.esg.pdf.PdfRenderer;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
@@ -73,7 +73,7 @@ public class GovernanceReportService {
                 "Governance & Compliance Report", ExportFormat.PDF, Year.now().getValue()));
 
         String safeName = company.getName().replaceAll("[^a-zA-Z0-9]+", "_");
-        String filename = "Lestari_Governance_Report_" + safeName + ".pdf";
+        String filename = "EsgEasy_Governance_Report_" + safeName + ".pdf";
         return new GeneratedReport(pdf, filename);
     }
 }

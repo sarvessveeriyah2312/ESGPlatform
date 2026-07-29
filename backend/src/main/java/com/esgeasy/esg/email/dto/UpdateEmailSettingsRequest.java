@@ -1,4 +1,4 @@
-package com.lestari.esg.email.dto;
+package com.esgeasy.esg.email.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;

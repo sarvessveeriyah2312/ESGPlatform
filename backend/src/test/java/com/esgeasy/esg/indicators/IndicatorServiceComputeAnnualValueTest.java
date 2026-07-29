@@ -1,6 +1,6 @@
-package com.lestari.esg.indicators;
+package com.esgeasy.esg.indicators;
 
-import com.lestari.esg.reference.AggregationRule;
+import com.esgeasy.esg.reference.AggregationRule;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

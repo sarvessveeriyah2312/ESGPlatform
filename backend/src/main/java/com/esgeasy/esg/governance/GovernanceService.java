@@ -1,16 +1,16 @@
-package com.lestari.esg.governance;
+package com.esgeasy.esg.governance;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.governance.dto.GovernanceLevelResponse;
-import com.lestari.esg.governance.dto.MatterOwnershipResponse;
-import com.lestari.esg.governance.dto.UpdateGovernanceLevelRequest;
-import com.lestari.esg.governance.dto.UpdateMatterOwnershipRequest;
-import com.lestari.esg.reference.MatterSetResolverService;
-import com.lestari.esg.reference.SustainabilityMatter;
-import com.lestari.esg.reference.SustainabilityMatterCategory;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.governance.dto.GovernanceLevelResponse;
+import com.esgeasy.esg.governance.dto.MatterOwnershipResponse;
+import com.esgeasy.esg.governance.dto.UpdateGovernanceLevelRequest;
+import com.esgeasy.esg.governance.dto.UpdateMatterOwnershipRequest;
+import com.esgeasy.esg.reference.MatterSetResolverService;
+import com.esgeasy.esg.reference.SustainabilityMatter;
+import com.esgeasy.esg.reference.SustainabilityMatterCategory;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

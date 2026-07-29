@@ -1,7 +1,7 @@
-package com.lestari.esg.governance;
+package com.esgeasy.esg.governance;
 
-import com.lestari.esg.common.TenantOwnedEntity;
-import com.lestari.esg.reference.SustainabilityMatter;
+import com.esgeasy.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.reference.SustainabilityMatter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

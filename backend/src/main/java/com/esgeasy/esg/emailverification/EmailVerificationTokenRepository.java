@@ -1,4 +1,4 @@
-package com.lestari.esg.emailverification;
+package com.esgeasy.esg.emailverification;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

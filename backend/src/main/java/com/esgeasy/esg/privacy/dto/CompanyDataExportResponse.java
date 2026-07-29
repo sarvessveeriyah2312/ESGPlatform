@@ -1,14 +1,14 @@
-package com.lestari.esg.privacy.dto;
+package com.esgeasy.esg.privacy.dto;
 
-import com.lestari.esg.assurance.dto.SignOffResponse;
-import com.lestari.esg.governance.dto.CompliancePolicyResponse;
-import com.lestari.esg.governance.dto.GovernanceLevelResponse;
-import com.lestari.esg.governance.dto.MatterOwnershipResponse;
-import com.lestari.esg.indicators.dto.IndicatorResponse;
-import com.lestari.esg.materiality.dto.AssessmentSummaryResponse;
-import com.lestari.esg.targets.dto.PerformanceTargetResponse;
-import com.lestari.esg.tenant.dto.CompanyResponse;
-import com.lestari.esg.tenant.dto.TenantUserResponse;
+import com.esgeasy.esg.assurance.dto.SignOffResponse;
+import com.esgeasy.esg.governance.dto.CompliancePolicyResponse;
+import com.esgeasy.esg.governance.dto.GovernanceLevelResponse;
+import com.esgeasy.esg.governance.dto.MatterOwnershipResponse;
+import com.esgeasy.esg.indicators.dto.IndicatorResponse;
+import com.esgeasy.esg.materiality.dto.AssessmentSummaryResponse;
+import com.esgeasy.esg.targets.dto.PerformanceTargetResponse;
+import com.esgeasy.esg.tenant.dto.CompanyResponse;
+import com.esgeasy.esg.tenant.dto.TenantUserResponse;
 
 import java.time.Instant;
 import java.util.List;

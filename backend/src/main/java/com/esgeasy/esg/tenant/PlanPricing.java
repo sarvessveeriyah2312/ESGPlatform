@@ -1,4 +1,4 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -1,8 +1,8 @@
-package com.lestari.esg.reference.dto;
+package com.esgeasy.esg.reference.dto;
 
-import com.lestari.esg.reference.AggregationRule;
-import com.lestari.esg.reference.SustainabilityMatterCategory;
-import com.lestari.esg.reference.TargetDirection;
+import com.esgeasy.esg.reference.AggregationRule;
+import com.esgeasy.esg.reference.SustainabilityMatterCategory;
+import com.esgeasy.esg.reference.TargetDirection;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

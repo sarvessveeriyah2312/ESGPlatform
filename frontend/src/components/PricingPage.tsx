@@ -69,7 +69,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToLanding
   const faqs = [
     {
       question: "What's the difference between SEDG and Bursa's Common Sustainability Matters?",
-      answer: "The Simplified ESG Disclosure Guide (SEDG) is developed by Capital Markets Malaysia primarily for small-to-medium enterprises (SMEs) to simplify tracking across common global supply chain demands. Bursa Malaysia's Common Sustainability Matters are a broader, more rigorous set of mandated disclosure metrics specifically required for companies listed on the Main and ACE markets. Lestari ESG seamlessly supports both frameworks and maps overlapping indicators to save you double entry."
+      answer: "The Simplified ESG Disclosure Guide (SEDG) is developed by Capital Markets Malaysia primarily for small-to-medium enterprises (SMEs) to simplify tracking across common global supply chain demands. Bursa Malaysia's Common Sustainability Matters are a broader, more rigorous set of mandated disclosure metrics specifically required for companies listed on the Main and ACE markets. EsgEasy seamlessly supports both frameworks and maps overlapping indicators to save you double entry."
     },
     {
       question: "Can I upgrade from Growth to Issuer-Ready?",
@@ -77,7 +77,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToLanding
     },
     {
       question: "Does this replace Bursa Malaysia's CSI platform?",
-      answer: "No, Lestari ESG is an internal readiness, data consolidation, and compliance prep layer. Bursa Malaysia's Centralised Sustainability Intelligence (CSI) platform remains the official mandatory submission channel for listed issuers. Lestari ESG acts as your team's internal collaboration workspace to compile, verify, and export CSI-compatible datasets so you can submit with absolute confidence."
+      answer: "No, EsgEasy is an internal readiness, data consolidation, and compliance prep layer. Bursa Malaysia's Centralised Sustainability Intelligence (CSI) platform remains the official mandatory submission channel for listed issuers. EsgEasy acts as your team's internal collaboration workspace to compile, verify, and export CSI-compatible datasets so you can submit with absolute confidence."
     },
     {
       question: "Are our greenhouse gas (GHG) calculations audit-ready?",
@@ -160,7 +160,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToLanding
               <Trees className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-lg font-bold tracking-tight text-navy-950 block">Lestari ESG</span>
+              <span className="text-lg font-bold tracking-tight text-navy-950 block">EsgEasy</span>
               <span className="text-[9px] font-semibold text-navy-400 uppercase tracking-widest block leading-none">MALAYSIA</span>
             </div>
           </div>
@@ -666,7 +666,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToLanding
               <div className="p-1.5 bg-primary-500 rounded-lg text-white">
                 <Trees className="w-5 h-5" />
               </div>
-              <span className="text-base font-bold tracking-tight">Lestari ESG</span>
+              <span className="text-base font-bold tracking-tight">EsgEasy</span>
             </div>
             <p className="text-xs text-navy-400 max-w-sm leading-relaxed">
               Leading Malaysian ESG compliance and sustainability disclosures automation framework. Assisting small enterprises and listed issuers meet modern regulatory compliance.
@@ -710,7 +710,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToLanding
 
         {/* Bottom copyright segment */}
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-navy-900 flex flex-col md:flex-row items-center justify-between text-xs text-navy-500">
-          <span>© 2026 Lestari ESG Corporation Sdn Bhd. All rights reserved.</span>
+          <span>© 2026 EsgEasy Corporation Sdn Bhd. All rights reserved.</span>
           <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <span className="hover:text-white cursor-pointer">FB</span>
             <span>•</span>

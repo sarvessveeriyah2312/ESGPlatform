@@ -1,4 +1,4 @@
-package com.lestari.esg.apiaccess;
+package com.esgeasy.esg.apiaccess;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

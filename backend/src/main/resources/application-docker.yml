@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:db}:5432/${DB_NAME:lestari_esg}
-    username: ${DB_USERNAME:lestari}
-    password: ${DB_PASSWORD:lestari}
+    url: jdbc:postgresql://${DB_HOST:db}:5432/${DB_NAME:esgeasy_esg}
+    username: ${DB_USERNAME:esgeasy}
+    password: ${DB_PASSWORD:esgeasy}
   jpa:
     hibernate:
       ddl-auto: validate

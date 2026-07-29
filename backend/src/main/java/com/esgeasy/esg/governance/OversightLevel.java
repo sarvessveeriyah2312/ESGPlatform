@@ -1,4 +1,4 @@
-package com.lestari.esg.governance;
+package com.esgeasy.esg.governance;
 
 public enum OversightLevel {
     OVERSIGHT,

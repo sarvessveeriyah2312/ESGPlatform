@@ -1,7 +1,7 @@
-package com.lestari.esg.tenant.dto;
+package com.esgeasy.esg.tenant.dto;
 
-import com.lestari.esg.tenant.PlanPricing;
-import com.lestari.esg.tenant.SubscriptionPlan;
+import com.esgeasy.esg.tenant.PlanPricing;
+import com.esgeasy.esg.tenant.SubscriptionPlan;
 
 import java.math.BigDecimal;
 

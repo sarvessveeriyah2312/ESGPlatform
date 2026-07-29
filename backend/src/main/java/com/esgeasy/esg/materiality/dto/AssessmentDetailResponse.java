@@ -1,8 +1,8 @@
-package com.lestari.esg.materiality.dto;
+package com.esgeasy.esg.materiality.dto;
 
-import com.lestari.esg.materiality.AssessmentStatus;
-import com.lestari.esg.tenant.MarketClassification;
-import com.lestari.esg.tenant.SubscriptionPlan;
+import com.esgeasy.esg.materiality.AssessmentStatus;
+import com.esgeasy.esg.tenant.MarketClassification;
+import com.esgeasy.esg.tenant.SubscriptionPlan;
 
 import java.time.Instant;
 import java.time.LocalDate;

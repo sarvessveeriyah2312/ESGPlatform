@@ -1,7 +1,7 @@
-package com.lestari.esg.materiality.dto;
+package com.esgeasy.esg.materiality.dto;
 
-import com.lestari.esg.materiality.MaterialityScore;
-import com.lestari.esg.reference.SustainabilityMatterCategory;
+import com.esgeasy.esg.materiality.MaterialityScore;
+import com.esgeasy.esg.reference.SustainabilityMatterCategory;
 
 public record ScoreResponse(
         String matterId,

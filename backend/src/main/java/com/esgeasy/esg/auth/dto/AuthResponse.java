@@ -1,4 +1,4 @@
-package com.lestari.esg.auth.dto;
+package com.esgeasy.esg.auth.dto;
 
 public record AuthResponse(
         String token,

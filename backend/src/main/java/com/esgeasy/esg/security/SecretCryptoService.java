@@ -1,4 +1,4 @@
-package com.lestari.esg.security;
+package com.esgeasy.esg.security;
 
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ import java.util.Base64;
 /**
  * Reversible at-rest encryption for secrets that must be decrypted for later use (e.g. a tenant's
  * SMTP password) — unlike password hashing (one-way) or API token hashing (one-way, compared not
- * decrypted). The key is derived from {@code lestari.jwt.secret} so no new required config is
+ * decrypted). The key is derived from {@code esgeasy.jwt.secret} so no new required config is
  * introduced; AES/GCM gives authenticated encryption with a random IV per call.
  */
 @Service

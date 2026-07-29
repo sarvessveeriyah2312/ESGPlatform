@@ -1,7 +1,7 @@
-package com.lestari.esg.governance.dto;
+package com.esgeasy.esg.governance.dto;
 
-import com.lestari.esg.governance.CompliancePolicy;
-import com.lestari.esg.governance.ComplianceStatus;
+import com.esgeasy.esg.governance.CompliancePolicy;
+import com.esgeasy.esg.governance.ComplianceStatus;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

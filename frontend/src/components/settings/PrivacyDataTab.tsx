@@ -69,7 +69,7 @@ export default function PrivacyDataTab() {
     setExporting(true);
     privacyApi.exportData()
       .then((data) => {
-        downloadJson(data, `Lestari_Company_Data_Export_${new Date().toISOString().slice(0, 10)}.json`);
+        downloadJson(data, `EsgEasy_Company_Data_Export_${new Date().toISOString().slice(0, 10)}.json`);
         showMessage('Your data export has been downloaded.', 'success');
       })
       .catch(() => showMessage('Failed to generate your data export.', 'warning'))
@@ -130,7 +130,7 @@ export default function PrivacyDataTab() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:p-8">
         <h3 className="text-lg font-bold text-gray-900">Cookie & Marketing Preferences</h3>
         <p className="text-xs text-gray-500 mt-1 mb-6">
-          Controls how Lestari may contact your company and use product-analytics data. These apply company-wide.
+          Controls how EsgEasy may contact your company and use product-analytics data. These apply company-wide.
         </p>
 
         {consentLoading ? (

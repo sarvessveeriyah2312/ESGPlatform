@@ -1,6 +1,6 @@
-# Lestari ESG Backend
+# EsgEasy Backend
 
-Java 21 + Spring Boot 3 + PostgreSQL backend for the Lestari ESG reporting platform. Implements the
+Java 21 + Spring Boot 3 + PostgreSQL backend for the EsgEasy reporting platform. Implements the
 multi-tenant data model, JWT auth, and REST API described in the project's BRD/PRD/SRS documents,
 covering all three subscription tiers (`STARTER`, `GROWTH`, `ISSUER_READY`).
 
@@ -16,8 +16,8 @@ The React frontend in `../frontend/` is fully wired to this API (no mocked data)
 ## Local setup
 
 ```bash
-createdb lestari_esg          # one-time
-createdb lestari_esg_test     # only needed if you add Testcontainers-free integration tests
+createdb esgeasy_esg          # one-time
+createdb esgeasy_esg_test     # only needed if you add Testcontainers-free integration tests
 
 cd backend
 mvn spring-boot:run           # runs with the 'dev' profile by default, http://localhost:8080
@@ -38,7 +38,7 @@ flags) ships in `V4__reference_seed_data.sql`.
 flow yet — self-registration always creates `COMPANY_ADMIN`):
 
 ```
-email:    platform.admin@lestari.my
+email:    platform.admin@esgeasy.my
 password: PlatformAdmin#2026
 role:     PLATFORM_ADMIN
 ```
@@ -63,7 +63,7 @@ unverified; sanity-check them before relying on them in production.
 
 ## Architecture
 
-Package root `com.lestari.esg`. See the plan/design notes for the full rationale; the short version:
+Package root `com.esgeasy.esg`. See the plan/design notes for the full rationale; the short version:
 
 - **`common`** — `BaseEntity` (UUID PK + audit timestamps), `TenantOwnedEntity` (adds `companyId`
   + a Hibernate `@Filter` enabled per-request as a tenant-isolation safety net), exceptions, global

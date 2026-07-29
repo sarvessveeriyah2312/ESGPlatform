@@ -1,4 +1,4 @@
-package com.lestari.esg.targets.dto;
+package com.esgeasy.esg.targets.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

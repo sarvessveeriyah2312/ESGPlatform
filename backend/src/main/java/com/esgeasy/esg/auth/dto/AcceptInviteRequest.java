@@ -1,4 +1,4 @@
-package com.lestari.esg.auth.dto;
+package com.esgeasy.esg.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

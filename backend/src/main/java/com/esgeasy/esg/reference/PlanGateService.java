@@ -1,9 +1,9 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import org.springframework.stereotype.Component;
 
 /**

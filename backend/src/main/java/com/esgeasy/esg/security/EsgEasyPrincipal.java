@@ -1,6 +1,6 @@
-package com.lestari.esg.security;
+package com.esgeasy.esg.security;
 
-import com.lestari.esg.user.Role;
+import com.esgeasy.esg.user.Role;
 
 import java.util.Set;
 import java.util.UUID;
@@ -13,7 +13,7 @@ import java.util.UUID;
  * jti identifies which user_session row backs this request; it is null when authenticated via an
  * API token (those aren't per-device sessions) or via a legacy pre-jti JWT.
  */
-public record LestariPrincipal(
+public record EsgEasyPrincipal(
         UUID userId,
         UUID companyId,
         Role role,

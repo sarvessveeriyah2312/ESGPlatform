@@ -1,6 +1,6 @@
-package com.lestari.esg.platform.dto;
+package com.esgeasy.esg.platform.dto;
 
-import com.lestari.esg.platform.PlatformSettings;
+import com.esgeasy.esg.platform.PlatformSettings;
 
 import java.time.Instant;
 

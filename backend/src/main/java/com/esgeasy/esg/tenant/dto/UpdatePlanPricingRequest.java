@@ -1,4 +1,4 @@
-package com.lestari.esg.tenant.dto;
+package com.esgeasy.esg.tenant.dto;
 
 import jakarta.validation.constraints.NotNull;
 

@@ -145,7 +145,7 @@ export default function MaterialityAssessmentView() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Lestari_Materiality_Report_${name.replace(/\s+/g, '_')}.pdf`;
+        a.download = `EsgEasy_Materiality_Report_${name.replace(/\s+/g, '_')}.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();

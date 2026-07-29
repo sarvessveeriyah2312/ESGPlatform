@@ -1,17 +1,17 @@
-package com.lestari.esg.support;
+package com.esgeasy.esg.support;
 
-import com.lestari.esg.common.exceptions.ForbiddenException;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.support.dto.CreateSupportTicketRequest;
-import com.lestari.esg.support.dto.SupportTicketResponse;
-import com.lestari.esg.support.dto.UpdateSupportTicketRequest;
-import com.lestari.esg.support.dto.UpdateTicketNoteRequest;
-import com.lestari.esg.support.dto.UpdateTicketStatusRequest;
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyRepository;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.common.exceptions.ForbiddenException;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.support.dto.CreateSupportTicketRequest;
+import com.esgeasy.esg.support.dto.SupportTicketResponse;
+import com.esgeasy.esg.support.dto.UpdateSupportTicketRequest;
+import com.esgeasy.esg.support.dto.UpdateTicketNoteRequest;
+import com.esgeasy.esg.support.dto.UpdateTicketStatusRequest;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

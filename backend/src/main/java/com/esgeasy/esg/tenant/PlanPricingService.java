@@ -1,8 +1,8 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.tenant.dto.PlanPricingResponse;
-import com.lestari.esg.tenant.dto.UpdatePlanPricingRequest;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.tenant.dto.PlanPricingResponse;
+import com.esgeasy.esg.tenant.dto.UpdatePlanPricingRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

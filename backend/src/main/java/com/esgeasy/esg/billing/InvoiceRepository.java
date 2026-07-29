@@ -1,4 +1,4 @@
-package com.lestari.esg.billing;
+package com.esgeasy.esg.billing;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

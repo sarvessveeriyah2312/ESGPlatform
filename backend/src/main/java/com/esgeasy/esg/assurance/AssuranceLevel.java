@@ -1,4 +1,4 @@
-package com.lestari.esg.assurance;
+package com.esgeasy.esg.assurance;
 
 public enum AssuranceLevel {
     INTERNAL_REVIEW,

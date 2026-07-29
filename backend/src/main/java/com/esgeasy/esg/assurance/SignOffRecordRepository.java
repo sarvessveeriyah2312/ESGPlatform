@@ -1,4 +1,4 @@
-package com.lestari.esg.assurance;
+package com.esgeasy.esg.assurance;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

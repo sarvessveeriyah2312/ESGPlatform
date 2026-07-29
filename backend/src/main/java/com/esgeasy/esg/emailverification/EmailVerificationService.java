@@ -1,11 +1,11 @@
-package com.lestari.esg.emailverification;
+package com.esgeasy.esg.emailverification;
 
-import com.lestari.esg.common.exceptions.ConflictException;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.email.EmailService;
-import com.lestari.esg.platform.PlatformSettingsService;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.common.exceptions.ConflictException;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.email.EmailService;
+import com.esgeasy.esg.platform.PlatformSettingsService;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

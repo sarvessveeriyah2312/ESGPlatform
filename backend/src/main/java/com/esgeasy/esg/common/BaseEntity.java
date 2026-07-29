@@ -1,4 +1,4 @@
-package com.lestari.esg.common;
+package com.esgeasy.esg.common;
 
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

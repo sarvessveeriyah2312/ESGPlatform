@@ -1,34 +1,34 @@
-package com.lestari.esg.export;
+package com.esgeasy.esg.export;
 
-import com.lestari.esg.climate.EmissionsService;
-import com.lestari.esg.climate.IfrsService;
-import com.lestari.esg.climate.dto.BusinessSegmentResponse;
-import com.lestari.esg.climate.dto.EmissionsResponse;
-import com.lestari.esg.assurance.AssuranceService;
-import com.lestari.esg.assurance.dto.SignOffResponse;
-import com.lestari.esg.climate.dto.IfrsS1DisclosureResponse;
-import com.lestari.esg.climate.dto.IfrsS2Response;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.export.dto.LogExportRequest;
-import com.lestari.esg.governance.CompliancePolicyService;
-import com.lestari.esg.governance.GovernanceService;
-import com.lestari.esg.governance.dto.CompliancePolicyResponse;
-import com.lestari.esg.governance.dto.GovernanceLevelResponse;
-import com.lestari.esg.governance.dto.MatterOwnershipResponse;
-import com.lestari.esg.indicators.IndicatorService;
-import com.lestari.esg.indicators.dto.IndicatorResponse;
-import com.lestari.esg.indicators.dto.IndicatorValuePointDto;
-import com.lestari.esg.materiality.AssessmentStatus;
-import com.lestari.esg.materiality.MaterialityService;
-import com.lestari.esg.materiality.dto.AssessmentSummaryResponse;
-import com.lestari.esg.materiality.dto.ScoreResponse;
-import com.lestari.esg.pdf.PdfRenderer;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyRepository;
-import com.lestari.esg.tenant.SubscriptionPlan;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.climate.EmissionsService;
+import com.esgeasy.esg.climate.IfrsService;
+import com.esgeasy.esg.climate.dto.BusinessSegmentResponse;
+import com.esgeasy.esg.climate.dto.EmissionsResponse;
+import com.esgeasy.esg.assurance.AssuranceService;
+import com.esgeasy.esg.assurance.dto.SignOffResponse;
+import com.esgeasy.esg.climate.dto.IfrsS1DisclosureResponse;
+import com.esgeasy.esg.climate.dto.IfrsS2Response;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.export.dto.LogExportRequest;
+import com.esgeasy.esg.governance.CompliancePolicyService;
+import com.esgeasy.esg.governance.GovernanceService;
+import com.esgeasy.esg.governance.dto.CompliancePolicyResponse;
+import com.esgeasy.esg.governance.dto.GovernanceLevelResponse;
+import com.esgeasy.esg.governance.dto.MatterOwnershipResponse;
+import com.esgeasy.esg.indicators.IndicatorService;
+import com.esgeasy.esg.indicators.dto.IndicatorResponse;
+import com.esgeasy.esg.indicators.dto.IndicatorValuePointDto;
+import com.esgeasy.esg.materiality.AssessmentStatus;
+import com.esgeasy.esg.materiality.MaterialityService;
+import com.esgeasy.esg.materiality.dto.AssessmentSummaryResponse;
+import com.esgeasy.esg.materiality.dto.ScoreResponse;
+import com.esgeasy.esg.pdf.PdfRenderer;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.tenant.SubscriptionPlan;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
@@ -179,7 +179,7 @@ public class IntegratedReportService {
 
         exportService.logClientGeneratedExport(new LogExportRequest("Integrated ESG Report", ExportFormat.PDF, fiscalYear));
 
-        String filename = "Lestari_ESG_Integrated_Report_FY" + fiscalYear + ".pdf";
+        String filename = "EsgEasy_ESG_Integrated_Report_FY" + fiscalYear + ".pdf";
         return new GeneratedReport(pdf, filename);
     }
 

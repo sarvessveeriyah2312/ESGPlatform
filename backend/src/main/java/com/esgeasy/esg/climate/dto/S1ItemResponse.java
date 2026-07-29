@@ -1,9 +1,9 @@
-package com.lestari.esg.climate.dto;
+package com.esgeasy.esg.climate.dto;
 
-import com.lestari.esg.climate.Currency;
-import com.lestari.esg.climate.RiskOpportunityType;
-import com.lestari.esg.climate.S1RiskOpportunity;
-import com.lestari.esg.climate.TimeHorizon;
+import com.esgeasy.esg.climate.Currency;
+import com.esgeasy.esg.climate.RiskOpportunityType;
+import com.esgeasy.esg.climate.S1RiskOpportunity;
+import com.esgeasy.esg.climate.TimeHorizon;
 
 import java.math.BigDecimal;
 import java.util.UUID;

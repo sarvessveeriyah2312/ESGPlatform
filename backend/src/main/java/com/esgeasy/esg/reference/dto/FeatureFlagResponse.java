@@ -1,7 +1,7 @@
-package com.lestari.esg.reference.dto;
+package com.esgeasy.esg.reference.dto;
 
-import com.lestari.esg.reference.FeatureFlag;
-import com.lestari.esg.tenant.SubscriptionPlan;
+import com.esgeasy.esg.reference.FeatureFlag;
+import com.esgeasy.esg.tenant.SubscriptionPlan;
 
 public record FeatureFlagResponse(
         String featureKey,

@@ -1,8 +1,8 @@
-package com.lestari.esg.email;
+package com.esgeasy.esg.email;
 
-import com.lestari.esg.email.dto.EmailSettingsResponse;
-import com.lestari.esg.email.dto.TestEmailResponse;
-import com.lestari.esg.email.dto.UpdateEmailSettingsRequest;
+import com.esgeasy.esg.email.dto.EmailSettingsResponse;
+import com.esgeasy.esg.email.dto.TestEmailResponse;
+import com.esgeasy.esg.email.dto.UpdateEmailSettingsRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

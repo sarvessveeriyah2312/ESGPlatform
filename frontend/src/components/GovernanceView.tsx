@@ -154,7 +154,7 @@ export default function GovernanceView() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'Lestari_Governance_Report.pdf';
+        a.download = 'EsgEasy_Governance_Report.pdf';
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -750,7 +750,7 @@ export default function GovernanceView() {
               <div className="flex justify-between items-start border-b-2 border-navy-900 pb-5">
                 <div>
                   <h1 className="text-xl font-black text-navy-950 uppercase tracking-tight">ESG GOVERNANCE FRAMEWORK</h1>
-                  <p className="text-xs text-navy-500 font-bold mt-1">LESTARI ESG ASSURANCE SYSTEM DOCUMENT</p>
+                  <p className="text-xs text-navy-500 font-bold mt-1">ESGEASY ASSURANCE SYSTEM DOCUMENT</p>
                   <p className="text-[10px] text-navy-400 font-medium font-mono">Captured: {new Date().toLocaleDateString()}</p>
                 </div>
 
@@ -758,7 +758,7 @@ export default function GovernanceView() {
                   <span className="px-2.5 py-1 bg-primary-100 text-primary-950 font-extrabold text-[10px] rounded uppercase font-mono tracking-wider border border-primary-200">
                     Plan: {plan === 'issuer-ready' ? 'Bursa Common Matters' : 'SEDG Standard'}
                   </span>
-                  <div className="text-[10px] text-navy-400 font-bold mt-2 font-sans">WORKSPACE: LESTARI HQ</div>
+                  <div className="text-[10px] text-navy-400 font-bold mt-2 font-sans">WORKSPACE: ESGEASY HQ</div>
                 </div>
               </div>
 

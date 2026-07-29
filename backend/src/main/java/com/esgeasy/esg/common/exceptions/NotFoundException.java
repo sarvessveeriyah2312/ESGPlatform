@@ -1,4 +1,4 @@
-package com.lestari.esg.common.exceptions;
+package com.esgeasy.esg.common.exceptions;
 
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String message) {

@@ -1,7 +1,7 @@
-package com.lestari.esg.export.dto;
+package com.esgeasy.esg.export.dto;
 
-import com.lestari.esg.export.ExportFormat;
-import com.lestari.esg.export.ExportHistoryItem;
+import com.esgeasy.esg.export.ExportFormat;
+import com.esgeasy.esg.export.ExportHistoryItem;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -1,15 +1,15 @@
-package com.lestari.esg.platform;
+package com.esgeasy.esg.platform;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.email.EmailService;
-import com.lestari.esg.email.dto.TestEmailResponse;
-import com.lestari.esg.platform.dto.PlatformSettingsResponse;
-import com.lestari.esg.platform.dto.UpdatePlatformSettingsRequest;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.security.JwtProperties;
-import com.lestari.esg.security.SecretCryptoService;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.email.EmailService;
+import com.esgeasy.esg.email.dto.TestEmailResponse;
+import com.esgeasy.esg.platform.dto.PlatformSettingsResponse;
+import com.esgeasy.esg.platform.dto.UpdatePlatformSettingsRequest;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.security.JwtProperties;
+import com.esgeasy.esg.security.SecretCryptoService;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +33,7 @@ public class PlatformSettingsService {
                                     SecretCryptoService cryptoService,
                                     EmailService emailService,
                                     JwtProperties jwtProperties,
-                                    @Value("${lestari.app.base-url}") String defaultAppBaseUrl) {
+                                    @Value("${esgeasy.app.base-url}") String defaultAppBaseUrl) {
         this.repository = repository;
         this.appUserRepository = appUserRepository;
         this.currentUserProvider = currentUserProvider;

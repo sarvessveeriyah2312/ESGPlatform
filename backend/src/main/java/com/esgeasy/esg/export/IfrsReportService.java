@@ -1,19 +1,19 @@
-package com.lestari.esg.export;
+package com.esgeasy.esg.export;
 
-import com.lestari.esg.climate.EmissionsService;
-import com.lestari.esg.climate.IfrsService;
-import com.lestari.esg.climate.dto.BusinessSegmentResponse;
-import com.lestari.esg.climate.dto.EmissionsResponse;
-import com.lestari.esg.climate.dto.IfrsS1DisclosureResponse;
-import com.lestari.esg.climate.dto.IfrsS2Response;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.export.dto.LogExportRequest;
-import com.lestari.esg.pdf.PdfRenderer;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyRepository;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.climate.EmissionsService;
+import com.esgeasy.esg.climate.IfrsService;
+import com.esgeasy.esg.climate.dto.BusinessSegmentResponse;
+import com.esgeasy.esg.climate.dto.EmissionsResponse;
+import com.esgeasy.esg.climate.dto.IfrsS1DisclosureResponse;
+import com.esgeasy.esg.climate.dto.IfrsS2Response;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.export.dto.LogExportRequest;
+import com.esgeasy.esg.pdf.PdfRenderer;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
@@ -68,7 +68,7 @@ public class IfrsReportService {
 
         byte[] pdf = pdfRenderer.render("ifrs-s1-report", ctx);
         exportService.logClientGeneratedExport(new LogExportRequest("IFRS S1 Report", ExportFormat.PDF, fiscalYear));
-        return new GeneratedReport(pdf, "Lestari_IFRS_S1_Report_FY" + fiscalYear + ".pdf");
+        return new GeneratedReport(pdf, "EsgEasy_IFRS_S1_Report_FY" + fiscalYear + ".pdf");
     }
 
     @Transactional
@@ -91,7 +91,7 @@ public class IfrsReportService {
 
         byte[] pdf = pdfRenderer.render("ifrs-s2-report", ctx);
         exportService.logClientGeneratedExport(new LogExportRequest("IFRS S2 Report", ExportFormat.PDF, fiscalYear));
-        return new GeneratedReport(pdf, "Lestari_IFRS_S2_Report_FY" + fiscalYear + ".pdf");
+        return new GeneratedReport(pdf, "EsgEasy_IFRS_S2_Report_FY" + fiscalYear + ".pdf");
     }
 
     private Company requireCompany() {

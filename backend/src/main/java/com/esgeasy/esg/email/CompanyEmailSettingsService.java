@@ -1,13 +1,13 @@
-package com.lestari.esg.email;
+package com.esgeasy.esg.email;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.email.dto.EmailSettingsResponse;
-import com.lestari.esg.email.dto.TestEmailResponse;
-import com.lestari.esg.email.dto.UpdateEmailSettingsRequest;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.security.SecretCryptoService;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.email.dto.EmailSettingsResponse;
+import com.esgeasy.esg.email.dto.TestEmailResponse;
+import com.esgeasy.esg.email.dto.UpdateEmailSettingsRequest;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.security.SecretCryptoService;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

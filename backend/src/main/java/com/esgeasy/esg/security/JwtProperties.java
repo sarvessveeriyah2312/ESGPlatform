@@ -1,8 +1,8 @@
-package com.lestari.esg.security;
+package com.esgeasy.esg.security;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "lestari.jwt")
+@ConfigurationProperties(prefix = "esgeasy.jwt")
 public class JwtProperties {
 
     private String secret;

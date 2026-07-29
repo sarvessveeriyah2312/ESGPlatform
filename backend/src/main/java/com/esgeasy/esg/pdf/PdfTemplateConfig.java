@@ -1,4 +1,4 @@
-package com.lestari.esg.pdf;
+package com.esgeasy.esg.pdf;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

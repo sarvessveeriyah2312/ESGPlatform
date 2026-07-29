@@ -1,4 +1,4 @@
-package com.lestari.esg.targets;
+package com.esgeasy.esg.targets;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

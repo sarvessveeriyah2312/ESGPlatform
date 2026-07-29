@@ -1,11 +1,11 @@
-package com.lestari.esg.support;
+package com.esgeasy.esg.support;
 
-import com.lestari.esg.support.dto.CreateSupportTicketRequest;
-import com.lestari.esg.support.dto.CreateTicketMessageRequest;
-import com.lestari.esg.support.dto.SupportTicketResponse;
-import com.lestari.esg.support.dto.TicketMessageResponse;
-import com.lestari.esg.support.dto.UpdateSupportTicketRequest;
-import com.lestari.esg.support.dto.UpdateTicketNoteRequest;
+import com.esgeasy.esg.support.dto.CreateSupportTicketRequest;
+import com.esgeasy.esg.support.dto.CreateTicketMessageRequest;
+import com.esgeasy.esg.support.dto.SupportTicketResponse;
+import com.esgeasy.esg.support.dto.TicketMessageResponse;
+import com.esgeasy.esg.support.dto.UpdateSupportTicketRequest;
+import com.esgeasy.esg.support.dto.UpdateTicketNoteRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,4 +1,4 @@
-package com.lestari.esg.materiality;
+package com.esgeasy.esg.materiality;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

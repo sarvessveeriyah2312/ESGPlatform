@@ -1,7 +1,7 @@
-package com.lestari.esg.tenant.dto;
+package com.esgeasy.esg.tenant.dto;
 
-import com.lestari.esg.tenant.TeamInvite;
-import com.lestari.esg.user.Role;
+import com.esgeasy.esg.tenant.TeamInvite;
+import com.esgeasy.esg.user.Role;
 
 import java.time.Instant;
 import java.util.UUID;

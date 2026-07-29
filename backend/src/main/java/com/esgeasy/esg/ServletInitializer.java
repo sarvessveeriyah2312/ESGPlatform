@@ -1,4 +1,4 @@
-package com.lestari.esg;
+package com.esgeasy.esg;
 
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;

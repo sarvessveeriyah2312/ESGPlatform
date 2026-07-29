@@ -1,10 +1,10 @@
-package com.lestari.esg.auth;
+package com.esgeasy.esg.auth;
 
-import com.lestari.esg.auth.dto.MeResponse;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.auth.dto.MeResponse;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +34,7 @@ public class ProfileAvatarService {
     public ProfileAvatarService(AppUserRepository appUserRepository,
                                  CurrentUserProvider currentUserProvider,
                                  AuthService authService,
-                                 @Value("${lestari.uploads.dir}") String uploadsDir) {
+                                 @Value("${esgeasy.uploads.dir}") String uploadsDir) {
         this.appUserRepository = appUserRepository;
         this.currentUserProvider = currentUserProvider;
         this.authService = authService;

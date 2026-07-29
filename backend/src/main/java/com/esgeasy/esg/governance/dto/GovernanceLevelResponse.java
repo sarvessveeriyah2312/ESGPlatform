@@ -1,7 +1,7 @@
-package com.lestari.esg.governance.dto;
+package com.esgeasy.esg.governance.dto;
 
-import com.lestari.esg.governance.GovernanceLevel;
-import com.lestari.esg.governance.OversightLevel;
+import com.esgeasy.esg.governance.GovernanceLevel;
+import com.esgeasy.esg.governance.OversightLevel;
 
 public record GovernanceLevelResponse(OversightLevel level, String roleTitle, String description) {
     public static GovernanceLevelResponse from(GovernanceLevel l) {

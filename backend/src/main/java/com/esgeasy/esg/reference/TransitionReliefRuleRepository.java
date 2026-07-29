@@ -1,7 +1,7 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.lestari.esg.tenant.MarketClassification;
+import com.esgeasy.esg.tenant.MarketClassification;
 
 public interface TransitionReliefRuleRepository extends JpaRepository<TransitionReliefRule, MarketClassification> {
 }

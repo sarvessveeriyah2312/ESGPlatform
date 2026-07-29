@@ -1,7 +1,7 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
-import com.lestari.esg.common.TenantOwnedEntity;
-import com.lestari.esg.user.Role;
+import com.esgeasy.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.user.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

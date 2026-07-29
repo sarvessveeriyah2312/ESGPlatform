@@ -92,7 +92,7 @@ export default function AdminEmailSettingsTab({ settings, saving, onSave, onSave
 
         <div className="mb-6 space-y-2">
           <label className="text-xs font-semibold text-gray-700">From address</label>
-          <input type="email" value={fromAddress} onChange={(e) => setFromAddress(e.target.value)} placeholder="no-reply@lestari.my" className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors" />
+          <input type="email" value={fromAddress} onChange={(e) => setFromAddress(e.target.value)} placeholder="no-reply@esgeasy.my" className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors" />
         </div>
 
         <label className="flex items-center gap-2.5 mb-8 cursor-pointer w-fit">

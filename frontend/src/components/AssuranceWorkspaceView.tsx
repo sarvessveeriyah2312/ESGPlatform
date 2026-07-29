@@ -324,7 +324,7 @@ export default function AssuranceWorkspaceView() {
       const url = URL.createObjectURL(zipBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Lestari_Assurance_Package_${focusYear}.zip`;
+      link.download = `EsgEasy_Assurance_Package_${focusYear}.zip`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -854,7 +854,7 @@ export default function AssuranceWorkspaceView() {
                     Assembly completed and compiled. Secured archive is saved as:
                   </p>
                   <p className="text-primary-700 bg-primary-50 px-3 py-1.5 rounded-xl border border-primary-100 font-mono text-xs inline-block">
-                    Lestari_Assurance_Package_{focusYear}.zip
+                    EsgEasy_Assurance_Package_{focusYear}.zip
                   </p>
                 </div>
 

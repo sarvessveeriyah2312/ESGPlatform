@@ -1,7 +1,7 @@
-package com.lestari.esg.support.dto;
+package com.esgeasy.esg.support.dto;
 
-import com.lestari.esg.support.TicketMessage;
-import com.lestari.esg.user.Role;
+import com.esgeasy.esg.support.TicketMessage;
+import com.esgeasy.esg.user.Role;
 
 import java.time.Instant;
 import java.util.UUID;

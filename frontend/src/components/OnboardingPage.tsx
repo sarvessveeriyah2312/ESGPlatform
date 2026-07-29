@@ -235,7 +235,7 @@ export default function OnboardingPage() {
             <Trees className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-sm font-bold tracking-tight text-gray-900 block">Lestari Onboarding Portal</span>
+            <span className="text-sm font-bold tracking-tight text-gray-900 block">EsgEasy Onboarding Portal</span>
             <span className="text-[9px] font-semibold text-emerald-600 uppercase tracking-widest block leading-none">Workspace Initialization</span>
           </div>
         </div>
@@ -283,7 +283,7 @@ export default function OnboardingPage() {
                 </div>
                 <h3 className="text-2xl font-black text-gray-900">Declare your reporting boundaries</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
-                  Lestari aligns workspace tiers, reports, and calculations to meet your specific market regulations. Under Malaysian NSRF mandates, choose your corporate scale.
+                  EsgEasy aligns workspace tiers, reports, and calculations to meet your specific market regulations. Under Malaysian NSRF mandates, choose your corporate scale.
                 </p>
               </div>
 
@@ -591,7 +591,7 @@ export default function OnboardingPage() {
 
       {/* 3. Footer Row */}
       <footer className="h-12 border-t border-gray-200 bg-white px-6 flex items-center justify-between text-xs font-medium text-gray-500 shrink-0 sticky bottom-0 z-50">
-        <span>© 2026 Lestari ESG Malaysia Onboarding Console</span>
+        <span>© 2026 EsgEasy Malaysia Onboarding Console</span>
         <div className="flex items-center">
            <Lock className="w-3.5 h-3.5 mr-1.5" />
            <span>Secure ISO/IEC 27001 Certified Host</span>

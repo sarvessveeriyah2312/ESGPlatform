@@ -1,6 +1,6 @@
-package com.lestari.esg.climate.dto;
+package com.esgeasy.esg.climate.dto;
 
-import com.lestari.esg.climate.EmissionActivityEntry;
+import com.esgeasy.esg.climate.EmissionActivityEntry;
 
 import java.math.BigDecimal;
 import java.util.UUID;

@@ -1,6 +1,6 @@
-package com.lestari.esg.tenant.dto;
+package com.esgeasy.esg.tenant.dto;
 
-import com.lestari.esg.user.Role;
+import com.esgeasy.esg.user.Role;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdateUserRoleRequest(

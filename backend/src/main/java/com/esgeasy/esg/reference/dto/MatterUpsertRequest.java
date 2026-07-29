@@ -1,7 +1,7 @@
-package com.lestari.esg.reference.dto;
+package com.esgeasy.esg.reference.dto;
 
-import com.lestari.esg.reference.MatterSet;
-import com.lestari.esg.reference.SustainabilityMatterCategory;
+import com.esgeasy.esg.reference.MatterSet;
+import com.esgeasy.esg.reference.SustainabilityMatterCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

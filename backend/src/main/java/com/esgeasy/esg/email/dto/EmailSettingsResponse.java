@@ -1,6 +1,6 @@
-package com.lestari.esg.email.dto;
+package com.esgeasy.esg.email.dto;
 
-import com.lestari.esg.email.CompanyEmailSettings;
+import com.esgeasy.esg.email.CompanyEmailSettings;
 
 import java.time.Instant;
 

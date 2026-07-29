@@ -1,8 +1,8 @@
-package com.lestari.esg.indicators;
+package com.esgeasy.esg.indicators;
 
-import com.lestari.esg.indicators.dto.IndicatorResponse;
-import com.lestari.esg.indicators.dto.SetIndicatorTargetRequest;
-import com.lestari.esg.indicators.dto.SetIndicatorValueRequest;
+import com.esgeasy.esg.indicators.dto.IndicatorResponse;
+import com.esgeasy.esg.indicators.dto.SetIndicatorTargetRequest;
+import com.esgeasy.esg.indicators.dto.SetIndicatorValueRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

@@ -1,7 +1,7 @@
-package com.lestari.esg.targets;
+package com.esgeasy.esg.targets;
 
-import com.lestari.esg.common.TenantOwnedEntity;
-import com.lestari.esg.reference.IndicatorDefinition;
+import com.esgeasy.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.reference.IndicatorDefinition;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 
 /**
  * Standalone strategic target (e.g. "30% Scope 1/2 reduction by 2030"), distinct from the
- * per-indicator target already carried on {@link com.lestari.esg.indicators.TenantIndicator}.
+ * per-indicator target already carried on {@link com.esgeasy.esg.indicators.TenantIndicator}.
  * Optionally linked to a specific indicator for context, but not required.
  */
 @Entity

@@ -1,8 +1,8 @@
-package com.lestari.esg.apiaccess;
+package com.esgeasy.esg.apiaccess;
 
-import com.lestari.esg.indicators.IndicatorService;
-import com.lestari.esg.indicators.dto.IndicatorResponse;
-import com.lestari.esg.indicators.dto.SetIndicatorValueRequest;
+import com.esgeasy.esg.indicators.IndicatorService;
+import com.esgeasy.esg.indicators.dto.IndicatorResponse;
+import com.esgeasy.esg.indicators.dto.SetIndicatorValueRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

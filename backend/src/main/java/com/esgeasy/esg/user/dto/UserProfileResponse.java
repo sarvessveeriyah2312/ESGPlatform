@@ -1,6 +1,6 @@
-package com.lestari.esg.user.dto;
+package com.esgeasy.esg.user.dto;
 
-import com.lestari.esg.user.Role;
+import com.esgeasy.esg.user.Role;
 
 import java.time.Instant;
 import java.util.UUID;

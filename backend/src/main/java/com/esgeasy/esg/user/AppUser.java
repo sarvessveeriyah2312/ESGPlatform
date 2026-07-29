@@ -1,7 +1,7 @@
-package com.lestari.esg.user;
+package com.esgeasy.esg.user;
 
-import com.lestari.esg.common.BaseEntity;
-import com.lestari.esg.tenant.Company;
+import com.esgeasy.esg.common.BaseEntity;
+import com.esgeasy.esg.tenant.Company;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,7 +18,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 /**
- * Not a {@link com.lestari.esg.common.TenantOwnedEntity} — login must look up a user by email
+ * Not a {@link com.esgeasy.esg.common.TenantOwnedEntity} — login must look up a user by email
  * before any company context (and therefore the companyFilter) exists.
  */
 @Entity

@@ -1,6 +1,6 @@
-package com.lestari.esg.platform;
+package com.esgeasy.esg.platform;
 
-import com.lestari.esg.common.BaseEntity;
+import com.esgeasy.esg.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -33,7 +33,7 @@ public class PlatformSettings extends BaseEntity {
     @Column(name = "smtp_username", length = 255)
     private String smtpUsername;
 
-    /** AES/GCM-encrypted (see {@link com.lestari.esg.security.SecretCryptoService}) — never stored or returned in plaintext. */
+    /** AES/GCM-encrypted (see {@link com.esgeasy.esg.security.SecretCryptoService}) — never stored or returned in plaintext. */
     @Column(name = "smtp_password_encrypted", length = 1000)
     private String smtpPasswordEncrypted;
 
@@ -68,7 +68,7 @@ public class PlatformSettings extends BaseEntity {
     @Column(name = "stripe_publishable_key", length = 255)
     private String stripePublishableKey;
 
-    /** AES/GCM-encrypted (see {@link com.lestari.esg.security.SecretCryptoService}) — never stored or returned in plaintext. */
+    /** AES/GCM-encrypted (see {@link com.esgeasy.esg.security.SecretCryptoService}) — never stored or returned in plaintext. */
     @Column(name = "stripe_secret_key_encrypted", length = 1000)
     private String stripeSecretKeyEncrypted;
 

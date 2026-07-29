@@ -1,4 +1,4 @@
-package com.lestari.esg.email;
+package com.esgeasy.esg.email;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -38,19 +38,19 @@ export default function AdminGeneralSettingsTab({ settings, saving, onSave }: Ad
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="space-y-2">
           <label className="text-xs font-semibold text-gray-700">Platform Name</label>
-          <input type="text" value={platformName} onChange={(e) => setPlatformName(e.target.value)} placeholder="Lestari" className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors" />
+          <input type="text" value={platformName} onChange={(e) => setPlatformName(e.target.value)} placeholder="EsgEasy" className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors" />
         </div>
 
         <div className="space-y-2">
           <label className="text-xs font-semibold text-gray-700">Support Email</label>
-          <input type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} placeholder="support@lestari.my" className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors" />
+          <input type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} placeholder="support@esgeasy.my" className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors" />
           <p className="text-[10px] text-gray-400">Shown to tenants as the contact point for platform-level issues.</p>
         </div>
       </div>
 
       <div className="mb-8 space-y-2">
         <label className="text-xs font-semibold text-gray-700">App Base URL</label>
-        <input type="url" value={appBaseUrl} onChange={(e) => setAppBaseUrl(e.target.value)} placeholder="https://app.lestari.my" className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors" />
+        <input type="url" value={appBaseUrl} onChange={(e) => setAppBaseUrl(e.target.value)} placeholder="https://app.esgeasy.my" className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-emerald-500 transition-colors" />
         <p className="text-[10px] text-gray-400">Used to build links in system emails (registration verification, team invites). Leave blank to use the environment default.</p>
       </div>
 

@@ -1,11 +1,11 @@
-package com.lestari.esg.support;
+package com.esgeasy.esg.support;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.support.dto.CreateTicketMessageRequest;
-import com.lestari.esg.support.dto.TicketMessageResponse;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.support.dto.CreateTicketMessageRequest;
+import com.esgeasy.esg.support.dto.TicketMessageResponse;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

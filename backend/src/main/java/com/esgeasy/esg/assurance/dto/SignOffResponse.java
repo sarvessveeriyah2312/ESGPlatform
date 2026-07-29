@@ -1,8 +1,8 @@
-package com.lestari.esg.assurance.dto;
+package com.esgeasy.esg.assurance.dto;
 
-import com.lestari.esg.assurance.AssuranceLevel;
-import com.lestari.esg.assurance.SignOffRecord;
-import com.lestari.esg.assurance.SignOffStatus;
+import com.esgeasy.esg.assurance.AssuranceLevel;
+import com.esgeasy.esg.assurance.SignOffRecord;
+import com.esgeasy.esg.assurance.SignOffStatus;
 
 import java.time.Instant;
 import java.time.LocalDate;

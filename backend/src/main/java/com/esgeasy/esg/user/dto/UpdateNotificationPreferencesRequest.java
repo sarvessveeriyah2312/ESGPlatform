@@ -1,4 +1,4 @@
-package com.lestari.esg.user.dto;
+package com.esgeasy.esg.user.dto;
 
 import jakarta.validation.constraints.NotNull;
 

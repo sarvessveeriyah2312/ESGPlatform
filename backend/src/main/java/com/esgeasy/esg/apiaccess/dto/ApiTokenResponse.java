@@ -1,6 +1,6 @@
-package com.lestari.esg.apiaccess.dto;
+package com.esgeasy.esg.apiaccess.dto;
 
-import com.lestari.esg.apiaccess.ApiToken;
+import com.esgeasy.esg.apiaccess.ApiToken;
 
 import java.time.Instant;
 import java.util.List;

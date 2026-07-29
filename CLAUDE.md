@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**Lestari** — a frontend-only ESG (Environmental, Social & Governance) reporting SaaS for Bursa Malaysia compliance. Scaffolded from Google AI Studio. The `backend/` directory is currently empty; all logic lives in `frontend/`.
+**EsgEasy** — a frontend-only ESG (Environmental, Social & Governance) reporting SaaS for Bursa Malaysia compliance. Scaffolded from Google AI Studio. The `backend/` directory is currently empty; all logic lives in `frontend/`.
 
 ## Commands
 
@@ -44,7 +44,7 @@ PlanProvider
 
 ### Auth
 
-`AuthContext.tsx` is entirely localStorage-based (no real backend). Login accepts any email; the onboarding market selection determines the initial plan tier (SME → starter, ACE Market → growth, Main Market → issuer-ready). Default sandbox user is `sarvesh@lestari.my`.
+`AuthContext.tsx` is entirely localStorage-based (no real backend). Login accepts any email; the onboarding market selection determines the initial plan tier (SME → starter, ACE Market → growth, Main Market → issuer-ready). Default sandbox user is `sarvesh@esgeasy.my`.
 
 ### Route structure
 

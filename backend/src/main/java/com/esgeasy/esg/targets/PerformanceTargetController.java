@@ -1,7 +1,7 @@
-package com.lestari.esg.targets;
+package com.esgeasy.esg.targets;
 
-import com.lestari.esg.targets.dto.PerformanceTargetResponse;
-import com.lestari.esg.targets.dto.UpsertPerformanceTargetRequest;
+import com.esgeasy.esg.targets.dto.PerformanceTargetResponse;
+import com.esgeasy.esg.targets.dto.UpsertPerformanceTargetRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

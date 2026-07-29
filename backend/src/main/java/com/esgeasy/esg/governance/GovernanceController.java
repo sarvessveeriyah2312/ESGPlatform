@@ -1,9 +1,9 @@
-package com.lestari.esg.governance;
+package com.esgeasy.esg.governance;
 
-import com.lestari.esg.governance.dto.GovernanceLevelResponse;
-import com.lestari.esg.governance.dto.MatterOwnershipResponse;
-import com.lestari.esg.governance.dto.UpdateGovernanceLevelRequest;
-import com.lestari.esg.governance.dto.UpdateMatterOwnershipRequest;
+import com.esgeasy.esg.governance.dto.GovernanceLevelResponse;
+import com.esgeasy.esg.governance.dto.MatterOwnershipResponse;
+import com.esgeasy.esg.governance.dto.UpdateGovernanceLevelRequest;
+import com.esgeasy.esg.governance.dto.UpdateMatterOwnershipRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;

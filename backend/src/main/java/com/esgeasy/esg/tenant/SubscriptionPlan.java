@@ -1,4 +1,4 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
 public enum SubscriptionPlan {
     STARTER(1),

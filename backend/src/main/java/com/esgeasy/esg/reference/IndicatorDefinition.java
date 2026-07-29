@@ -1,6 +1,6 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
-import com.lestari.esg.tenant.Sector;
+import com.esgeasy.esg.tenant.Sector;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

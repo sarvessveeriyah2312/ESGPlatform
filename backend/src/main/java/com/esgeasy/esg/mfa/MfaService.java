@@ -1,14 +1,14 @@
-package com.lestari.esg.mfa;
+package com.esgeasy.esg.mfa;
 
-import com.lestari.esg.common.exceptions.ForbiddenException;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.mfa.dto.BackupCodesResponse;
-import com.lestari.esg.mfa.dto.TotpEnrollResponse;
-import com.lestari.esg.mfa.dto.TotpStatusResponse;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.security.SecretCryptoService;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.common.exceptions.ForbiddenException;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.mfa.dto.BackupCodesResponse;
+import com.esgeasy.esg.mfa.dto.TotpEnrollResponse;
+import com.esgeasy.esg.mfa.dto.TotpStatusResponse;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.security.SecretCryptoService;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import dev.samstevens.totp.code.CodeVerifier;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
 import dev.samstevens.totp.code.DefaultCodeVerifier;
@@ -36,7 +36,7 @@ import java.util.UUID;
 @Service
 public class MfaService {
 
-    private static final String ISSUER = "Lestari";
+    private static final String ISSUER = "EsgEasy";
     private static final int BACKUP_CODE_COUNT = 10;
     private static final String BACKUP_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 

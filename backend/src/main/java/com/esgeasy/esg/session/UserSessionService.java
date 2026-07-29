@@ -1,8 +1,8 @@
-package com.lestari.esg.session;
+package com.esgeasy.esg.session;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.session.dto.SessionResponse;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.session.dto.SessionResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -101,7 +101,7 @@ export default function AcceptInvitePage() {
           <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-black text-xl shadow-lg">
             <Trees className="w-6 h-6" />
           </div>
-          <span className="text-2xl font-black text-gray-900 tracking-tight">Lestari</span>
+          <span className="text-2xl font-black text-gray-900 tracking-tight">EsgEasy</span>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 shadow-xl">

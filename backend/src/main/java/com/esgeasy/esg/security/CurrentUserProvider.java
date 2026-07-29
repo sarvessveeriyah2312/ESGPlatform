@@ -1,6 +1,6 @@
-package com.lestari.esg.security;
+package com.esgeasy.esg.security;
 
-import com.lestari.esg.common.exceptions.ForbiddenException;
+import com.esgeasy.esg.common.exceptions.ForbiddenException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -9,9 +9,9 @@ import java.util.UUID;
 @Component
 public class CurrentUserProvider {
 
-    public LestariPrincipal getPrincipal() {
+    public EsgEasyPrincipal getPrincipal() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof LestariPrincipal principal)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof EsgEasyPrincipal principal)) {
             throw new ForbiddenException("No authenticated user in context");
         }
         return principal;

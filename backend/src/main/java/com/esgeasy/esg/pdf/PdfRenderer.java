@@ -1,4 +1,4 @@
-package com.lestari.esg.pdf;
+package com.esgeasy.esg.pdf;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.springframework.stereotype.Component;

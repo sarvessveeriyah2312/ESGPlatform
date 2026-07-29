@@ -2,15 +2,15 @@ services:
   db:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: lestari_esg
-      POSTGRES_USER: lestari
-      POSTGRES_PASSWORD: lestari
+      POSTGRES_DB: esgeasy_esg
+      POSTGRES_USER: esgeasy
+      POSTGRES_PASSWORD: esgeasy
     ports:
       - "5433:5432"
     volumes:
-      - lestari_esg_data:/var/lib/postgresql/data
+      - esgeasy_esg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lestari -d lestari_esg"]
+      test: ["CMD-SHELL", "pg_isready -U esgeasy -d esgeasy_esg"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -28,4 +28,4 @@ services:
         condition: service_healthy
 
 volumes:
-  lestari_esg_data:
+  esgeasy_esg_data:

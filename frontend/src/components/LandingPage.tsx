@@ -82,14 +82,14 @@ export default function LandingPage({
   // PLACEHOLDER SOCIAL PROOF DATA (clearly marked as requested)
   const testimonials = [
     {
-      quote: "Lestari ESG made our transition into SEDG compliance incredibly straightforward. We produced our first disclosure report in less than three weeks without needing high-cost sustainability consultants.",
+      quote: "EsgEasy made our transition into SEDG compliance incredibly straightforward. We produced our first disclosure report in less than three weeks without needing high-cost sustainability consultants.",
       author: "Ir. Tan Boon Heong",
       role: "Managing Director",
       company: "Apex Precision Components Sdn Bhd (Penang)",
       avatarUrl: "https://ui-avatars.com/api/?name=Tan+Boon+Heong&background=15803D&color=fff",
     },
     {
-      quote: "With Bursa Malaysia's enhanced sustainability disclosure rules, our team was feeling overwhelmed. Lestari ESG provided us with preset indicators, audit trails, and instant reports ready for our integrated annual report.",
+      quote: "With Bursa Malaysia's enhanced sustainability disclosure rules, our team was feeling overwhelmed. EsgEasy provided us with preset indicators, audit trails, and instant reports ready for our integrated annual report.",
       author: "Puan Sarah Razak",
       role: "Head of Corporate Governance & ESG",
       company: "Kuala Lumpur Infrastructure Berhad (KLSE)",
@@ -117,7 +117,7 @@ export default function LandingPage({
               <Trees className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-lg font-bold tracking-tight text-navy-950 block">Lestari ESG</span>
+              <span className="text-lg font-bold tracking-tight text-navy-950 block">EsgEasy</span>
               <span className="text-[9px] font-semibold text-navy-400 uppercase tracking-widest block leading-none">MALAYSIA</span>
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function LandingPage({
                   <div className="w-3 h-3 rounded-full bg-red-400" />
                   <div className="w-3 h-3 rounded-full bg-amber-400" />
                   <div className="w-3 h-3 rounded-full bg-green-400" />
-                  <span className="text-xs font-semibold text-navy-400 font-mono ml-4">https://app.lestariesg.com/disclosures</span>
+                  <span className="text-xs font-semibold text-navy-400 font-mono ml-4">https://app.esgeasy.com/disclosures</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-xs text-navy-400 font-semibold bg-navy-50 px-2 py-1 rounded">SEDG Core Dashboard</span>
@@ -385,7 +385,7 @@ export default function LandingPage({
               The 4-Step Disclosure Engine
             </h2>
             <p className="text-sm text-navy-500 mt-2">
-              Lestari ESG handles everything from setup to export in an intuitive, linear workspace.
+              EsgEasy handles everything from setup to export in an intuitive, linear workspace.
             </p>
           </div>
 
@@ -456,7 +456,7 @@ export default function LandingPage({
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <h3 className="text-xs font-bold uppercase tracking-wider text-navy-400">Trusted Framework Alignment</h3>
-            <p className="text-xs text-navy-500 mt-1">Lestari ESG is developed in complete concordance with Malaysia's core sustainability regulators.</p>
+            <p className="text-xs text-navy-500 mt-1">EsgEasy is developed in complete concordance with Malaysia's core sustainability regulators.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
@@ -568,7 +568,7 @@ export default function LandingPage({
               <div className="p-1.5 bg-primary-500 rounded-lg text-white">
                 <Trees className="w-5 h-5" />
               </div>
-              <span className="text-base font-bold tracking-tight">Lestari ESG</span>
+              <span className="text-base font-bold tracking-tight">EsgEasy</span>
             </div>
             <p className="text-xs text-navy-400 max-w-sm leading-relaxed">
               Leading Malaysian ESG compliance and sustainability disclosures automation framework. Assisting small enterprises and listed issuers meet modern regulatory compliance.
@@ -612,7 +612,7 @@ export default function LandingPage({
 
         {/* Bottom copyright segment */}
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-navy-900 flex flex-col md:flex-row items-center justify-between text-xs text-navy-500">
-          <span>© 2026 Lestari ESG Corporation Sdn Bhd. All rights reserved.</span>
+          <span>© 2026 EsgEasy Corporation Sdn Bhd. All rights reserved.</span>
           <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <span className="hover:text-white cursor-pointer">FB</span>
             <span>•</span>

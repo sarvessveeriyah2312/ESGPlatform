@@ -87,7 +87,7 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
               <Trees className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-lg font-bold tracking-tight text-navy-950 block">Lestari ESG</span>
+              <span className="text-lg font-bold tracking-tight text-navy-950 block">EsgEasy</span>
               <span className="text-[9px] font-semibold text-navy-400 uppercase tracking-widest block leading-none">MALAYSIA</span>
             </div>
           </div>
@@ -130,7 +130,7 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
           </h1>
           
           <p className="text-sm md:text-base text-navy-600 mt-6 leading-relaxed text-left md:text-center max-w-3xl mx-auto">
-            Malaysia is undertaking a generational shift toward sustainable corporate responsibility, anchored by the Securities Commission's National Sustainability Reporting Framework (NSRF), amended Bursa Malaysia listing requirements, and CMM's Simplified ESG Disclosure Guide (SEDG). However, a stark tooling and expertise gap exists. While large conglomerates hire elite tier-one consultants, local SMEs and mid-market listed issuers are left to navigate complex regulatory requirements manually. <strong>Lestari ESG</strong> acts as the vital digital translator—democratizing enterprise-grade sustainability disclosures, automations, and carbon footprint tracking for every Malaysian enterprise.
+            Malaysia is undertaking a generational shift toward sustainable corporate responsibility, anchored by the Securities Commission's National Sustainability Reporting Framework (NSRF), amended Bursa Malaysia listing requirements, and CMM's Simplified ESG Disclosure Guide (SEDG). However, a stark tooling and expertise gap exists. While large conglomerates hire elite tier-one consultants, local SMEs and mid-market listed issuers are left to navigate complex regulatory requirements manually. <strong>EsgEasy</strong> acts as the vital digital translator—democratizing enterprise-grade sustainability disclosures, automations, and carbon footprint tracking for every Malaysian enterprise.
           </p>
 
           <div className="flex justify-center gap-4 mt-8">
@@ -201,7 +201,7 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
             <span className="text-xs font-bold text-primary-600 uppercase tracking-wider block mb-2">Our Regulatory Engine</span>
             <h2 className="text-3xl font-bold text-navy-950">We Track the Codes, You Run Your Business</h2>
             <p className="text-xs text-navy-500 mt-2">
-              Lestari ESG constantly updates its calculations and questionnaires to map seamlessly with Malaysian mandates.
+              EsgEasy constantly updates its calculations and questionnaires to map seamlessly with Malaysian mandates.
               <span className="block font-medium text-[10px] text-navy-400 mt-1 italic">*This section is for reference only and does not constitute formal legal advice.</span>
             </p>
           </div>
@@ -307,7 +307,7 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
                 Proudly Built in Penang, Malaysia
               </h2>
               <p className="text-sm text-navy-500 leading-relaxed">
-                Lestari ESG is conceptualized and engineered by a dedicated group of software craftsmen and sustainability specialists based in Penang. We are deeply committed to empowering Malaysian business owners, ensuring our regulatory engines stay perfectly synchronized with domestic authorities while presenting global-grade visual reports.
+                EsgEasy is conceptualized and engineered by a dedicated group of software craftsmen and sustainability specialists based in Penang. We are deeply committed to empowering Malaysian business owners, ensuring our regulatory engines stay perfectly synchronized with domestic authorities while presenting global-grade visual reports.
               </p>
               
               <div className="border-t border-navy-100 pt-6 space-y-3">
@@ -337,7 +337,7 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
                     LE
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-navy-900 block">Lestari ESG Engineering</span>
+                    <span className="text-xs font-bold text-navy-900 block">EsgEasy Engineering</span>
                     <span className="text-[10px] text-navy-400 block">George Town Sandbox Team</span>
                   </div>
                 </div>
@@ -386,7 +386,7 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
               <div className="p-1.5 bg-primary-500 rounded-lg text-white">
                 <Trees className="w-5 h-5" />
               </div>
-              <span className="text-base font-bold tracking-tight">Lestari ESG</span>
+              <span className="text-base font-bold tracking-tight">EsgEasy</span>
             </div>
             <p className="text-xs text-navy-400 max-w-sm leading-relaxed">
               Leading Malaysian ESG compliance and sustainability disclosures automation framework. Assisting small enterprises and listed issuers meet modern regulatory compliance.
@@ -430,7 +430,7 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
 
         {/* Bottom copyright segment */}
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-navy-900 flex flex-col md:flex-row items-center justify-between text-xs text-navy-500">
-          <span>© 2026 Lestari ESG Corporation Sdn Bhd. All rights reserved.</span>
+          <span>© 2026 EsgEasy Corporation Sdn Bhd. All rights reserved.</span>
           <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <span className="hover:text-white cursor-pointer">FB</span>
             <span>•</span>

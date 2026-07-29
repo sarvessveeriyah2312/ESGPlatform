@@ -1,4 +1,4 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

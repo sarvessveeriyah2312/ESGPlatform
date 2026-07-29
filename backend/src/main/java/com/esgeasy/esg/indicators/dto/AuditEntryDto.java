@@ -1,6 +1,6 @@
-package com.lestari.esg.indicators.dto;
+package com.esgeasy.esg.indicators.dto;
 
-import com.lestari.esg.indicators.IndicatorAuditEntry;
+import com.esgeasy.esg.indicators.IndicatorAuditEntry;
 
 import java.math.BigDecimal;
 import java.time.Instant;

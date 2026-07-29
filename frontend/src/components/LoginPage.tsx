@@ -183,7 +183,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 font-black text-xl shadow-lg">
               <Trees className="w-6 h-6" />
             </div>
-            <span className="text-2xl font-black text-white tracking-tight">Lestari</span>
+            <span className="text-2xl font-black text-white tracking-tight">EsgEasy</span>
           </div>
 
           <div className="space-y-6 max-w-lg">
@@ -216,7 +216,7 @@ export default function LoginPage() {
           <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-black text-sm shadow-sm">
             <Trees className="w-5 h-5" />
           </div>
-          <span className="text-lg font-black text-gray-900 tracking-tight">Lestari</span>
+          <span className="text-lg font-black text-gray-900 tracking-tight">EsgEasy</span>
         </div>
 
         {/* Back Link */}
@@ -363,7 +363,7 @@ export default function LoginPage() {
                 <label className="text-xs font-bold text-gray-700">Password</label>
                 <button 
                   type="button"
-                  onClick={() => alert("Please contact platform administration at support@lestari.my to reset your enterprise-linked SSO credentials.")}
+                  onClick={() => alert("Please contact platform administration at support@esgeasy.my to reset your enterprise-linked SSO credentials.")}
                   className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
                 >
                   Forgot Password?
@@ -445,7 +445,7 @@ export default function LoginPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               
               <button
-                onClick={() => handleQuickLogin('sarvesh@lestari.my', true)}
+                onClick={() => handleQuickLogin('sarvesh@esgeasy.my', true)}
                 disabled={isSubmitting}
                 className="p-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-left cursor-pointer transition-all space-y-1.5 shadow-sm group"
               >

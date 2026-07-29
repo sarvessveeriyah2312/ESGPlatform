@@ -1,7 +1,7 @@
-package com.lestari.esg.assurance.dto;
+package com.esgeasy.esg.assurance.dto;
 
-import com.lestari.esg.assurance.SignOffAuditEntry;
-import com.lestari.esg.assurance.SignOffStatus;
+import com.esgeasy.esg.assurance.SignOffAuditEntry;
+import com.esgeasy.esg.assurance.SignOffStatus;
 
 import java.time.Instant;
 

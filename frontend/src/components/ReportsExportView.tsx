@@ -386,7 +386,7 @@ export default function ReportsExportView() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Lestari_${label.replace(' ', '_')}_Report_${period}.pdf`;
+        a.download = `EsgEasy_${label.replace(' ', '_')}_Report_${period}.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -412,7 +412,7 @@ export default function ReportsExportView() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `Lestari_ESG_Integrated_Report_${period}.pdf`;
+          a.download = `EsgEasy_ESG_Integrated_Report_${period}.pdf`;
           document.body.appendChild(a);
           a.click();
           a.remove();
@@ -434,7 +434,7 @@ export default function ReportsExportView() {
 
       // Build a realistic styled text file to download representing the report
       let fileContent = `========================================================================
-LESTARI ESG WORKSPACE - INTEGRATED ESG DISCLOSURE REPORT
+ESGEASY WORKSPACE - INTEGRATED ESG DISCLOSURE REPORT
 Generated for: ${company?.name ?? 'Not configured'}
 Period: ${period} | Format: ${format}
 Generated Date: ${new Date().toLocaleString()}
@@ -503,8 +503,8 @@ ${governanceLines.join('\n')}
 ------------------------------------------------------------------------
 6. ASSURANCE WORKSPACE AUDIT FILE LOGS
 ------------------------------------------------------------------------
-This document is prepared via Lestari ESG compliance platform.
-Verification Checksum: LESTARI-SHA256-${checksum}
+This document is prepared via EsgEasy compliance platform.
+Verification Checksum: ESGEASY-SHA256-${checksum}
 Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off record)
 ========================================================================
 `;
@@ -514,7 +514,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Lestari_ESG_Integrated_Report_${period}.txt`;
+      link.download = `EsgEasy_ESG_Integrated_Report_${period}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -534,7 +534,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
 
     exportApi.csv(fiscalYear)
       .then((content) => {
-        downloadCsv(content, `Lestari_Raw_Indicators_Ledger_${period}.csv`);
+        downloadCsv(content, `EsgEasy_Raw_Indicators_Ledger_${period}.csv`);
         return exportApi.log('Raw Indicators Ledger', 'CSV', fiscalYear);
       })
       .then(() => {
@@ -577,7 +577,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `Lestari_ESG_Integrated_Report_${item.period}.pdf`;
+          a.download = `EsgEasy_ESG_Integrated_Report_${item.period}.pdf`;
           document.body.appendChild(a);
           a.click();
           a.remove();
@@ -595,7 +595,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
       if (item.format.includes('PDF')) {
         const doc = new jsPDF();
         doc.setFontSize(16);
-        doc.text('LESTARI ARCHIVE RE-DOWNLOAD', 14, 20);
+        doc.text('ESGEASY ARCHIVE RE-DOWNLOAD', 14, 20);
         doc.setFontSize(12);
         doc.text(`File Type: ${item.type}`, 14, 30);
         doc.text(`Period: ${item.period}`, 14, 38);
@@ -603,15 +603,15 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
         doc.text(`Archived On: ${item.date}`, 14, 54);
         doc.text(`Verifier: ${item.by}`, 14, 62);
         doc.text(`[Checksum Verified: OK]`, 14, 78);
-        doc.save(`Lestari_Archived_${item.type.replace(/\s+/g, '_')}_${item.period}.pdf`);
+        doc.save(`EsgEasy_Archived_${item.type.replace(/\s+/g, '_')}_${item.period}.pdf`);
       } else {
         // Re-trigger standard text download for this item type
-        let content = `LESTARI ARCHIVE RE-DOWNLOAD\nFile Type: ${item.type}\nPeriod: ${item.period}\nFormat: ${item.format}\nArchived On: ${item.date}\nVerifier: ${item.by}\n\n[Checksum Verified: OK]`;
+        let content = `ESGEASY ARCHIVE RE-DOWNLOAD\nFile Type: ${item.type}\nPeriod: ${item.period}\nFormat: ${item.format}\nArchived On: ${item.date}\nVerifier: ${item.by}\n\n[Checksum Verified: OK]`;
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Lestari_Archived_${item.type.replace(/\s+/g, '_')}_${item.period}.${item.format.includes('CSV') ? 'csv' : 'txt'}`;
+        link.download = `EsgEasy_Archived_${item.type.replace(/\s+/g, '_')}_${item.period}.${item.format.includes('CSV') ? 'csv' : 'txt'}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -831,7 +831,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
                     </div>
                     <span className="text-navy-300">|</span>
                     <span className="text-navy-700 truncate">
-                      Lestari_Sustainability_Disclosure_Report_{period}.{format === 'PDF' ? 'pdf' : 'txt'}
+                      EsgEasy_Sustainability_Disclosure_Report_{period}.{format === 'PDF' ? 'pdf' : 'txt'}
                     </span>
                   </div>
                   <span className="text-[10px] text-primary-600 bg-primary-50 px-2 py-0.5 rounded font-bold font-sans shrink-0">
@@ -843,7 +843,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
                 <div className="flex-1 overflow-y-auto p-5 bg-white text-[11px] leading-relaxed text-navy-800 space-y-4 shadow-sm select-text">
                   <div className="border-b-2 border-primary-500 pb-3 flex justify-between items-start">
                     <div>
-                      <h1 className="text-sm font-black text-navy-950 uppercase tracking-tight">Lestari ESG Report</h1>
+                      <h1 className="text-sm font-black text-navy-950 uppercase tracking-tight">EsgEasy Report</h1>
                       <p className="text-[8px] text-navy-400 font-mono tracking-widest">BURSA MALAYSIA DISCLOSURE FRAMEWORK</p>
                     </div>
                     <div className="text-right">

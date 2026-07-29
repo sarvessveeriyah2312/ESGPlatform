@@ -1,6 +1,6 @@
-package com.lestari.esg.materiality;
+package com.esgeasy.esg.materiality;
 
-import com.lestari.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.common.TenantOwnedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

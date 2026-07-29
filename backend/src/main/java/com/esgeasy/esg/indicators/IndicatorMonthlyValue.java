@@ -1,7 +1,7 @@
-package com.lestari.esg.indicators;
+package com.esgeasy.esg.indicators;
 
-import com.lestari.esg.common.TenantOwnedEntity;
-import com.lestari.esg.reference.IndicatorDefinition;
+import com.esgeasy.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.reference.IndicatorDefinition;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 /**
  * Current value for one calendar month of a fiscal year (upserted on save) — the raw input that
  * {@link IndicatorService#computeAnnualValue} rolls up into the disclosure-facing
- * {@link IndicatorValue} per the indicator's {@link com.lestari.esg.reference.AggregationRule}.
+ * {@link IndicatorValue} per the indicator's {@link com.esgeasy.esg.reference.AggregationRule}.
  * Correction history lives in {@link IndicatorAuditEntry} (via its {@code month} field), not here.
  */
 @Entity

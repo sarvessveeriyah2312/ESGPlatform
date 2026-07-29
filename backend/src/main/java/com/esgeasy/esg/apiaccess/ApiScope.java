@@ -1,4 +1,4 @@
-package com.lestari.esg.apiaccess;
+package com.esgeasy.esg.apiaccess;
 
 /** Fixed, validated set of grantable API token scopes. Add new constants here as new external endpoints ship. */
 public enum ApiScope {

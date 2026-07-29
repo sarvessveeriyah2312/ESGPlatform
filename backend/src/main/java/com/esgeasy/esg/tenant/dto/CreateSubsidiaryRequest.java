@@ -1,7 +1,7 @@
-package com.lestari.esg.tenant.dto;
+package com.esgeasy.esg.tenant.dto;
 
-import com.lestari.esg.tenant.CompanyType;
-import com.lestari.esg.tenant.ListingBoard;
+import com.esgeasy.esg.tenant.CompanyType;
+import com.esgeasy.esg.tenant.ListingBoard;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;

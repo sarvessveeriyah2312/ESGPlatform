@@ -1,9 +1,9 @@
-package com.lestari.esg.assurance;
+package com.esgeasy.esg.assurance;
 
-import com.lestari.esg.assurance.dto.CreateSignOffRequest;
-import com.lestari.esg.assurance.dto.RevokeSignOffRequest;
-import com.lestari.esg.assurance.dto.SignOffAuditEntryResponse;
-import com.lestari.esg.assurance.dto.SignOffResponse;
+import com.esgeasy.esg.assurance.dto.CreateSignOffRequest;
+import com.esgeasy.esg.assurance.dto.RevokeSignOffRequest;
+import com.esgeasy.esg.assurance.dto.SignOffAuditEntryResponse;
+import com.esgeasy.esg.assurance.dto.SignOffResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;

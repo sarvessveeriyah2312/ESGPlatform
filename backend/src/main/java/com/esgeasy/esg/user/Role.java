@@ -1,4 +1,4 @@
-package com.lestari.esg.user;
+package com.esgeasy.esg.user;
 
 public enum Role {
     COMPANY_ADMIN,

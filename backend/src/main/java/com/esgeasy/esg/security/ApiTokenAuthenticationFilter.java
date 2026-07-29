@@ -1,9 +1,9 @@
-package com.lestari.esg.security;
+package com.esgeasy.esg.security;
 
-import com.lestari.esg.apiaccess.ApiToken;
-import com.lestari.esg.apiaccess.ApiTokenRepository;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.apiaccess.ApiToken;
+import com.esgeasy.esg.apiaccess.ApiTokenRepository;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -67,7 +67,7 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
                     if (userOpt.isPresent() && Boolean.TRUE.equals(userOpt.get().getActive())) {
                         AppUser user = userOpt.get();
                         Set<String> scopes = new HashSet<>(token.getScopes());
-                        var principal = new LestariPrincipal(user.getId(), token.getCompanyId(), user.getRole(), user.getEmail(), scopes, null);
+                        var principal = new EsgEasyPrincipal(user.getId(), token.getCompanyId(), user.getRole(), user.getEmail(), scopes, null);
 
                         var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
                         var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);

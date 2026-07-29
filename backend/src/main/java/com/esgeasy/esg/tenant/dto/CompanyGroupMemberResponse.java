@@ -1,10 +1,10 @@
-package com.lestari.esg.tenant.dto;
+package com.esgeasy.esg.tenant.dto;
 
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyType;
-import com.lestari.esg.tenant.ListingBoard;
-import com.lestari.esg.tenant.MarketClassification;
-import com.lestari.esg.tenant.SubscriptionPlan;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyType;
+import com.esgeasy.esg.tenant.ListingBoard;
+import com.esgeasy.esg.tenant.MarketClassification;
+import com.esgeasy.esg.tenant.SubscriptionPlan;
 
 import java.time.LocalDate;
 import java.util.UUID;

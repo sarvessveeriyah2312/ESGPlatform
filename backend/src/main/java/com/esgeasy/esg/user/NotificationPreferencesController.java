@@ -1,7 +1,7 @@
-package com.lestari.esg.user;
+package com.esgeasy.esg.user;
 
-import com.lestari.esg.user.dto.NotificationPreferencesResponse;
-import com.lestari.esg.user.dto.UpdateNotificationPreferencesRequest;
+import com.esgeasy.esg.user.dto.NotificationPreferencesResponse;
+import com.esgeasy.esg.user.dto.UpdateNotificationPreferencesRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;

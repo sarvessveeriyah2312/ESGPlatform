@@ -1,4 +1,4 @@
-package com.lestari.esg.common;
+package com.esgeasy.esg.common;
 
 import java.time.Instant;
 import java.util.List;

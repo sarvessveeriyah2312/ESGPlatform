@@ -1,6 +1,6 @@
-package com.lestari.esg.billing;
+package com.esgeasy.esg.billing;
 
-import com.lestari.esg.billing.dto.InvoiceResponse;
+import com.esgeasy.esg.billing.dto.InvoiceResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

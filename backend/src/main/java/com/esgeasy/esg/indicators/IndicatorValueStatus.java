@@ -1,4 +1,4 @@
-package com.lestari.esg.indicators;
+package com.esgeasy.esg.indicators;
 
 public enum IndicatorValueStatus {
     DRAFT,

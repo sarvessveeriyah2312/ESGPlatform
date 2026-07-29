@@ -1,4 +1,4 @@
-package com.lestari.esg.mfa.dto;
+package com.esgeasy.esg.mfa.dto;
 
 import java.time.Instant;
 

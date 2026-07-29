@@ -1,4 +1,4 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
 /**
  * Groups {@link SustainabilityMatter} rows by which disclosure framework they belong to:

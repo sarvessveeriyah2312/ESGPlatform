@@ -1,4 +1,4 @@
-# Lestari — ESG Reporting Platform
+# EsgEasy — ESG Reporting Platform
 
 A multi-tenant ESG (Environmental, Social & Governance) reporting SaaS built for **Bursa Malaysia**
 compliance — the Simplified ESG Disclosure Guide (SEDG), Bursa Main/ACE Market listing
@@ -70,7 +70,7 @@ ESG/
 ### 1. Backend
 
 ```bash
-createdb lestari_esg          # one-time
+createdb esgeasy_esg          # one-time
 
 cd backend
 mvn spring-boot:run           # http://localhost:8080, 'dev' profile by default

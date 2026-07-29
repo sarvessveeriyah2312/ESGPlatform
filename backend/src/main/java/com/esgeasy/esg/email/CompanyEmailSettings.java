@@ -1,6 +1,6 @@
-package com.lestari.esg.email;
+package com.esgeasy.esg.email;
 
-import com.lestari.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.common.TenantOwnedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -27,7 +27,7 @@ public class CompanyEmailSettings extends TenantOwnedEntity {
     @Column(name = "smtp_username", nullable = false, length = 255)
     private String smtpUsername;
 
-    /** AES/GCM-encrypted (see {@link com.lestari.esg.security.SecretCryptoService}) — never stored or returned in plaintext. */
+    /** AES/GCM-encrypted (see {@link com.esgeasy.esg.security.SecretCryptoService}) — never stored or returned in plaintext. */
     @Column(name = "smtp_password_encrypted", nullable = false, length = 1000)
     private String smtpPasswordEncrypted;
 

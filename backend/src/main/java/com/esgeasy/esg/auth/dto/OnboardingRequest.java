@@ -1,6 +1,6 @@
-package com.lestari.esg.auth.dto;
+package com.esgeasy.esg.auth.dto;
 
-import com.lestari.esg.tenant.MarketClassification;
+import com.esgeasy.esg.tenant.MarketClassification;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;

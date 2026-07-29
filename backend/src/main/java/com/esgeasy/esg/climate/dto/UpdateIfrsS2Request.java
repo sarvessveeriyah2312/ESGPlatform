@@ -1,8 +1,8 @@
-package com.lestari.esg.climate.dto;
+package com.esgeasy.esg.climate.dto;
 
-import com.lestari.esg.climate.Currency;
-import com.lestari.esg.climate.IntegrationLevel;
-import com.lestari.esg.climate.ReviewFrequency;
+import com.esgeasy.esg.climate.Currency;
+import com.esgeasy.esg.climate.IntegrationLevel;
+import com.esgeasy.esg.climate.ReviewFrequency;
 
 import java.math.BigDecimal;
 

@@ -1,8 +1,8 @@
-package com.lestari.esg.indicators;
+package com.esgeasy.esg.indicators;
 
-import com.lestari.esg.common.TenantOwnedEntity;
-import com.lestari.esg.reference.IndicatorDefinition;
-import com.lestari.esg.reference.TargetDirection;
+import com.esgeasy.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.reference.IndicatorDefinition;
+import com.esgeasy.esg.reference.TargetDirection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

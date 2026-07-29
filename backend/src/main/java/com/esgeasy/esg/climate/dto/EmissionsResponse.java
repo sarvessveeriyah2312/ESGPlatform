@@ -1,4 +1,4 @@
-package com.lestari.esg.climate.dto;
+package com.esgeasy.esg.climate.dto;
 
 import java.util.List;
 

@@ -1,14 +1,14 @@
-package com.lestari.esg.materiality;
+package com.esgeasy.esg.materiality;
 
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.export.ExportFormat;
-import com.lestari.esg.export.ExportService;
-import com.lestari.esg.export.dto.LogExportRequest;
-import com.lestari.esg.materiality.dto.AssessmentDetailResponse;
-import com.lestari.esg.pdf.PdfRenderer;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.export.ExportFormat;
+import com.esgeasy.esg.export.ExportService;
+import com.esgeasy.esg.export.dto.LogExportRequest;
+import com.esgeasy.esg.materiality.dto.AssessmentDetailResponse;
+import com.esgeasy.esg.pdf.PdfRenderer;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
@@ -62,7 +62,7 @@ public class MaterialityReportService {
                 "Materiality Assessment Report", ExportFormat.PDF, assessment.assessmentDate().getYear()));
 
         String safeName = assessment.name().replaceAll("[^a-zA-Z0-9]+", "_");
-        String filename = "Lestari_Materiality_Report_" + safeName + ".pdf";
+        String filename = "EsgEasy_Materiality_Report_" + safeName + ".pdf";
         return new GeneratedReport(pdf, filename);
     }
 }

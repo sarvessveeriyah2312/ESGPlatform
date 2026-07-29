@@ -1,4 +1,4 @@
-package com.lestari.esg.targets.dto;
+package com.esgeasy.esg.targets.dto;
 
 import java.math.BigDecimal;
 import java.util.UUID;

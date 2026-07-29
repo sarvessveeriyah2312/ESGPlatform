@@ -1,4 +1,4 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
 /**
  * How an indicator's disclosure-facing annual {@code IndicatorValue} is derived from its monthly

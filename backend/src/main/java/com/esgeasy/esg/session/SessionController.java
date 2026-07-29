@@ -1,6 +1,6 @@
-package com.lestari.esg.session;
+package com.esgeasy.esg.session;
 
-import com.lestari.esg.session.dto.SessionResponse;
+import com.esgeasy.esg.session.dto.SessionResponse;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -1,11 +1,11 @@
-package com.lestari.esg.apiaccess;
+package com.esgeasy.esg.apiaccess;
 
-import com.lestari.esg.apiaccess.dto.ApiTokenResponse;
-import com.lestari.esg.apiaccess.dto.CreateApiTokenRequest;
-import com.lestari.esg.apiaccess.dto.CreateApiTokenResponse;
-import com.lestari.esg.common.exceptions.ConflictException;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.apiaccess.dto.ApiTokenResponse;
+import com.esgeasy.esg.apiaccess.dto.CreateApiTokenRequest;
+import com.esgeasy.esg.apiaccess.dto.CreateApiTokenResponse;
+import com.esgeasy.esg.common.exceptions.ConflictException;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.security.CurrentUserProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

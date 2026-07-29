@@ -1,4 +1,4 @@
-package com.lestari.esg.privacy.dto;
+package com.esgeasy.esg.privacy.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

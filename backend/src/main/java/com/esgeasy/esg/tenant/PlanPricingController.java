@@ -1,7 +1,7 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
-import com.lestari.esg.tenant.dto.PlanPricingResponse;
-import com.lestari.esg.tenant.dto.UpdatePlanPricingRequest;
+import com.esgeasy.esg.tenant.dto.PlanPricingResponse;
+import com.esgeasy.esg.tenant.dto.UpdatePlanPricingRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

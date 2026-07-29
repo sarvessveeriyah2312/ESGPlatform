@@ -1,10 +1,10 @@
-package com.lestari.esg.governance;
+package com.esgeasy.esg.governance;
 
-import com.lestari.esg.common.exceptions.ConflictException;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.governance.dto.CompliancePolicyResponse;
-import com.lestari.esg.governance.dto.CreateCompliancePolicyRequest;
-import com.lestari.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.common.exceptions.ConflictException;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.governance.dto.CompliancePolicyResponse;
+import com.esgeasy.esg.governance.dto.CreateCompliancePolicyRequest;
+import com.esgeasy.esg.security.CurrentUserProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

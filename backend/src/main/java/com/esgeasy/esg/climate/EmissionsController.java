@@ -1,9 +1,9 @@
-package com.lestari.esg.climate;
+package com.esgeasy.esg.climate;
 
-import com.lestari.esg.climate.dto.CreateScope3CategoryRequest;
-import com.lestari.esg.climate.dto.EmissionsResponse;
-import com.lestari.esg.climate.dto.Scope3CategoryResponse;
-import com.lestari.esg.climate.dto.SetEmissionValueRequest;
+import com.esgeasy.esg.climate.dto.CreateScope3CategoryRequest;
+import com.esgeasy.esg.climate.dto.EmissionsResponse;
+import com.esgeasy.esg.climate.dto.Scope3CategoryResponse;
+import com.esgeasy.esg.climate.dto.SetEmissionValueRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

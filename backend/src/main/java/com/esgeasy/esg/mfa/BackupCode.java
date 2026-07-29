@@ -1,6 +1,6 @@
-package com.lestari.esg.mfa;
+package com.esgeasy.esg.mfa;
 
-import com.lestari.esg.common.BaseEntity;
+import com.esgeasy.esg.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

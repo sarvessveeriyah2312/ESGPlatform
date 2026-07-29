@@ -1,4 +1,4 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

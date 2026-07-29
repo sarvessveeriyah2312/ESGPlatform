@@ -1,4 +1,4 @@
-package com.lestari.esg.climate;
+package com.esgeasy.esg.climate;
 
 public enum Currency {
     MYR,

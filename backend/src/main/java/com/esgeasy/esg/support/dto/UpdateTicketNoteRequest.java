@@ -1,4 +1,4 @@
-package com.lestari.esg.support.dto;
+package com.esgeasy.esg.support.dto;
 
 public record UpdateTicketNoteRequest(String note) {
 }

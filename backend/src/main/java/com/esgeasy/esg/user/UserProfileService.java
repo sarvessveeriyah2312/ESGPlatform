@@ -1,12 +1,12 @@
-package com.lestari.esg.user;
+package com.esgeasy.esg.user;
 
-import com.lestari.esg.common.exceptions.ForbiddenException;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.security.CurrentUserProvider;
-import com.lestari.esg.session.UserSessionService;
-import com.lestari.esg.user.dto.ChangePasswordRequest;
-import com.lestari.esg.user.dto.UpdateUserProfileRequest;
-import com.lestari.esg.user.dto.UserProfileResponse;
+import com.esgeasy.esg.common.exceptions.ForbiddenException;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.session.UserSessionService;
+import com.esgeasy.esg.user.dto.ChangePasswordRequest;
+import com.esgeasy.esg.user.dto.UpdateUserProfileRequest;
+import com.esgeasy.esg.user.dto.UserProfileResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

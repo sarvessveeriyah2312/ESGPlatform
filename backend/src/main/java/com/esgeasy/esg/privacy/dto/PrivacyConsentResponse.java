@@ -1,6 +1,6 @@
-package com.lestari.esg.privacy.dto;
+package com.esgeasy.esg.privacy.dto;
 
-import com.lestari.esg.tenant.Company;
+import com.esgeasy.esg.tenant.Company;
 
 import java.time.Instant;
 

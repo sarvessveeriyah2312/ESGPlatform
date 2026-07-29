@@ -1,4 +1,4 @@
-package com.lestari.esg.governance;
+package com.esgeasy.esg.governance;
 
 /** Computed at read time from lastReviewedAt + reviewCycleMonths — never stored. */
 public enum ComplianceStatus {

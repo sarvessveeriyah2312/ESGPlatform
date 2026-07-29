@@ -1,7 +1,7 @@
-package com.lestari.esg.support.dto;
+package com.esgeasy.esg.support.dto;
 
-import com.lestari.esg.support.TicketPriority;
-import com.lestari.esg.support.TicketType;
+import com.esgeasy.esg.support.TicketPriority;
+import com.esgeasy.esg.support.TicketType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

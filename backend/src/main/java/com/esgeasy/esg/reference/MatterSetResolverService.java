@@ -1,8 +1,8 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.MarketClassification;
-import com.lestari.esg.tenant.SubscriptionPlan;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.MarketClassification;
+import com.esgeasy.esg.tenant.SubscriptionPlan;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

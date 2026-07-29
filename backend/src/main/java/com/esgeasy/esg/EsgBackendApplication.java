@@ -1,4 +1,4 @@
-package com.lestari.esg;
+package com.esgeasy.esg;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

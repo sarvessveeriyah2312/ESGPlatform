@@ -13,7 +13,7 @@ import { PLAN_PRICING } from './constants';
 const activityLogs: ActivityLog[] = [
   { id: '1', timestamp: '2026-07-02, 11:45 AM', tenantName: 'Gamuda Berhad', eventType: 'Sync Success', eventDescription: 'Successfully generated and downloaded Bursa CSI manual import CSV', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
   { id: '2', timestamp: '2026-07-02, 09:30 AM', tenantName: 'Penang Electronic SME', eventType: 'Signup', eventDescription: 'Created dynamic sandbox workspace under SME trial tier', badgeColor: 'bg-blue-50 text-blue-700 border-blue-100' },
-  { id: '3', timestamp: '2026-07-01, 04:15 PM', tenantName: 'Lestari Workspace', eventType: 'Upgrade', eventDescription: 'Upgraded subscription tier to Premium (Issuer-Ready) via billing settings', badgeColor: 'bg-purple-50 text-purple-700 border-purple-100' },
+  { id: '3', timestamp: '2026-07-01, 04:15 PM', tenantName: 'EsgEasy Workspace', eventType: 'Upgrade', eventDescription: 'Upgraded subscription tier to Premium (Issuer-Ready) via billing settings', badgeColor: 'bg-purple-50 text-purple-700 border-purple-100' },
   { id: '4', timestamp: '2026-06-30, 02:00 PM', tenantName: 'Top Glove Corporation', eventType: 'Support Request', eventDescription: 'Logged ticket: "Difficulty syncing scope 3 carbon metrics"', badgeColor: 'bg-amber-50 text-amber-700 border-amber-100' },
   { id: '5', timestamp: '2026-06-29, 10:12 AM', tenantName: 'ACE Tech Solutions', eventType: 'Sync Success', eventDescription: 'Completed Materiality matrix and finalized 10 active indicators', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
 ];

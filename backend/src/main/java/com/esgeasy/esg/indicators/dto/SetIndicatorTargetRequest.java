@@ -1,6 +1,6 @@
-package com.lestari.esg.indicators.dto;
+package com.esgeasy.esg.indicators.dto;
 
-import com.lestari.esg.reference.TargetDirection;
+import com.esgeasy.esg.reference.TargetDirection;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;

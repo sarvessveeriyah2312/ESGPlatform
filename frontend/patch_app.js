@@ -19,7 +19,7 @@ const replacement = `function AuthenticatedLayout({ children }: { children: Reac
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   
-  const activeCompany = user?.company || 'Lestari Workspace';
+  const activeCompany = user?.company || 'EsgEasy Workspace';
 
   const userInitials = user?.name 
     ? user.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase() 
@@ -81,7 +81,7 @@ const replacement = `function AuthenticatedLayout({ children }: { children: Reac
             </div>
             {!sidebarCollapsed && (
               <div className="flex-1 min-w-0 flex justify-between items-center">
-                <span className="font-bold text-gray-900 text-lg truncate">Lestari</span>
+                <span className="font-bold text-gray-900 text-lg truncate">EsgEasy</span>
                 <button 
                   onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                   className="p-1 text-gray-400 hover:text-gray-800 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"

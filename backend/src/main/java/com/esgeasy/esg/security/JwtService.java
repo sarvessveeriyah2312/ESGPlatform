@@ -1,7 +1,7 @@
-package com.lestari.esg.security;
+package com.esgeasy.esg.security;
 
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.Role;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

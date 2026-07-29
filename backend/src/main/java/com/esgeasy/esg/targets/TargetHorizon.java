@@ -1,4 +1,4 @@
-package com.lestari.esg.targets;
+package com.esgeasy.esg.targets;
 
 /** SBTi-style target classification, driving dashboard grouping. */
 public enum TargetHorizon {

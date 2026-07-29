@@ -1,10 +1,10 @@
-package com.lestari.esg.climate;
+package com.esgeasy.esg.climate;
 
-import com.lestari.esg.climate.dto.EmissionActivityEntryResponse;
-import com.lestari.esg.climate.dto.EmissionFactorResponse;
-import com.lestari.esg.climate.dto.SetEmissionValueRequest;
-import com.lestari.esg.common.exceptions.NotFoundException;
-import com.lestari.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.climate.dto.EmissionActivityEntryResponse;
+import com.esgeasy.esg.climate.dto.EmissionFactorResponse;
+import com.esgeasy.esg.climate.dto.SetEmissionValueRequest;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.security.CurrentUserProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -71,7 +71,7 @@ public class EmissionActivityService {
     }
 
     @Transactional
-    public com.lestari.esg.climate.dto.EmissionsResponse applyToScope(int fiscalYear, EmissionScope scope) {
+    public com.esgeasy.esg.climate.dto.EmissionsResponse applyToScope(int fiscalYear, EmissionScope scope) {
         if (scope != EmissionScope.SCOPE_1 && scope != EmissionScope.SCOPE_2) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only Scope 1 or Scope 2 totals can be applied directly — Scope 3 has multiple categories, apply manually.");
         }

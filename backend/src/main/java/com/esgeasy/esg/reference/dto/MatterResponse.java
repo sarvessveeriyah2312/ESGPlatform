@@ -1,8 +1,8 @@
-package com.lestari.esg.reference.dto;
+package com.esgeasy.esg.reference.dto;
 
-import com.lestari.esg.reference.MatterSet;
-import com.lestari.esg.reference.SustainabilityMatter;
-import com.lestari.esg.reference.SustainabilityMatterCategory;
+import com.esgeasy.esg.reference.MatterSet;
+import com.esgeasy.esg.reference.SustainabilityMatter;
+import com.esgeasy.esg.reference.SustainabilityMatterCategory;
 
 public record MatterResponse(
         String id,

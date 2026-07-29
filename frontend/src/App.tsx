@@ -211,7 +211,7 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
               <Hash className="w-5 h-5" />
             </div>
             {!sidebarCollapsed && (
-              <span className="font-bold text-gray-900 text-lg truncate">Lestari</span>
+              <span className="font-bold text-gray-900 text-lg truncate">EsgEasy</span>
             )}
           </div>
         </div>
@@ -398,10 +398,57 @@ function AuthenticatedLayout({ children, allowedRoles }: { children: React.React
 }
 
 /**
+ * Maps each route to its browser tab title. Falls back to the bare brand name for
+ * anything unmapped (e.g. the settings/companies/:companyId detail route).
+ */
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'ESG Reporting for Bursa Malaysia Compliance',
+  '/pricing': 'Pricing',
+  '/about': 'About',
+  '/login': 'Log In',
+  '/register': 'Create Account',
+  '/accept-invite': 'Accept Invite',
+  '/verify-email': 'Verify Email',
+  '/onboarding': 'Onboarding',
+  '/dashboard': 'Dashboard',
+  '/materiality': 'Materiality Assessment',
+  '/governance': 'Compliance',
+  '/indicators': 'ESG Indicators',
+  '/targets': 'Targets & Decarbonization',
+  '/reports': 'Reports & Export',
+  '/support': 'Feedback & Support',
+  '/ifrs-s1-s2': 'IFRS S1/S2 Module',
+  '/assurance-workspace': 'Assurance Workspace',
+  '/api-access': 'API Access',
+  '/team': 'Team Directory',
+  '/settings': 'Settings',
+  '/profile': 'My Profile',
+  '/admin/overview': 'Platform Admin — Overview',
+  '/admin/tenants': 'Platform Admin — Tenant Companies',
+  '/admin/reference': 'Platform Admin — Reference Frameworks',
+  '/admin/billing': 'Platform Admin — Subscriptions & Invoices',
+  '/admin/support': 'Platform Admin — Feedback & Support',
+  '/admin/plans': 'Platform Admin — Plan Management',
+  '/admin/settings': 'Platform Admin — Settings',
+};
+
+function usePageTitle() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    const label = PAGE_TITLES[path] ?? (path.startsWith('/settings/companies/') ? 'Company Details' : undefined);
+
+    document.title = label ? `EsgEasy - ${label}` : 'EsgEasy';
+  }, [location.pathname]);
+}
+
+/**
  * 2. Main App Content Switcher mapping React Router URL state
  */
 function AppContent() {
   const navigate = useNavigate();
+  usePageTitle();
 
   return (
     <Routes>

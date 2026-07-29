@@ -63,7 +63,7 @@ const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-r
 export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Try loading initial plan from local storage to keep state stable, default to 'starter' to showcase locked flows
   const [plan, setPlanState] = useState<PlanType>(() => {
-    const saved = localStorage.getItem('lestari_current_plan');
+    const saved = localStorage.getItem('esgeasy_current_plan');
     return (saved as PlanType) || 'starter';
   });
 
@@ -89,7 +89,7 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const setPlan = (newPlan: PlanType) => {
     setPlanState(newPlan);
-    localStorage.setItem('lestari_current_plan', newPlan);
+    localStorage.setItem('esgeasy_current_plan', newPlan);
   };
 
   const hasFeature = (featureKey: string): boolean => {

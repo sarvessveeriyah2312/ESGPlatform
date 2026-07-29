@@ -1,8 +1,8 @@
-package com.lestari.esg.common;
+package com.esgeasy.esg.common;
 
-import com.lestari.esg.common.exceptions.ConflictException;
-import com.lestari.esg.common.exceptions.ForbiddenException;
-import com.lestari.esg.common.exceptions.NotFoundException;
+import com.esgeasy.esg.common.exceptions.ConflictException;
+import com.esgeasy.esg.common.exceptions.ForbiddenException;
+import com.esgeasy.esg.common.exceptions.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;

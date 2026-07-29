@@ -1,13 +1,13 @@
-package com.lestari.esg.climate;
+package com.esgeasy.esg.climate;
 
-import com.lestari.esg.climate.dto.BusinessSegmentResponse;
-import com.lestari.esg.climate.dto.CreateSegmentRequest;
-import com.lestari.esg.climate.dto.IfrsS1DisclosureResponse;
-import com.lestari.esg.climate.dto.IfrsS2Response;
-import com.lestari.esg.climate.dto.S1ItemResponse;
-import com.lestari.esg.climate.dto.UpdateIfrsS1DisclosureRequest;
-import com.lestari.esg.climate.dto.UpdateIfrsS2Request;
-import com.lestari.esg.climate.dto.UpsertS1ItemRequest;
+import com.esgeasy.esg.climate.dto.BusinessSegmentResponse;
+import com.esgeasy.esg.climate.dto.CreateSegmentRequest;
+import com.esgeasy.esg.climate.dto.IfrsS1DisclosureResponse;
+import com.esgeasy.esg.climate.dto.IfrsS2Response;
+import com.esgeasy.esg.climate.dto.S1ItemResponse;
+import com.esgeasy.esg.climate.dto.UpdateIfrsS1DisclosureRequest;
+import com.esgeasy.esg.climate.dto.UpdateIfrsS2Request;
+import com.esgeasy.esg.climate.dto.UpsertS1ItemRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,8 +1,8 @@
-package com.lestari.esg.climate.dto;
+package com.esgeasy.esg.climate.dto;
 
-import com.lestari.esg.climate.IfrsS1Disclosure;
-import com.lestari.esg.climate.IntegrationLevel;
-import com.lestari.esg.climate.ReviewFrequency;
+import com.esgeasy.esg.climate.IfrsS1Disclosure;
+import com.esgeasy.esg.climate.IntegrationLevel;
+import com.esgeasy.esg.climate.ReviewFrequency;
 
 public record IfrsS1DisclosureResponse(
         String oversightDescription,

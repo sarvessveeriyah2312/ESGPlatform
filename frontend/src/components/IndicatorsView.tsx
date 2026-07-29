@@ -440,7 +440,7 @@ export default function IndicatorsView() {
       return;
     }
     exportApi.csv(fiscalYearNumber(focusYear)).then((csv) => {
-      downloadCsv(csv, `Lestari_ESG_Indicators_${focusYear}_Export.csv`);
+      downloadCsv(csv, `EsgEasy_ESG_Indicators_${focusYear}_Export.csv`);
     });
   };
 

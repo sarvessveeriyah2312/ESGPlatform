@@ -1,11 +1,11 @@
-package com.lestari.esg.materiality;
+package com.esgeasy.esg.materiality;
 
-import com.lestari.esg.materiality.dto.AddStakeholderRequest;
-import com.lestari.esg.materiality.dto.AssessmentDetailResponse;
-import com.lestari.esg.materiality.dto.AssessmentSummaryResponse;
-import com.lestari.esg.materiality.dto.CreateAssessmentRequest;
-import com.lestari.esg.materiality.dto.StakeholderOptionResponse;
-import com.lestari.esg.materiality.dto.ToggleStakeholderRequest;
+import com.esgeasy.esg.materiality.dto.AddStakeholderRequest;
+import com.esgeasy.esg.materiality.dto.AssessmentDetailResponse;
+import com.esgeasy.esg.materiality.dto.AssessmentSummaryResponse;
+import com.esgeasy.esg.materiality.dto.CreateAssessmentRequest;
+import com.esgeasy.esg.materiality.dto.StakeholderOptionResponse;
+import com.esgeasy.esg.materiality.dto.ToggleStakeholderRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;

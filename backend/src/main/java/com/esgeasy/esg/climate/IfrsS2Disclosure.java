@@ -1,7 +1,7 @@
-package com.lestari.esg.climate;
+package com.esgeasy.esg.climate;
 
-import com.lestari.esg.common.TenantOwnedEntity;
-import com.lestari.esg.targets.PerformanceTarget;
+import com.esgeasy.esg.common.TenantOwnedEntity;
+import com.esgeasy.esg.targets.PerformanceTarget;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

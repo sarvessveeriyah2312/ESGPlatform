@@ -1,4 +1,4 @@
-package com.lestari.esg.reference;
+package com.esgeasy.esg.reference;
 
 public enum TargetDirection {
     UP,

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const TOKEN_KEY = 'lestari_jwt_token';
+const TOKEN_KEY = 'esgeasy_jwt_token';
 
 export const tokenStore = {
   get(): string | null {

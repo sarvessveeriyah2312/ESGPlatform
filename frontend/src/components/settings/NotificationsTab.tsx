@@ -95,7 +95,7 @@ export default function NotificationsTab() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:p-8">
         <h3 className="text-lg font-bold text-gray-900">Email Notifications</h3>
         <p className="text-xs text-gray-500 mt-1 mb-6">
-          Choose which updates Lestari should email you about. These apply to your account only.
+          Choose which updates EsgEasy should email you about. These apply to your account only.
         </p>
 
         {loading ? (

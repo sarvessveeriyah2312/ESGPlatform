@@ -146,7 +146,7 @@ export default function RegisterPage() {
               <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 font-black text-xl shadow-lg">
                 <Trees className="w-6 h-6" />
               </div>
-              <span className="text-2xl font-black text-white tracking-tight">Lestari</span>
+              <span className="text-2xl font-black text-white tracking-tight">EsgEasy</span>
             </div>
 
             <div className="space-y-6 max-w-lg">
@@ -179,7 +179,7 @@ export default function RegisterPage() {
             <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-black text-sm shadow-sm">
               <Trees className="w-5 h-5" />
             </div>
-            <span className="text-lg font-black text-gray-900 tracking-tight">Lestari</span>
+            <span className="text-lg font-black text-gray-900 tracking-tight">EsgEasy</span>
           </div>
 
           <div className="max-w-md w-full mx-auto space-y-8 py-12">
@@ -253,7 +253,7 @@ export default function RegisterPage() {
             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 font-black text-xl shadow-lg">
               <Trees className="w-6 h-6" />
             </div>
-            <span className="text-2xl font-black text-white tracking-tight">Lestari</span>
+            <span className="text-2xl font-black text-white tracking-tight">EsgEasy</span>
           </div>
 
           <div className="space-y-6 max-w-lg">
@@ -286,7 +286,7 @@ export default function RegisterPage() {
           <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-black text-sm shadow-sm">
             <Trees className="w-5 h-5" />
           </div>
-          <span className="text-lg font-black text-gray-900 tracking-tight">Lestari</span>
+          <span className="text-lg font-black text-gray-900 tracking-tight">EsgEasy</span>
         </div>
 
         {/* Top login link */}
@@ -393,7 +393,7 @@ export default function RegisterPage() {
                     <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="e.g. Lestari Green Tech Sdn Bhd"
+                      placeholder="e.g. EsgEasy Green Tech Sdn Bhd"
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 hover:border-gray-300 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-900 placeholder-gray-400 transition-all shadow-sm"
@@ -512,7 +512,7 @@ export default function RegisterPage() {
                     className="w-4 h-4 rounded border-gray-300 text-emerald-500 focus:ring-emerald-500 mt-0.5 cursor-pointer"
                   />
                   <label htmlFor="terms" className="text-xs font-medium text-gray-600 leading-relaxed cursor-pointer select-none">
-                    I authorize Lestari ESG to provision my cloud reporting environment and I accept the <span className="text-emerald-600 underline">Service Agreement</span>.
+                    I authorize EsgEasy to provision my cloud reporting environment and I accept the <span className="text-emerald-600 underline">Service Agreement</span>.
                   </label>
                 </div>
               </form>

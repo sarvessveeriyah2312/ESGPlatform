@@ -1,4 +1,4 @@
-package com.lestari.esg.email.dto;
+package com.esgeasy.esg.email.dto;
 
 public record TestEmailResponse(boolean success, String message) {
 }

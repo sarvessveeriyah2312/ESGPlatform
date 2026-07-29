@@ -1,8 +1,8 @@
-package com.lestari.esg.platform;
+package com.esgeasy.esg.platform;
 
-import com.lestari.esg.email.dto.TestEmailResponse;
-import com.lestari.esg.platform.dto.PlatformSettingsResponse;
-import com.lestari.esg.platform.dto.UpdatePlatformSettingsRequest;
+import com.esgeasy.esg.email.dto.TestEmailResponse;
+import com.esgeasy.esg.platform.dto.PlatformSettingsResponse;
+import com.esgeasy.esg.platform.dto.UpdatePlatformSettingsRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

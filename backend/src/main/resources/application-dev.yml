@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/lestari_esg
+    url: jdbc:postgresql://localhost:5432/esgeasy_esg
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:root}
   jpa:
@@ -16,5 +16,5 @@ spring:
 
 logging:
   level:
-    com.lestari.esg: DEBUG
+    com.esgeasy.esg: DEBUG
 

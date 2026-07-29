@@ -1,9 +1,9 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
-import com.lestari.esg.tenant.dto.TenantSummaryResponse;
-import com.lestari.esg.tenant.dto.TenantUserResponse;
-import com.lestari.esg.tenant.dto.UpdatePlanRequest;
-import com.lestari.esg.tenant.dto.UpdateTenantStatusRequest;
+import com.esgeasy.esg.tenant.dto.TenantSummaryResponse;
+import com.esgeasy.esg.tenant.dto.TenantUserResponse;
+import com.esgeasy.esg.tenant.dto.UpdatePlanRequest;
+import com.esgeasy.esg.tenant.dto.UpdateTenantStatusRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

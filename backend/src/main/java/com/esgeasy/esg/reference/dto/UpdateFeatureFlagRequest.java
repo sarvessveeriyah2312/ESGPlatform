@@ -1,6 +1,6 @@
-package com.lestari.esg.reference.dto;
+package com.esgeasy.esg.reference.dto;
 
-import com.lestari.esg.tenant.SubscriptionPlan;
+import com.esgeasy.esg.tenant.SubscriptionPlan;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdateFeatureFlagRequest(

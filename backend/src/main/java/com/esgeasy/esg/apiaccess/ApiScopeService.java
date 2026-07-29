@@ -1,6 +1,6 @@
-package com.lestari.esg.apiaccess;
+package com.esgeasy.esg.apiaccess;
 
-import com.lestari.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.security.CurrentUserProvider;
 import org.springframework.stereotype.Component;
 
 /**

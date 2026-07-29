@@ -1,7 +1,7 @@
-package com.lestari.esg.tenant;
+package com.esgeasy.esg.tenant;
 
-import com.lestari.esg.common.BaseEntity;
-import com.lestari.esg.common.StringListConverter;
+import com.esgeasy.esg.common.BaseEntity;
+import com.esgeasy.esg.common.StringListConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;

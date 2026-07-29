@@ -1,4 +1,4 @@
-package com.lestari.esg.apiaccess.dto;
+package com.esgeasy.esg.apiaccess.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;

@@ -141,7 +141,7 @@ export default function AddCompanyModal({ onClose, onCreated }: AddCompanyModalP
 
               <div className="space-y-1">
                 <label className={labelClass}>Company name<span className="text-rose-500"> *</span></label>
-                <input type="text" required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Lestari Green Tech Sdn Bhd" className={inputClass} />
+                <input type="text" required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. EsgEasy Green Tech Sdn Bhd" className={inputClass} />
               </div>
               <div className="space-y-1">
                 <label className={labelClass}>Registration number (SSM)</label>

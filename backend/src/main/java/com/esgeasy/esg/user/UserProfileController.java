@@ -1,8 +1,8 @@
-package com.lestari.esg.user;
+package com.esgeasy.esg.user;
 
-import com.lestari.esg.user.dto.ChangePasswordRequest;
-import com.lestari.esg.user.dto.UpdateUserProfileRequest;
-import com.lestari.esg.user.dto.UserProfileResponse;
+import com.esgeasy.esg.user.dto.ChangePasswordRequest;
+import com.esgeasy.esg.user.dto.UpdateUserProfileRequest;
+import com.esgeasy.esg.user.dto.UserProfileResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

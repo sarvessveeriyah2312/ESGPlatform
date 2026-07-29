@@ -1,4 +1,4 @@
-package com.lestari.esg.materiality;
+package com.esgeasy.esg.materiality;
 
 public enum AssessmentStatus {
     DRAFT,

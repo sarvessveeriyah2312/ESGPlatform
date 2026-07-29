@@ -1,6 +1,6 @@
-package com.lestari.esg.indicators;
+package com.esgeasy.esg.indicators;
 
-import com.lestari.esg.indicators.dto.AuditEntryDto;
+import com.esgeasy.esg.indicators.dto.AuditEntryDto;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;

@@ -1,9 +1,9 @@
-package com.lestari.esg.security;
+package com.esgeasy.esg.security;
 
-import com.lestari.esg.session.UserSession;
-import com.lestari.esg.session.UserSessionRepository;
-import com.lestari.esg.user.AppUser;
-import com.lestari.esg.user.AppUserRepository;
+import com.esgeasy.esg.session.UserSession;
+import com.esgeasy.esg.session.UserSessionRepository;
+import com.esgeasy.esg.user.AppUser;
+import com.esgeasy.esg.user.AppUserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -69,7 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     if (versionMatches && Boolean.TRUE.equals(user.getActive()) && sessionValid(d)) {
                         var companyId = user.getCompany() != null ? user.getCompany().getId() : null;
-                        var principal = new LestariPrincipal(user.getId(), companyId, user.getRole(), user.getEmail(), java.util.Set.of(), d.jti());
+                        var principal = new EsgEasyPrincipal(user.getId(), companyId, user.getRole(), user.getEmail(), java.util.Set.of(), d.jti());
 
                         var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
                         var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);

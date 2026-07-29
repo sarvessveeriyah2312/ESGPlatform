@@ -1,7 +1,7 @@
-package com.lestari.esg.governance.dto;
+package com.esgeasy.esg.governance.dto;
 
-import com.lestari.esg.governance.MatterOwnership;
-import com.lestari.esg.governance.OversightLevel;
+import com.esgeasy.esg.governance.MatterOwnership;
+import com.esgeasy.esg.governance.OversightLevel;
 
 public record MatterOwnershipResponse(
         String matterId,

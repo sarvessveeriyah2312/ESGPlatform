@@ -1,8 +1,8 @@
-package com.lestari.esg.billing;
+package com.esgeasy.esg.billing;
 
-import com.lestari.esg.billing.dto.InvoiceResponse;
-import com.lestari.esg.tenant.Company;
-import com.lestari.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.billing.dto.InvoiceResponse;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
