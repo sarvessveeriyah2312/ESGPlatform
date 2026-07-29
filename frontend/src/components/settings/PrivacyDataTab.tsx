@@ -7,18 +7,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, AlertCircle, Download, ShieldAlert, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { privacyApi, downloadJson } from '../../api/privacyApi';
 import Switch from '../ui/Switch';
 
 export default function PrivacyDataTab() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'warning' } | null>(null);
-
-  const showMessage = (text: string, type: 'success' | 'warning') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage(null), 4000);
-  };
+  const { showToast } = useToast();
 
   // --- Cookie & marketing consent ---
   const [consentLoading, setConsentLoading] = useState(true);
@@ -32,7 +28,7 @@ export default function PrivacyDataTab() {
         setMarketingConsent(c.marketingConsent);
         setAnalyticsConsent(c.analyticsConsent);
       })
-      .catch(() => showMessage('Failed to load privacy preferences.', 'warning'))
+      .catch(() => showToast('Failed to load privacy preferences.', 'error'))
       .finally(() => setConsentLoading(false));
   }, []);
 
@@ -42,9 +38,9 @@ export default function PrivacyDataTab() {
       .then((c) => {
         setMarketingConsent(c.marketingConsent);
         setAnalyticsConsent(c.analyticsConsent);
-        showMessage('Privacy preferences saved.', 'success');
+        showToast('Privacy preferences saved.', 'success');
       })
-      .catch(() => showMessage('Failed to save privacy preferences.', 'warning'))
+      .catch(() => showToast('Failed to save privacy preferences.', 'error'))
       .finally(() => setSavingConsent(false));
   };
 
@@ -70,9 +66,9 @@ export default function PrivacyDataTab() {
     privacyApi.exportData()
       .then((data) => {
         downloadJson(data, `EsgEasy_Company_Data_Export_${new Date().toISOString().slice(0, 10)}.json`);
-        showMessage('Your data export has been downloaded.', 'success');
+        showToast('Your data export has been downloaded.', 'success');
       })
-      .catch(() => showMessage('Failed to generate your data export.', 'warning'))
+      .catch(() => showToast('Failed to generate your data export.', 'error'))
       .finally(() => setExporting(false));
   };
 
@@ -90,22 +86,13 @@ export default function PrivacyDataTab() {
         navigate('/login');
       })
       .catch(() => {
-        showMessage('Failed to close the account — please try again.', 'warning');
+        showToast('Failed to close the account — please try again.', 'error');
         setClosing(false);
       });
   };
 
   return (
     <div className="space-y-6">
-      {message && (
-        <div className={`flex items-center gap-2 text-xs font-semibold rounded-lg px-3 py-2 ${
-          message.type === 'success' ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' : 'text-rose-600 bg-rose-50 border border-rose-100'
-        }`}>
-          {message.type === 'success' ? <Check className="w-3.5 h-3.5 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
-          <span>{message.text}</span>
-        </div>
-      )}
-
       {/* Download data */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:p-8">
         <div className="flex items-center space-x-2">

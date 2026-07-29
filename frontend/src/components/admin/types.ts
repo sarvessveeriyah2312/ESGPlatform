@@ -49,5 +49,7 @@ export interface MatterFormState {
   matterSet: MatterSet;
 }
 
-export type ToastType = 'success' | 'info' | 'warning';
-export type ShowToast = (message: string, type?: ToastType) => void;
+// Re-exported so every admin tab keeps importing from './types' — the app's single toast
+// implementation now lives in contexts/ToastContext.tsx.
+export type { ToastType, ShowToast } from '../../contexts/ToastContext';
+

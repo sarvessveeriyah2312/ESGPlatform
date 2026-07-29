@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, X, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { supportTicketApi, SupportTicketResponse, TicketType, TicketPriority } from '../api/supportTicketApi';
 import TicketChatPanel from './ui/TicketChatPanel';
 
@@ -14,14 +15,9 @@ export default function SupportTicketsView() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [tickets, setTickets] = useState<SupportTicketResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
-
-  const showToast = (message: string, type: 'success' | 'warning' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
 
   const [createOpen, setCreateOpen] = useState(false);
   const [formType, setFormType] = useState<TicketType>('SUPPORT_REQUEST');
@@ -38,7 +34,7 @@ export default function SupportTicketsView() {
   useEffect(() => {
     supportTicketApi.listMine()
       .then(setTickets)
-      .catch(() => showToast('Failed to load your tickets.', 'warning'))
+      .catch(() => showToast('Failed to load your tickets.', 'error'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -67,7 +63,7 @@ export default function SupportTicketsView() {
         resetCreateForm();
         showToast('Submitted — our team will follow up soon.');
       })
-      .catch(() => showToast('Failed to submit. Please try again.', 'warning'));
+      .catch(() => showToast('Failed to submit. Please try again.', 'error'));
   };
 
   const openEdit = (ticket: SupportTicketResponse) => {
@@ -86,7 +82,7 @@ export default function SupportTicketsView() {
         setSelectedTicket(prev => prev && prev.id === updated.id ? updated : prev);
         showToast('Updated.');
       })
-      .catch(() => showToast('Failed to update — it may no longer be editable.', 'warning'));
+      .catch(() => showToast('Failed to update — it may no longer be editable.', 'error'));
   };
 
   const typeLabel = (t: SupportTicketResponse) => t.type === 'FEEDBACK' ? 'Feedback' : 'Support';
@@ -94,12 +90,6 @@ export default function SupportTicketsView() {
 
   return (
     <div className="space-y-6 w-full pb-16">
-
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2.5 bg-navy-950 text-white px-4 py-3 rounded-xl shadow-2xl border border-navy-800 animate-slide-in">
-          <span className="text-xs font-semibold">{toast.message}</span>
-        </div>
-      )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -415,7 +405,7 @@ export default function SupportTicketsView() {
                     setSelectedTicket(prev => prev ? { ...prev, note } : prev);
                     setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, note } : t));
                   }}
-                  onError={(msg) => showToast(msg, 'warning')}
+                  onError={(msg) => showToast(msg, 'error')}
                 />
               </div>
             </div>

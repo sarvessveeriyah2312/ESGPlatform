@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
+import { useToast } from '../contexts/ToastContext';
 import { targetsApi, PerformanceTargetResponse, UpsertPerformanceTargetRequest } from '../api/targetsApi';
 import { indicatorsApi, IndicatorResponse } from '../api/indicatorsApi';
 import { computeTargetStatus, TARGET_STATUS_STYLES, TargetStatus } from '../utils/targetStatus';
@@ -110,13 +111,13 @@ function clampPercent(currentProgress: number): number {
 }
 
 export default function TargetsView() {
+  const { showToast } = useToast();
   const [targets, setTargets] = useState<PerformanceTargetResponse[]>([]);
   const [indicators, setIndicators] = useState<IndicatorResponse[]>([]);
 
   // Create/edit modal state — editingTargetId is null when creating, set when editing an existing target
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState<TargetFormState>(EMPTY_FORM);
-  const [formError, setFormError] = useState<string | null>(null);
   const [editingTargetId, setEditingTargetId] = useState<string | null>(null);
 
   // Filter & sort state
@@ -194,7 +195,6 @@ export default function TargetsView() {
 
   const openCreateModal = () => {
     setForm(EMPTY_FORM);
-    setFormError(null);
     setEditingTargetId(null);
     setShowCreateModal(true);
   };
@@ -210,7 +210,6 @@ export default function TargetsView() {
       indicatorId: target.indicatorId ?? '',
       horizon: target.horizon
     });
-    setFormError(null);
     setEditingTargetId(target.id);
     setShowCreateModal(true);
   };
@@ -224,7 +223,7 @@ export default function TargetsView() {
     e.preventDefault();
 
     if (form.title.trim() === '') {
-      setFormError('Title is required.');
+      showToast('Title is required.', 'error');
       return;
     }
 
@@ -234,15 +233,15 @@ export default function TargetsView() {
     const currentProgress = form.currentProgress.trim() === '' ? undefined : Number(form.currentProgress);
 
     if (isNaN(baselineYear) || isNaN(targetYear) || isNaN(targetValue)) {
-      setFormError('Baseline year, target year, and target value must be valid numbers.');
+      showToast('Baseline year, target year, and target value must be valid numbers.', 'error');
       return;
     }
     if (targetYear <= baselineYear) {
-      setFormError('Target year must be after the baseline year.');
+      showToast('Target year must be after the baseline year.', 'error');
       return;
     }
     if (currentProgress !== undefined && (isNaN(currentProgress) || currentProgress < 0)) {
-      setFormError('Starting progress must be a non-negative number.');
+      showToast('Starting progress must be a non-negative number.', 'error');
       return;
     }
 
@@ -263,7 +262,7 @@ export default function TargetsView() {
         setProgressDrafts((prev) => ({ ...prev, [updated.id]: String(updated.currentProgress) }));
         closeModal();
       }).catch((err) => {
-        setFormError(err?.details?.[0] || err?.message || 'Failed to save target. Please check your inputs and try again.');
+        showToast(err?.details?.[0] || err?.message || 'Failed to save target. Please check your inputs and try again.', 'error');
       });
     } else {
       targetsApi.create(payload).then((created) => {
@@ -271,7 +270,7 @@ export default function TargetsView() {
         setProgressDrafts((prev) => ({ ...prev, [created.id]: String(created.currentProgress) }));
         closeModal();
       }).catch((err) => {
-        setFormError(err?.details?.[0] || err?.message || 'Failed to save target. Please check your inputs and try again.');
+        showToast(err?.details?.[0] || err?.message || 'Failed to save target. Please check your inputs and try again.', 'error');
       });
     }
   };
@@ -711,13 +710,6 @@ export default function TargetsView() {
                   </p>
                 )}
               </div>
-
-              {formError && (
-                <div className="flex items-center gap-2 text-[11px] text-rose-600 font-bold bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>{formError}</span>
-                </div>
-              )}
 
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="secondary" size="sm" type="button" onClick={closeModal}>

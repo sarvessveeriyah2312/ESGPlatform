@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, AlertCircle, Eye, EyeOff, Send, Sparkles } from 'lucide-react';
 import { platformSettingsApi, PlatformSettingsResponse, UpdatePlatformSettingsRequest } from '../../../api/platformSettingsApi';
+import { useToast } from '../../../contexts/ToastContext';
 import Button from '../../ui/Button';
 
 interface AdminEmailSettingsTabProps {
@@ -16,6 +17,7 @@ interface AdminEmailSettingsTabProps {
 }
 
 export default function AdminEmailSettingsTab({ settings, saving, onSave, onSaved }: AdminEmailSettingsTabProps) {
+  const { showToast } = useToast();
   const [smtpHost, setSmtpHost] = useState('');
   const [smtpPort, setSmtpPort] = useState(587);
   const [smtpUsername, setSmtpUsername] = useState('');
@@ -25,7 +27,6 @@ export default function AdminEmailSettingsTab({ settings, saving, onSave, onSave
   const [enabled, setEnabled] = useState(false);
 
   const [testing, setTesting] = useState(false);
-  const [testMessage, setTestMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     setSmtpHost(settings.smtpHost ?? '');
@@ -38,20 +39,18 @@ export default function AdminEmailSettingsTab({ settings, saving, onSave, onSave
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setTestMessage(null);
     onSave({ smtpHost, smtpPort, smtpUsername, password, fromAddress, enabled });
   };
 
   const handleTest = () => {
     setTesting(true);
-    setTestMessage(null);
     platformSettingsApi.sendTest()
       .then((result) => {
-        setTestMessage({ type: result.success ? 'success' : 'error', text: result.message });
+        showToast(result.message, result.success ? 'success' : 'error');
         return platformSettingsApi.get();
       })
       .then(onSaved)
-      .catch((err) => setTestMessage({ type: 'error', text: err?.message || 'Failed to send test email.' }))
+      .catch((err) => showToast(err?.message || 'Failed to send test email.', 'error'))
       .finally(() => setTesting(false));
   };
 
@@ -148,16 +147,6 @@ export default function AdminEmailSettingsTab({ settings, saving, onSave, onSave
             )}
           </div>
         </div>
-
-        {testMessage && (
-          <div className={`rounded-2xl border p-5 ${testMessage.type === 'success' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
-            <div className={`flex items-center space-x-2 font-bold text-xs mb-2 ${testMessage.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {testMessage.type === 'success' ? <Check className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
-              <span>{testMessage.type === 'success' ? 'TEST SENT' : 'TEST FAILED'}</span>
-            </div>
-            <p className="text-xs text-gray-600 leading-relaxed font-medium break-words">{testMessage.text}</p>
-          </div>
-        )}
 
         <div className="bg-emerald-50/50 rounded-2xl border border-emerald-100 p-5">
           <div className="flex items-center space-x-2 text-emerald-600 font-bold text-xs mb-2">

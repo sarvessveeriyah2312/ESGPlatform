@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { usePlan, PlanType } from '../contexts/PlanContext';
 import { useAuth } from '../contexts/AuthContext';
-import { canAccess, MANAGEMENT_ROLES } from '../permissions';
+import { canAccess, hasPermission, MANAGEMENT_ROLES } from '../permissions';
 import { authApi } from '../api/authApi';
 import { emailSettingsApi, EmailSettingsResponse } from '../api/emailSettingsApi';
 import { referenceApi, PublicPlanPricingResponse } from '../api/referenceApi';
@@ -38,6 +38,8 @@ import SecuritySettingsTab from './settings/SecuritySettingsTab';
 import CompanyTab from './settings/CompanyTab';
 import PrivacyDataTab from './settings/PrivacyDataTab';
 import NotificationsTab from './settings/NotificationsTab';
+import AiSettingsTab from './settings/AiSettingsTab';
+import PromptLibraryTab from './settings/PromptLibraryTab';
 
 // 1. MATERIALITY ASSESSMENT
 export function MaterialityAssessmentView() {
@@ -209,7 +211,7 @@ export function BillingView() {
 }
 
 // 12. SETTINGS
-type SettingsTabId = 'profile' | 'security' | 'notifications' | 'smtp' | 'company' | 'billing' | 'privacy';
+type SettingsTabId = 'profile' | 'security' | 'notifications' | 'smtp' | 'company' | 'billing' | 'privacy' | 'ai' | 'prompts';
 
 interface SettingsTab {
   id: SettingsTabId;
@@ -218,6 +220,8 @@ interface SettingsTab {
   badge?: string;
   badgeClass?: string;
   adminOnly?: boolean;
+  /** Permission-based visibility (mirrors App.tsx's nav-item convention) — shown if the user has ANY of these keys. Takes precedence over adminOnly when present. */
+  requiresAnyPermission?: string[];
 }
 
 const SETTINGS_TABS: SettingsTab[] = [
@@ -228,6 +232,8 @@ const SETTINGS_TABS: SettingsTab[] = [
   { id: 'company', label: 'Company', icon: Building, adminOnly: true },
   { id: 'billing', label: 'Billing & Plan', icon: CreditCard },
   { id: 'privacy', label: 'Privacy & Data', icon: Lock, adminOnly: true },
+  { id: 'ai', label: 'AI Assistant', icon: Sparkles, requiresAnyPermission: ['ai.view', 'ai.manage'] },
+  { id: 'prompts', label: 'Prompt Library', icon: FileText, requiresAnyPermission: ['prompts.view', 'prompts.manage'] },
 ];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -241,7 +247,10 @@ const ROLE_LABELS: Record<string, string> = {
 export function SettingsView() {
   const { user } = useAuth();
   const canManage = canAccess(user?.role, MANAGEMENT_ROLES);
-  const visibleTabs = SETTINGS_TABS.filter((t) => !t.adminOnly || canManage);
+  const visibleTabs = SETTINGS_TABS.filter((t) => {
+    if (t.requiresAnyPermission) return t.requiresAnyPermission.some((key) => hasPermission(user?.role, user?.permissions, key));
+    return !t.adminOnly || canManage;
+  });
 
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab') as SettingsTabId | null;
@@ -282,7 +291,7 @@ export function SettingsView() {
         </nav>
       </div>
 
-      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && activeTab !== 'company' && activeTab !== 'privacy' && activeTab !== 'notifications' && activeTab !== 'billing' && (
+      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && activeTab !== 'company' && activeTab !== 'privacy' && activeTab !== 'notifications' && activeTab !== 'billing' && activeTab !== 'ai' && activeTab !== 'prompts' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center text-center space-y-3">
           <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
             {React.createElement(SETTINGS_TABS.find((t) => t.id === activeTab)!.icon, { className: 'w-5 h-5 text-gray-400' })}
@@ -299,6 +308,8 @@ export function SettingsView() {
       {activeTab === 'smtp' && canManage && <SmtpSettingsTab />}
       {activeTab === 'company' && canManage && <CompanyTab />}
       {activeTab === 'privacy' && canManage && <PrivacyDataTab />}
+      {activeTab === 'ai' && <AiSettingsTab />}
+      {activeTab === 'prompts' && <PromptLibraryTab />}
     </div>
   );
 }

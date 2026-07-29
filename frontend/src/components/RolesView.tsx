@@ -7,6 +7,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ShieldCheck, Plus, Pencil, Trash2, X, Check, AlertCircle } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
+import { useToast } from '../contexts/ToastContext';
 import { customRoleApi, CustomRoleResponse, CustomRoleRequest } from '../api/customRoleApi';
 import { referenceApi, PermissionResponse } from '../api/referenceApi';
 
@@ -17,12 +18,12 @@ interface RolesViewProps {
 }
 
 export default function RolesView({ roles, canManage, onRolesChanged }: RolesViewProps) {
+  const { showToast } = useToast();
   const [permissions, setPermissions] = useState<PermissionResponse[]>([]);
   const [editing, setEditing] = useState<CustomRoleResponse | 'new' | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
-  const [formError, setFormError] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,7 +44,6 @@ export default function RolesView({ roles, canManage, onRolesChanged }: RolesVie
     setName('');
     setDescription('');
     setSelectedKeys(new Set());
-    setFormError(null);
     setEditing('new');
   };
 
@@ -51,7 +51,6 @@ export default function RolesView({ roles, canManage, onRolesChanged }: RolesVie
     setName(role.name);
     setDescription(role.description ?? '');
     setSelectedKeys(new Set(role.permissionKeys));
-    setFormError(null);
     setEditing(role);
   };
 
@@ -67,7 +66,7 @@ export default function RolesView({ roles, canManage, onRolesChanged }: RolesVie
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() === '') {
-      setFormError('Name is required.');
+      showToast('Name is required.', 'error');
       return;
     }
     const payload: CustomRoleRequest = { name: name.trim(), description: description.trim() || undefined, permissionKeys: Array.from(selectedKeys) };
@@ -79,7 +78,7 @@ export default function RolesView({ roles, canManage, onRolesChanged }: RolesVie
       })
       .catch((e) => {
         console.error(e);
-        setFormError(e?.status === 409 ? (e?.message || 'A role with this name already exists.') : 'Failed to save role.');
+        showToast(e?.status === 409 ? (e?.message || 'A role with this name already exists.') : 'Failed to save role.', 'error');
       });
   };
 
@@ -92,7 +91,7 @@ export default function RolesView({ roles, canManage, onRolesChanged }: RolesVie
       .catch((e) => {
         console.error(e);
         setConfirmDeleteId(null);
-        alert(e?.message || 'Failed to delete role — it may still be assigned to a team member or invite.');
+        showToast(e?.message || 'Failed to delete role — it may still be assigned to a team member or invite.', 'error');
       });
   };
 
@@ -218,12 +217,6 @@ export default function RolesView({ roles, canManage, onRolesChanged }: RolesVie
                 </div>
               </div>
 
-              {formError && (
-                <div className="flex items-center gap-2 text-[11px] text-rose-600 font-bold bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>{formError}</span>
-                </div>
-              )}
 
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="secondary" size="sm" type="button" onClick={() => setEditing(null)}>

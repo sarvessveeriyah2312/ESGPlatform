@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { authApi, InvitePreviewResponse } from '../api/authApi';
 import { postLoginPath } from '../permissions';
 import Button from './ui/Button';
@@ -35,6 +36,7 @@ export default function AcceptInvitePage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
   const { acceptInvite } = useAuth();
+  const { showToast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [invite, setInvite] = useState<InvitePreviewResponse | null>(null);
@@ -45,7 +47,6 @@ export default function AcceptInvitePage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   const valLength = password.length >= 8;
 
@@ -68,18 +69,17 @@ export default function AcceptInvitePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage('');
 
     if (!name.trim()) {
-      setErrorMessage('Please enter your full name.');
+      showToast('Please enter your full name.', 'error');
       return;
     }
     if (!valLength) {
-      setErrorMessage('Password must be at least 8 characters.');
+      showToast('Password must be at least 8 characters.', 'error');
       return;
     }
     if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match.');
+      showToast('Passwords do not match.', 'error');
       return;
     }
 
@@ -89,7 +89,7 @@ export default function AcceptInvitePage() {
       navigate(postLoginPath(user.role, user.onboardingCompleted));
     } catch (error: any) {
       setIsSubmitting(false);
-      setErrorMessage(error?.message || 'Failed to accept this invite. It may have already been used.');
+      showToast(error?.message || 'Failed to accept this invite. It may have already been used.', 'error');
     }
   };
 
@@ -137,12 +137,6 @@ export default function AcceptInvitePage() {
                 </p>
               </div>
 
-              {errorMessage && (
-                <div className="p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-semibold flex items-start shadow-sm">
-                  <Info className="w-4 h-4 mr-2 shrink-0 mt-0.5" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700">Email</label>

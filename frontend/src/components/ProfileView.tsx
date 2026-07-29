@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { Sparkles, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { userApi, UserProfileResponse } from '../api/userApi';
 import ChangePasswordCard from './settings/ChangePasswordCard';
 import TwoFactorAuthCard from './settings/TwoFactorAuthCard';
@@ -20,15 +21,10 @@ const ROLE_LABELS: Record<UserProfileResponse['role'], string> = {
 
 export default function ProfileView() {
   const { user, updateUser } = useAuth();
+  const { showToast } = useToast();
 
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
-
-  const showToast = (message: string, type: 'success' | 'warning' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -47,7 +43,7 @@ export default function ProfileView() {
         setDepartment(p.department ?? '');
         setBio(p.bio ?? '');
       })
-      .catch(() => showToast('Failed to load your profile.', 'warning'))
+      .catch(() => showToast('Failed to load your profile.', 'error'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -63,7 +59,7 @@ export default function ProfileView() {
         updateUser({ name: updated.name });
         showToast('Profile updated.');
       })
-      .catch(() => showToast('Failed to update profile.', 'warning'))
+      .catch(() => showToast('Failed to update profile.', 'error'))
       .finally(() => setSavingProfile(false));
   };
 
@@ -77,12 +73,6 @@ export default function ProfileView() {
 
   return (
     <div className="w-full pb-16">
-
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2.5 bg-navy-950 text-white px-4 py-3 rounded-xl shadow-2xl border border-navy-800 animate-slide-in">
-          <span className="text-xs font-semibold">{toast.message}</span>
-        </div>
-      )}
 
       <div className="mb-6">
         <h2 className="text-2xl font-bold tracking-tight text-gray-900">My Profile</h2>

@@ -45,6 +45,7 @@ import {
 
 import { PlanProvider, usePlan, PlanType } from './contexts/PlanContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider, useToast } from './contexts/ToastContext';
 import { Role, canAccess, hasPermission, MANAGEMENT_ROLES, PLATFORM_ROLES, TENANT_ROLES } from './permissions';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
@@ -53,8 +54,10 @@ import VerifyEmailPage from './components/VerifyEmailPage';
 import OnboardingPage from './components/OnboardingPage';
 import UpgradeGate from './components/ui/UpgradeGate';
 import AuthTopBar from './components/ui/AuthTopBar';
+import AskAiPanel from './components/ai/AskAiPanel';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
+import FeaturesPage from './components/FeaturesPage';
 import PricingPage from './components/PricingPage';
 import AboutPage from './components/AboutPage';
 
@@ -85,10 +88,12 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
   const location = useLocation();
   const { plan, hasFeature, isFeatureVisible } = usePlan();
   const { user, isAuthenticated, isLoading, updateUser } = useAuth();
+  const { showToast } = useToast();
 
   // Declared before any early return below so hook order stays stable across renders
   // (e.g. logging out flips isAuthenticated on this same mounted component).
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [askAiOpen, setAskAiOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -364,9 +369,11 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
         
         {/* Dynamic TopBar */}
         <AuthTopBar
-          onNotificationClick={() => alert("Notification center is simulated in this ESG Sandbox.")}
+          onNotificationClick={() => showToast('Notification center is simulated in this ESG Sandbox.', 'info')}
           onSearchChange={(val) => console.log('Simulated ESG search query: ', val)}
+          onAskAIClick={() => setAskAiOpen(true)}
         />
+        <AskAiPanel open={askAiOpen} onClose={() => setAskAiOpen(false)} />
 
         {/* Scrollable Children Body */}
         <main className="flex-1 overflow-y-auto bg-[#F8F9FA] p-6 md:p-8">
@@ -405,7 +412,8 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
  * anything unmapped (e.g. the settings/companies/:companyId detail route).
  */
 const PAGE_TITLES: Record<string, string> = {
-  '/': 'ESG Reporting for Bursa Malaysia Compliance',
+  '/': 'ESG Reporting & Bursa Malaysia Compliance Software',
+  '/features': 'Platform Features',
   '/pricing': 'Pricing',
   '/about': 'About',
   '/login': 'Log In',
@@ -537,24 +545,26 @@ function AppContent() {
       />
 
       {/* Public Pages */}
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
-          <LandingPage 
-            onNavigateToDashboard={() => navigate('/dashboard')} 
-            onNavigateToPricing={() => navigate('/pricing')} 
-            onNavigateToAbout={() => navigate('/about')} 
+          <LandingPage
+            onNavigateToDashboard={() => navigate('/dashboard')}
+            onNavigateToFeatures={() => navigate('/features')}
+            onNavigateToPricing={() => navigate('/pricing')}
+            onNavigateToAbout={() => navigate('/about')}
             onNavigateToLogin={() => navigate('/login')}
             onNavigateToRegister={() => navigate('/register')}
           />
-        } 
+        }
       />
-      <Route 
-        path="/pricing" 
+      <Route
+        path="/features"
         element={
-          <PricingPage 
-            onNavigateToDashboard={() => navigate('/dashboard')} 
-            onNavigateToAbout={() => navigate('/about')} 
+          <FeaturesPage
+            onNavigateToDashboard={() => navigate('/dashboard')}
+            onNavigateToPricing={() => navigate('/pricing')}
+            onNavigateToAbout={() => navigate('/about')}
             onNavigateToLanding={(section) => {
               navigate('/');
               if (section) {
@@ -563,16 +573,17 @@ function AppContent() {
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }, 150);
               }
-            }} 
+            }}
           />
-        } 
+        }
       />
-      <Route 
-        path="/about" 
+      <Route
+        path="/pricing"
         element={
-          <AboutPage 
-            onNavigateToDashboard={() => navigate('/dashboard')} 
-            onNavigateToPricing={() => navigate('/pricing')} 
+          <PricingPage
+            onNavigateToDashboard={() => navigate('/dashboard')}
+            onNavigateToFeatures={() => navigate('/features')}
+            onNavigateToAbout={() => navigate('/about')}
             onNavigateToLanding={(section) => {
               navigate('/');
               if (section) {
@@ -581,9 +592,28 @@ function AppContent() {
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }, 150);
               }
-            }} 
+            }}
           />
-        } 
+        }
+      />
+      <Route
+        path="/about"
+        element={
+          <AboutPage
+            onNavigateToDashboard={() => navigate('/dashboard')}
+            onNavigateToFeatures={() => navigate('/features')}
+            onNavigateToPricing={() => navigate('/pricing')}
+            onNavigateToLanding={(section) => {
+              navigate('/');
+              if (section) {
+                setTimeout(() => {
+                  const el = document.getElementById(section);
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }, 150);
+              }
+            }}
+          />
+        }
       />
 
       {/* Authenticated Pages Layout Wrappers */}
@@ -751,8 +781,10 @@ function AppWithAuth() {
 
 export default function App() {
   return (
-    <PlanProvider>
-      <AppWithAuth />
-    </PlanProvider>
+    <ToastProvider>
+      <PlanProvider>
+        <AppWithAuth />
+      </PlanProvider>
+    </ToastProvider>
   );
 }

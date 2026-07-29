@@ -5,10 +5,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, RefreshCw, ChevronDown, Settings, LogOut, LifeBuoy, Building2, Check } from 'lucide-react';
+import { Bell, Search, RefreshCw, ChevronDown, Settings, LogOut, LifeBuoy, Building2, Check, Sparkles } from 'lucide-react';
 import { usePlan, PlanType } from '../../contexts/PlanContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { canAccess, TENANT_ROLES, MANAGEMENT_ROLES } from '../../permissions';
+import { canAccess, hasPermission, TENANT_ROLES, MANAGEMENT_ROLES } from '../../permissions';
 import { companyApi, CompanyGroupMember } from '../../api/companyApi';
 
 interface AuthTopBarProps {
@@ -44,18 +44,21 @@ export default function AuthTopBar({
     }
   };
 
-  // ⌘K focus listener
+  // ⌘K opens the Ask AI panel (falls back to focusing search if the assistant isn't available to this user)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        const input = document.getElementById('ask-ai-input');
-        if (input) input.focus();
+        if (onAskAIClick) {
+          onAskAIClick();
+        } else {
+          document.getElementById('ask-ai-input')?.focus();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [onAskAIClick]);
 
   // Close the profile menu when clicking anywhere outside it
   useEffect(() => {
@@ -109,8 +112,8 @@ export default function AuthTopBar({
   return (
     <header className="w-full flex items-center justify-between py-3 px-8 bg-white border-b border-gray-100 sticky top-0 z-35 font-sans h-[72px] shrink-0">
       
-      {/* 1. Left-aligned Search input */}
-      <div className="flex-1 flex items-center">
+      {/* 1. Left-aligned Search input + Ask AI */}
+      <div className="flex-1 flex items-center gap-2">
         <div className="relative w-full max-w-md group">
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-emerald-500 transition-colors">
             <Search className="w-4 h-4" />
@@ -124,6 +127,18 @@ export default function AuthTopBar({
             className="w-full pl-10 pr-4 py-2 text-sm text-gray-800 bg-gray-50 border border-transparent hover:bg-gray-100 focus:bg-white rounded-full outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-150"
           />
         </div>
+
+        {hasPermission(user?.role, user?.permissions, 'ai.use') && (
+          <button
+            onClick={onAskAIClick}
+            title="Ask AI (⌘K)"
+            aria-label="Ask AI"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-full transition-colors cursor-pointer shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Ask AI</span>
+          </button>
+        )}
       </div>
 
       {/* 2. Right-side items */}

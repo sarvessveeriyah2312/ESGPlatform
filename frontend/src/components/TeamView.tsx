@@ -25,6 +25,7 @@ import {
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { hasPermission } from '../permissions';
 import { companyApi, TeamInviteResponse } from '../api/companyApi';
 import { TenantUserResponse, BackendRole } from '../api/tenantAdminApi';
@@ -47,6 +48,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function TeamView() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const canManage = hasPermission(user?.role, user?.permissions, 'team.manage');
   const canManageRoles = hasPermission(user?.role, user?.permissions, 'roles.manage');
 
@@ -60,7 +62,6 @@ export default function TeamView() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<BackendRole>('COMPANY_CONTRIBUTOR');
   const [customRoleId, setCustomRoleId] = useState<string>('');
-  const [formError, setFormError] = useState<string | null>(null);
 
   const [createdInvite, setCreatedInvite] = useState<TeamInviteResponse | null>(null);
   const [copied, setCopied] = useState(false);
@@ -95,7 +96,6 @@ export default function TeamView() {
     setEmail('');
     setRole('COMPANY_CONTRIBUTOR');
     setCustomRoleId(customRoles[0]?.id ?? '');
-    setFormError(null);
     setCreatedInvite(null);
     setCopied(false);
     setShowInviteModal(true);
@@ -104,11 +104,11 @@ export default function TeamView() {
   const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() === '' || email.trim() === '') {
-      setFormError('Name and email are required.');
+      showToast('Name and email are required.', 'error');
       return;
     }
     if (role !== 'COMPANY_ADMIN' && !customRoleId) {
-      setFormError('Choose a role for this member — create one first under the Roles tab if none exist yet.');
+      showToast('Choose a role for this member — create one first under the Roles tab if none exist yet.', 'error');
       return;
     }
     companyApi.createInvite(name.trim(), email.trim(), role, role === 'COMPANY_ADMIN' ? null : customRoleId)
@@ -118,9 +118,9 @@ export default function TeamView() {
       })
       .catch((e) => {
         console.error(e);
-        setFormError(e?.status === 409
+        showToast(e?.status === 409
           ? (e?.message || 'An invite is already pending for this email, or an account already exists.')
-          : 'Failed to send invite.');
+          : 'Failed to send invite.', 'error');
       });
   };
 
@@ -553,12 +553,6 @@ export default function TeamView() {
                   </div>
                 )}
 
-                {formError && (
-                  <div className="flex items-center gap-2 text-[11px] text-rose-600 font-bold bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{formError}</span>
-                  </div>
-                )}
 
                 <div className="flex justify-end gap-3 pt-2">
                   <Button variant="secondary" size="sm" type="button" onClick={() => setShowInviteModal(false)}>

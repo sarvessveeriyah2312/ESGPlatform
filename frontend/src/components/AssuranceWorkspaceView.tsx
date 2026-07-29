@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { usePlan } from '../contexts/PlanContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { indicatorsApi, IndicatorResponse } from '../api/indicatorsApi';
@@ -132,6 +133,7 @@ const ASSURANCE_LEVEL_LABEL: Record<AssuranceLevel, string> = {
 export default function AssuranceWorkspaceView() {
   const { plan } = usePlan();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   // Page states
@@ -155,9 +157,6 @@ export default function AssuranceWorkspaceView() {
   const [exportStep, setExportStep] = useState<'confirm' | 'generating' | 'success'>('confirm');
   const [exportProgressText, setExportProgressText] = useState('');
   
-  // Notifications
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
   // Load latest indicators from the backend
   const refreshIndicators = () => {
     indicatorsApi.list()
@@ -186,11 +185,6 @@ export default function AssuranceWorkspaceView() {
       });
   }, [focusYear]);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
-
   // Calculations for review summary card
   const totalIndicators = indicators.length;
   const filledCount = indicators.filter(
@@ -213,9 +207,12 @@ export default function AssuranceWorkspaceView() {
       .then((record) => {
         setSignOff(mapSignOff(record));
         setIsSignOffModalOpen(false);
-        showToast(`Successfully recorded sign-off for ${focusYear}!`);
+        showToast(`Successfully recorded sign-off for ${focusYear}!`, 'success');
       })
-      .catch((e) => console.error('Error saving sign-off:', e));
+      .catch((e) => {
+        console.error('Error saving sign-off:', e);
+        showToast('Failed to record sign-off. Please try again.', 'error');
+      });
   };
 
   const handleResetSignOff = () => {
@@ -223,9 +220,12 @@ export default function AssuranceWorkspaceView() {
     assuranceApi.revoke(fiscalYear)
       .then(() => {
         setSignOff(null);
-        showToast('Sign-off signature revoked.');
+        showToast('Sign-off signature revoked.', 'success');
       })
-      .catch((e) => console.error('Error revoking sign-off:', e));
+      .catch((e) => {
+        console.error('Error revoking sign-off:', e);
+        showToast('Failed to revoke sign-off. Please try again.', 'error');
+      });
   };
 
   // Gather Supporting Documents from History Logs
@@ -331,24 +331,16 @@ export default function AssuranceWorkspaceView() {
       URL.revokeObjectURL(url);
 
       setExportStep('success');
-      showToast('Assurance package ZIP saved successfully.');
+      showToast('Assurance package ZIP saved successfully.', 'success');
     } catch (e) {
       console.error('Error building assurance package:', e);
-      showToast('Failed to build assurance package.');
+      showToast('Failed to build assurance package.', 'error');
       setExportStep('confirm');
     }
   };
 
   return (
     <div className="space-y-6">
-      
-      {/* 1. TOAST NOTIFICATION */}
-      {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 bg-navy-900 border border-navy-800 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-2.5 animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
 
       {/* 2. HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-navy-100 shadow-sm">

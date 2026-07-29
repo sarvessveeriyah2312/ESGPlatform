@@ -5,13 +5,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { tenantAdminApi } from '../api/tenantAdminApi';
 import { invoiceAdminApi, InvoiceResponse } from '../api/invoiceAdminApi';
 
-import { Tenant, toTenant, ToastType } from './admin/types';
+import { Tenant, toTenant } from './admin/types';
 import { AdminTab, ADMIN_TABS } from './admin/constants';
 import AdminOverviewTab from './admin/AdminOverviewTab';
 import AdminTenantsTab from './admin/AdminTenantsTab';
@@ -24,6 +24,7 @@ import AdminSettingsTab from './admin/AdminSettingsTab';
 
 export default function AdminPanel() {
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   // Which section is active is driven by the URL (/admin/overview, /admin/tenants, ...) —
   // the sidebar owns navigation between them, this component just reads where it's mounted.
@@ -40,13 +41,6 @@ export default function AdminPanel() {
       setSelectedTenantId(null);
     }
   }, [activeTab]);
-
-  // Active Toast Notification state — shared across every tab
-  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
-  const showToast = (message: string, type: ToastType = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
 
   // Tenants list, fetched from the real backend on mount — needed by Overview, Tenants, and the
   // tenant detail drill-down, so it's owned here rather than duplicated per tab.
@@ -80,16 +74,6 @@ export default function AdminPanel() {
 
   return (
     <div className="space-y-6">
-
-      {/* Toast Notification (dark floating toast is this app's real pattern — see ReportsExportView.tsx) */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2.5 bg-navy-950 text-white px-4 py-3 rounded-xl shadow-2xl border border-navy-800 animate-slide-in">
-          {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
-          {toast.type === 'info' && <RefreshCw className="w-4 h-4 text-sky-400 animate-spin shrink-0" />}
-          {toast.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />}
-          <span className="text-xs font-semibold">{toast.message}</span>
-        </div>
-      )}
 
       {selectedTenantId ? (
         <AdminTenantDetailView

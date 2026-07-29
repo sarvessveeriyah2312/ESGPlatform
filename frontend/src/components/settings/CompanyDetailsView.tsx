@@ -9,29 +9,25 @@ import { ArrowLeft, Building2, Check, AlertCircle, Trash2, RefreshCw, ShieldAler
 import { companyApi, CompanyGroupMember } from '../../api/companyApi';
 import { marketFromBackend, planFromBackend } from '../../api/mappers';
 import { ApiError } from '../../api/client';
+import { useToast } from '../../contexts/ToastContext';
 import { LISTING_BOARDS, COMPANY_TYPES } from './AddCompanyModal';
 
 export default function CompanyDetailsView() {
   const navigate = useNavigate();
   const { companyId } = useParams<{ companyId: string }>();
+  const { showToast } = useToast();
 
   const [members, setMembers] = useState<CompanyGroupMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'warning' } | null>(null);
   const [switching, setSwitching] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  const showMessage = (text: string, type: 'success' | 'warning') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage(null), 4000);
-  };
-
   useEffect(() => {
     companyApi.getGroup()
       .then(setMembers)
-      .catch(() => showMessage('Failed to load company details.', 'warning'))
+      .catch(() => showToast('Failed to load company details.', 'error'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -52,7 +48,7 @@ export default function CompanyDetailsView() {
     companyApi.switchCompany(company.id)
       .then(() => window.location.reload())
       .catch(() => {
-        showMessage('Failed to switch companies — please try again.', 'warning');
+        showToast('Failed to switch companies — please try again.', 'error');
         setSwitching(false);
       });
   };
@@ -62,11 +58,11 @@ export default function CompanyDetailsView() {
     setDeleting(true);
     companyApi.deleteSubsidiary(company.id)
       .then(() => {
-        showMessage(`${company.name} and all of its data were permanently deleted.`, 'success');
+        showToast(`${company.name} and all of its data were permanently deleted.`, 'success');
         navigate('/settings?tab=company');
       })
       .catch((err) => {
-        showMessage(err instanceof ApiError ? err.message : 'Failed to remove the company — please try again.', 'warning');
+        showToast(err instanceof ApiError ? err.message : 'Failed to remove the company — please try again.', 'error');
         setConfirmDelete(false);
       })
       .finally(() => setDeleting(false));
@@ -82,15 +78,6 @@ export default function CompanyDetailsView() {
         <ArrowLeft className="w-3.5 h-3.5" />
         Back to Companies
       </button>
-
-      {message && (
-        <div className={`flex items-center gap-2 text-xs font-semibold rounded-lg px-3 py-2 mb-4 ${
-          message.type === 'success' ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' : 'text-rose-600 bg-rose-50 border border-rose-100'
-        }`}>
-          {message.type === 'success' ? <Check className="w-3.5 h-3.5 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
-          <span>{message.text}</span>
-        </div>
-      )}
 
       {loading ? (
         <p className="text-sm text-gray-400">Loading…</p>

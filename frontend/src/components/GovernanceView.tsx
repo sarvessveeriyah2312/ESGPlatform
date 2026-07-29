@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { usePlan, PlanType } from '../contexts/PlanContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { canAccess, MANAGEMENT_ROLES } from '../permissions';
 import Button from './ui/Button';
 import Card from './ui/Card';
@@ -33,6 +34,7 @@ import { governanceApi, OversightLevel as BackendOversightLevel } from '../api/g
 import { companyApi } from '../api/companyApi';
 import { compliancePolicyApi, CompliancePolicyResponse } from '../api/compliancePolicyApi';
 import { COMPLIANCE_STATUS_STYLES } from '../utils/complianceStatus';
+import DraftWithAiButton from './ai/DraftWithAiButton';
 
 // Types for Governance structure
 interface GovernanceCardData {
@@ -76,6 +78,7 @@ const DEFAULT_STRUCTURE: GovernanceStructure = {
 export default function GovernanceView() {
   const { plan } = usePlan();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { matters: activeMatters } = useApplicableMatters();
   const canManageCompliance = canAccess(user?.role, MANAGEMENT_ROLES);
 
@@ -160,7 +163,7 @@ export default function GovernanceView() {
         a.remove();
         URL.revokeObjectURL(url);
       })
-      .catch(() => alert('Failed to generate the governance report PDF. Please try again.'))
+      .catch(() => showToast('Failed to generate the governance report PDF. Please try again.', 'error'))
       .finally(() => setIsDownloadingReport(false));
   };
 
@@ -314,7 +317,14 @@ export default function GovernanceView() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Responsibility Charter</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Responsibility Charter</label>
+                  <DraftWithAiButton
+                    draftType="governance-oversight-description"
+                    context={{ roleTitle: structure.oversight.role || 'Board Sustainability Committee', sector: user?.sector ?? '', marketClassification: user?.market ?? '' }}
+                    onDraft={(text) => handleStructureChange('oversight', 'description', text)}
+                  />
+                </div>
                 <textarea
                   value={structure.oversight.description}
                   onChange={(e) => handleStructureChange('oversight', 'description', e.target.value)}
@@ -358,7 +368,14 @@ export default function GovernanceView() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Responsibility Charter</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Responsibility Charter</label>
+                  <DraftWithAiButton
+                    draftType="governance-strategic-description"
+                    context={{ roleTitle: structure.strategic.role || 'Chief Sustainability Officer', sector: user?.sector ?? '', marketClassification: user?.market ?? '' }}
+                    onDraft={(text) => handleStructureChange('strategic', 'description', text)}
+                  />
+                </div>
                 <textarea
                   value={structure.strategic.description}
                   onChange={(e) => handleStructureChange('strategic', 'description', e.target.value)}
@@ -402,7 +419,14 @@ export default function GovernanceView() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Responsibility Charter</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Responsibility Charter</label>
+                  <DraftWithAiButton
+                    draftType="governance-implementation-description"
+                    context={{ roleTitle: structure.implementation.role || 'ESG Coordinator', sector: user?.sector ?? '', marketClassification: user?.market ?? '' }}
+                    onDraft={(text) => handleStructureChange('implementation', 'description', text)}
+                  />
+                </div>
                 <textarea
                   value={structure.implementation.description}
                   onChange={(e) => handleStructureChange('implementation', 'description', e.target.value)}
@@ -677,13 +701,20 @@ export default function GovernanceView() {
 
                       {/* Column 5: Implementation Notes */}
                       <td className="px-6 py-4.5">
-                        <input
-                          type="text"
-                          value={row.notes}
-                          onChange={(e) => handleOwnershipChange(mId, 'notes', e.target.value)}
-                          placeholder="e.g. Audit schedule details..."
-                          className="w-full px-2.5 py-1.5 text-xs font-medium text-navy-700 bg-navy-50/40 hover:bg-navy-50 border border-navy-100 focus:bg-white focus:ring-1 focus:ring-primary-500 rounded-xl outline-none transition-all"
-                        />
+                        <div className="space-y-1">
+                          <input
+                            type="text"
+                            value={row.notes}
+                            onChange={(e) => handleOwnershipChange(mId, 'notes', e.target.value)}
+                            placeholder="e.g. Audit schedule details..."
+                            className="w-full px-2.5 py-1.5 text-xs font-medium text-navy-700 bg-navy-50/40 hover:bg-navy-50 border border-navy-100 focus:bg-white focus:ring-1 focus:ring-primary-500 rounded-xl outline-none transition-all"
+                          />
+                          <DraftWithAiButton
+                            draftType="governance-ownership-notes"
+                            context={{ matterName: matter.name, ownerName: row.ownerName || 'Unassigned', oversightLevel: row.oversightLevel }}
+                            onDraft={(text) => handleOwnershipChange(mId, 'notes', text)}
+                          />
+                        </div>
                       </td>
 
                       {/* Column 6: Save Indicator */}

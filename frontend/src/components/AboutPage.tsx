@@ -25,11 +25,12 @@ import Card from './ui/Card';
 
 interface AboutPageProps {
   onNavigateToDashboard: () => void;
+  onNavigateToFeatures: () => void;
   onNavigateToPricing: () => void;
   onNavigateToLanding: (section?: string) => void;
 }
 
-export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, onNavigateToLanding }: AboutPageProps) {
+export default function AboutPage({ onNavigateToDashboard, onNavigateToFeatures, onNavigateToPricing, onNavigateToLanding }: AboutPageProps) {
   
   // Timeline Items of Regulatory Landscape
   const timelineEvents = [
@@ -94,7 +95,7 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-navy-600">
-            <button onClick={() => handleNav('product')} className="hover:text-primary-600 transition-colors cursor-pointer">Product</button>
+            <button onClick={onNavigateToFeatures} className="hover:text-primary-600 transition-colors cursor-pointer">Product</button>
             <button onClick={onNavigateToPricing} className="hover:text-primary-600 transition-colors cursor-pointer">Pricing</button>
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-primary-600 font-semibold cursor-pointer">About</button>
           </div>
@@ -398,9 +399,11 @@ export default function AboutPage({ onNavigateToDashboard, onNavigateToPricing, 
             <span className="font-bold text-white uppercase tracking-wider text-[10px]">Product</span>
             <ul className="space-y-2">
               <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer text-left">Disclosure Engine</button></li>
-              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer text-left">Scope 1 & 2 Carbon Calculator</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer text-left">Scope 1, 2 & 3 Carbon Calculator</button></li>
               <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer text-left">SEDG Templates</button></li>
-              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer text-left">Interactive Copilot</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer text-left">AI Drafting Assistant</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer text-left">Custom Roles & Permissions</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer text-left">Assurance Workspace</button></li>
             </ul>
           </div>
 

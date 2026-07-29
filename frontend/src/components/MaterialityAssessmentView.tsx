@@ -27,11 +27,13 @@ import {
 } from 'lucide-react';
 import { usePlan } from '../contexts/PlanContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { canAccess, MANAGEMENT_ROLES } from '../permissions';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { useApplicableMatters, SustainabilityMatter } from '../hooks/useApplicableMatters';
 import { materialityApi, StakeholderOptionResponse, AssessmentSummaryResponse, AssessmentDetailResponse } from '../api/materialityApi';
+import DraftWithAiButton from './ai/DraftWithAiButton';
 
 export type { SustainabilityMatter };
 
@@ -66,12 +68,12 @@ const PRIORITY_STYLES: Record<string, { color: string; bgLight: string }> = {
 export default function MaterialityAssessmentView() {
   const { plan } = usePlan();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { matters: activeMatters, loading: mattersLoading } = useApplicableMatters();
 
   // 1. Navigation state
   const [activeTab, setActiveTab] = useState<'wizard' | 'history'>('wizard');
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // 2. Step 1: Stakeholder Mapping state — backed by the real stakeholder-options API
@@ -151,7 +153,7 @@ export default function MaterialityAssessmentView() {
         a.remove();
         URL.revokeObjectURL(url);
       })
-      .catch(() => alert('Failed to generate the materiality report PDF. Please try again.'))
+      .catch(() => showToast('Failed to generate the materiality report PDF. Please try again.', 'error'))
       .finally(() => setIsDownloadingReport(false));
   };
 
@@ -228,8 +230,7 @@ export default function MaterialityAssessmentView() {
       });
 
       refreshAssessments();
-      setSaveSuccessMessage('Materiality assessment baseline snapshot saved successfully.');
-      setTimeout(() => setSaveSuccessMessage(null), 5000);
+      showToast('Materiality assessment baseline snapshot saved successfully.', 'success');
 
       setActiveTab('history');
       setSelectedHistoryAssessment(detail);
@@ -354,16 +355,6 @@ export default function MaterialityAssessmentView() {
 
   return (
     <div className="space-y-8 w-full pb-16 font-sans">
-      {/* SUCCESS TOAST FOR SNAPSHOT SAVE */}
-      {saveSuccessMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fade-in shrink-0">
-          <div className="flex items-center space-x-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span className="text-xs font-semibold">{saveSuccessMessage}</span>
-          </div>
-          <button onClick={() => setSaveSuccessMessage(null)} className="text-emerald-500 hover:text-emerald-700 text-xs font-bold font-mono">✕</button>
-        </div>
-      )}
 
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-navy-100/40">
@@ -1007,7 +998,20 @@ export default function MaterialityAssessmentView() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-navy-900 block">Rationale / Evidence (optional)</label>
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="text-xs font-bold text-navy-900 block">Rationale / Evidence (optional)</label>
+                        <DraftWithAiButton
+                          draftType="materiality-rationale"
+                          context={{
+                            matterName: activeMatters[activeMatterIndex].name,
+                            matterCategory: activeMatters[activeMatterIndex].category,
+                            matterDescription: activeMatters[activeMatterIndex].description,
+                            impactScore: String(scores[activeMatters[activeMatterIndex].id]?.impact ?? 3),
+                            influenceScore: String(scores[activeMatters[activeMatterIndex].id]?.influence ?? 3),
+                          }}
+                          onDraft={(text) => setScoreRationale(activeMatters[activeMatterIndex].id, text)}
+                        />
+                      </div>
                       <span className="text-[10px] text-navy-400 block leading-normal">
                         Document why this matter scored the way it did — Bursa Malaysia's guide expects disclosures to explain relevance, not just show a number. This becomes part of your audit evidence.
                       </span>

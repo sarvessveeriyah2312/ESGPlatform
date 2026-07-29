@@ -26,6 +26,7 @@ import {
 
 import { usePlan } from '../contexts/PlanContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { canAccess, MANAGEMENT_ROLES } from '../permissions';
 import Card from './ui/Card';
 import Button from './ui/Button';
@@ -123,6 +124,7 @@ export default function ReportsExportView() {
   const navigate = useNavigate();
   const { plan, hasFeature } = usePlan();
   const { user } = useAuth();
+  const { showToast: triggerToast } = useToast();
   const canSignOff = canAccess(user?.role, MANAGEMENT_ROLES);
 
   const [period, setPeriod] = useState<string>('FY2026');
@@ -135,7 +137,6 @@ export default function ReportsExportView() {
   const [generatingIfrsS1, setGeneratingIfrsS1] = useState<boolean>(false);
   const [generatingIfrsS2, setGeneratingIfrsS2] = useState<boolean>(false);
   const [indicators, setIndicators] = useState<IndicatorResponse[]>([]);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   // Real corporate profile, materiality, and governance data — replaces hardcoded report content
   const [company, setCompany] = useState<CompanyResponse | null>(null);
@@ -234,11 +235,6 @@ export default function ReportsExportView() {
     }).catch((e) => console.error(e));
     refreshHistory();
   }, []);
-
-  const triggerToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
 
   // 1. Calculate overall indicators progress dynamically based on filled metrics
   const totalIndicators = indicators.length > 0 ? indicators.length : 15;
@@ -622,16 +618,6 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
 
   return (
     <div className="space-y-6 w-full px-4 md:px-6 py-4 relative">
-      
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2.5 bg-navy-950 text-white px-4 py-3 rounded-xl shadow-2xl border border-navy-800 animate-slide-in">
-          {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
-          {toast.type === 'info' && <Loader2 className="w-4 h-4 text-primary-400 animate-spin shrink-0" />}
-          {toast.type === 'error' && <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />}
-          <span className="text-xs font-semibold">{toast.message}</span>
-        </div>
-      )}
 
       {/* Header Row with Title and Period Dropdown */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

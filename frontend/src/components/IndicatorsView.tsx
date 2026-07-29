@@ -30,6 +30,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { canAccess, MANAGEMENT_ROLES } from '../permissions';
 import Button from './ui/Button';
 import Card from './ui/Card';
@@ -140,6 +141,7 @@ function classifyEvidenceFile(filename: string): EvidencePreviewKind {
 
 export default function IndicatorsView() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { matters: allApplicableMatters, refetch: refetchApplicableMatters } = useApplicableMatters();
   const canApprove = canAccess(user?.role, MANAGEMENT_ROLES);
 
@@ -161,7 +163,6 @@ export default function IndicatorsView() {
   // Editing state for table cells
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
-  const [editError, setEditError] = useState<string | null>(null);
 
   // Collapsible sections state
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -285,22 +286,21 @@ export default function IndicatorsView() {
         setEditValue(targetVal !== null ? String(targetVal) : '');
       }
     }
-    setEditError(null);
   };
 
   const handleInlineSave = (indicatorId: string, type: 'year' | 'target', yearKey?: string) => {
     if (editValue.trim() === '') {
-      setEditError('A value is required — clearing an entered value is not supported.');
+      showToast('A value is required — clearing an entered value is not supported.', 'error');
       return;
     }
 
     const num = Number(editValue.trim());
     if (isNaN(num)) {
-      setEditError('Must be a number');
+      showToast('Must be a number', 'error');
       return;
     }
     if (num < 0) {
-      setEditError('Cannot be negative');
+      showToast('Cannot be negative', 'error');
       return;
     }
 
@@ -347,7 +347,7 @@ export default function IndicatorsView() {
     if (!selectedIndicatorForHistory) return;
     const num = Number(newAuditVal.trim());
     if (newAuditVal.trim() === '' || isNaN(num) || num < 0) {
-      alert('Please enter a valid non-negative numeric value.');
+      showToast('Please enter a valid non-negative numeric value.', 'error');
       return;
     }
 
@@ -380,7 +380,7 @@ export default function IndicatorsView() {
           setNewAuditMonth(nextOpenMonth >= 0 ? nextOpenMonth + 1 : 1);
         }
       })
-      .catch(() => alert('Failed to save — check your value and evidence file, then try again.'))
+      .catch(() => showToast('Failed to save — check your value and evidence file, then try again.', 'error'))
       .finally(() => setIsSavingAudit(false));
 
     setNewAuditVal('');
@@ -409,7 +409,7 @@ export default function IndicatorsView() {
         setPreviewUrl(URL.createObjectURL(blob));
       })
       .catch(() => {
-        alert('Failed to load the evidence file preview.');
+        showToast('Failed to load the evidence file preview.', 'error');
         setPreviewEntry(null);
         setPreviewKind(null);
       })
@@ -436,7 +436,7 @@ export default function IndicatorsView() {
   // --- CSV DATA EXPORT (backed by the real /exports/csv endpoint) ---
   const exportToCSV = () => {
     if (activeFilteredIndicators.length === 0) {
-      alert('No indicators visible in this view to export.');
+      showToast('No indicators visible in this view to export.', 'error');
       return;
     }
     exportApi.csv(fiscalYearNumber(focusYear)).then((csv) => {
@@ -816,12 +816,6 @@ export default function IndicatorsView() {
                                             <X className="w-3.5 h-3.5" />
                                           </button>
                                         </div>
-
-                                        {editError && (
-                                          <span className="text-[8px] font-bold text-rose-600 font-mono">
-                                            {editError}
-                                          </span>
-                                        )}
                                       </div>
                                     ) : cell !== null ? (
                                       <div className="flex flex-col items-center gap-1">
@@ -892,11 +886,6 @@ export default function IndicatorsView() {
                                         <X className="w-3.5 h-3.5" />
                                       </button>
                                     </div>
-                                    {editError && (
-                                      <span className="text-[8px] font-bold text-rose-600 font-mono">
-                                        {editError}
-                                      </span>
-                                    )}
                                   </div>
                                 ) : (
                                   <button

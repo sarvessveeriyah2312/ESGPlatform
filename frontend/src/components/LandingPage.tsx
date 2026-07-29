@@ -20,7 +20,11 @@ import {
   Check,
   Building,
   Target,
-  FileText
+  FileText,
+  MessageSquare,
+  UserCog,
+  ClipboardCheck,
+  ChevronDown
 } from 'lucide-react';
 
 import Button from './ui/Button';
@@ -32,15 +36,17 @@ import { AvatarUser, Status } from '../types';
 
 interface LandingPageProps {
   onNavigateToDashboard: () => void;
+  onNavigateToFeatures: () => void;
   onNavigateToPricing: () => void;
   onNavigateToAbout: () => void;
   onNavigateToLogin: () => void;
   onNavigateToRegister: () => void;
 }
 
-export default function LandingPage({ 
-  onNavigateToDashboard, 
-  onNavigateToPricing, 
+export default function LandingPage({
+  onNavigateToDashboard,
+  onNavigateToFeatures,
+  onNavigateToPricing,
   onNavigateToAbout,
   onNavigateToLogin,
   onNavigateToRegister
@@ -104,6 +110,32 @@ export default function LandingPage({
     }
   ];
 
+  // FAQ accordion state — index of the currently open question, or null if all collapsed
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const faqs = [
+    {
+      question: 'Do we still need to hire an ESG consultant?',
+      answer: "Most SMEs and mid-market issuers don't. EsgEasy pre-maps SEDG, Bursa Common Sustainability Matters, and NSRF / IFRS S1-S2 indicators into a guided workflow, and the AI drafting assistant handles first-pass narrative writing. Larger issuers with complex assurance requirements often still use us alongside their existing advisors, not instead of a proper external audit.",
+    },
+    {
+      question: 'How does bringing our own AI API key work?',
+      answer: "In Settings, a company admin adds an API key for Anthropic, OpenAI, or Google Gemini. That key is encrypted at rest and only ever used server-side to power \"Draft with AI\" and the Ask AI assistant for your company — you're billed directly by your chosen provider, and EsgEasy never marks up or caps usage.",
+    },
+    {
+      question: 'Can we control exactly what each team member can see or edit?',
+      answer: 'Yes. Company admins create named custom roles with module-and-action-level permissions (for example, "can edit indicators but not approve them") and assign them to teammates or external consultants. Roles are scoped entirely to your own company and never affect any other tenant.',
+    },
+    {
+      question: 'Is our data isolated from other companies on the platform?',
+      answer: "Yes — every company's data is strictly tenant-isolated at the database level. Custom roles, indicator values, disclosures, and AI usage logs are all scoped to a single company and are never visible across tenants.",
+    },
+    {
+      question: 'What happens when we outgrow our current plan?',
+      answer: 'You can upgrade at any time from Settings > Billing. Your existing materiality assessments, governance records, and indicator history carry over automatically and pre-populate the newly unlocked modules — nothing needs to be re-entered.',
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-bg-light text-navy-900 font-sans selection:bg-primary-100 selection:text-primary-900 relative">
       
@@ -124,7 +156,7 @@ export default function LandingPage({
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-navy-600">
-            <a href="#product" className="hover:text-primary-600 transition-colors">Product</a>
+            <button onClick={onNavigateToFeatures} className="hover:text-primary-600 transition-colors cursor-pointer font-medium">Product</button>
             <button onClick={onNavigateToPricing} className="hover:text-primary-600 transition-colors cursor-pointer font-medium">Pricing</button>
             <button onClick={onNavigateToAbout} className="hover:text-primary-600 transition-colors cursor-pointer font-medium">About</button>
           </div>
@@ -167,7 +199,7 @@ export default function LandingPage({
 
           {/* Subheadline */}
           <p className="text-base md:text-lg text-navy-600 max-w-2xl mx-auto mt-6 leading-relaxed">
-            The easiest compliance platform designed specifically for Malaysian SMEs and listed issuers to streamline sustainability reporting and secure supply chain readiness.
+            The easiest compliance platform designed specifically for Malaysian SMEs and listed issuers — with AI-assisted drafting, custom team roles, and an audit-ready Assurance Workspace built in.
           </p>
 
           {/* CTAs */}
@@ -176,7 +208,7 @@ export default function LandingPage({
               Start Disclosing Now
             </Button>
             <Button variant="ghost" size="lg" onClick={() => {
-              const el = document.getElementById('features');
+              const el = document.getElementById('how-it-works');
               if (el) {
                 el.scrollIntoView({ behavior: 'smooth' });
               } else {
@@ -293,6 +325,10 @@ export default function LandingPage({
                       <Check className="w-4 h-4 text-primary-500 mr-2.5 shrink-0 mt-0.5" />
                       <span>PDF export ready for local vendor assessments</span>
                     </li>
+                    <li className="flex items-start text-xs text-navy-600">
+                      <Check className="w-4 h-4 text-primary-500 mr-2.5 shrink-0 mt-0.5" />
+                      <span>AI-assisted drafting and custom team roles included</span>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -330,6 +366,10 @@ export default function LandingPage({
                       <Check className="w-4 h-4 text-primary-500 mr-2.5 shrink-0 mt-0.5" />
                       <span>Interactive dashboards for up to 5 multi-user roles</span>
                     </li>
+                    <li className="flex items-start text-xs text-navy-600">
+                      <Check className="w-4 h-4 text-primary-500 mr-2.5 shrink-0 mt-0.5" />
+                      <span>Governance workflows and target tracking, unlocked</span>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -362,6 +402,10 @@ export default function LandingPage({
                     <li className="flex items-start text-xs text-navy-600">
                       <Check className="w-4 h-4 text-purple-500 mr-2.5 shrink-0 mt-0.5" />
                       <span>NSRF / ISSB S1 and S2 climate-related disclosures</span>
+                    </li>
+                    <li className="flex items-start text-xs text-navy-600">
+                      <Check className="w-4 h-4 text-purple-500 mr-2.5 shrink-0 mt-0.5" />
+                      <span>Assurance Workspace &amp; CSI-compatible export</span>
                     </li>
                   </ul>
                 </div>
@@ -428,7 +472,7 @@ export default function LandingPage({
                 </div>
                 <h4 className="text-sm font-semibold text-navy-900 mb-1">Indicator Tracking</h4>
                 <p className="text-xs text-navy-500 leading-relaxed mt-2">
-                  Input data on energy consumption, labor ratios, and compliance. AI verifies completeness.
+                  Input data on energy consumption, labor ratios, and compliance metrics with full audit trails.
                 </p>
               </div>
             </Card>
@@ -447,6 +491,63 @@ export default function LandingPage({
               </div>
             </Card>
 
+          </div>
+        </div>
+      </section>
+
+      {/* 4.5 AI & TEAM ACCESS FEATURE SECTION */}
+      <section className="py-20 md:py-28 bg-bg-light" id="ai-assistant">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-xs font-bold text-primary-600 uppercase tracking-wider block mb-2">What Sets Us Apart</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-navy-950">
+              AI-assisted, audit-ready, and built around how your team works
+            </h2>
+            <p className="text-sm text-navy-500 mt-3 leading-relaxed">
+              Bring your own AI provider to draft disclosures in seconds, give every team member exactly the access they need, and hand external assurance providers a ready-made audit trail — included on every plan.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card padded="lg" className="bg-white border-navy-100/50 h-full">
+              <div className="w-11 h-11 bg-primary-100 text-primary-600 rounded-xl flex items-center justify-center mb-5">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-navy-950 mb-2">Draft with AI</h3>
+              <p className="text-xs text-navy-500 leading-relaxed">
+                Generate board-ready narrative disclosures for materiality, governance, and IFRS sections in one click — powered by your own Anthropic, OpenAI, or Gemini API key.
+              </p>
+            </Card>
+
+            <Card padded="lg" className="bg-white border-navy-100/50 h-full">
+              <div className="w-11 h-11 bg-primary-100 text-primary-600 rounded-xl flex items-center justify-center mb-5">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-navy-950 mb-2">Ask AI Assistant</h3>
+              <p className="text-xs text-navy-500 leading-relaxed">
+                Get instant answers about Bursa disclosure requirements, indicators, or your own reporting data — grounded in your workspace, right where you're working.
+              </p>
+            </Card>
+
+            <Card padded="lg" className="bg-white border-navy-100/50 h-full">
+              <div className="w-11 h-11 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                <UserCog className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-navy-950 mb-2">Custom Team Roles</h3>
+              <p className="text-xs text-navy-500 leading-relaxed">
+                Company admins define exactly which modules each teammate or consultant can view or edit — scoped entirely to your own company, with no effect on anyone else's.
+              </p>
+            </Card>
+
+            <Card padded="lg" className="bg-white border-navy-100/50 h-full">
+              <div className="w-11 h-11 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                <ClipboardCheck className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-navy-950 mb-2">Assurance Workspace</h3>
+              <p className="text-xs text-navy-500 leading-relaxed">
+                Package audit-ready evidence trails and collaborate directly with external assurance providers ahead of independent sign-off.
+              </p>
+            </Card>
           </div>
         </div>
       </section>
@@ -530,6 +631,59 @@ export default function LandingPage({
         </div>
       </section>
 
+      {/* 6.5 FAQ SECTION */}
+      <section className="py-20 md:py-28 bg-bg-light" id="faq">
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <span className="text-xs font-bold text-primary-600 uppercase tracking-wider block mb-2">Frequently Asked</span>
+            <h2 className="text-3xl font-bold text-navy-950">Common Questions</h2>
+          </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq, index) => {
+              const isOpen = openFaq === index;
+              return (
+                <Card key={faq.question} padded="none" className="bg-white border-navy-100/60 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : index)}
+                    className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left cursor-pointer"
+                    aria-expanded={isOpen}
+                  >
+                    <span className="text-sm font-bold text-navy-900">{faq.question}</span>
+                    <ChevronDown className={`w-4 h-4 text-navy-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-6 pb-5 text-xs text-navy-500 leading-relaxed">
+                      {faq.answer}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQPage structured data for search result rich snippets */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: faqs.map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.answer,
+              },
+            })),
+          }),
+        }}
+      />
+
       {/* 7. FINAL CTA BAND */}
       <section className="py-20 relative bg-primary-950 overflow-hidden text-white">
         {/* Soft background glow */}
@@ -580,9 +734,11 @@ export default function LandingPage({
             <span className="font-bold text-white uppercase tracking-wider text-[10px]">Product</span>
             <ul className="space-y-2">
               <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Disclosure Engine</button></li>
-              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Scope 1 & 2 Carbon Calculator</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Scope 1, 2 & 3 Carbon Calculator</button></li>
               <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">SEDG Templates</button></li>
-              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Interactive Copilot</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">AI Drafting Assistant</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Custom Roles & Permissions</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Assurance Workspace</button></li>
             </ul>
           </div>
 

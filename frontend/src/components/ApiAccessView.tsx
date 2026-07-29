@@ -17,6 +17,7 @@ import {
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { canAccess, MANAGEMENT_ROLES } from '../permissions';
 import { apiTokenApi, ApiTokenResponse, ApiScope } from '../api/apiTokenApi';
 
@@ -53,6 +54,7 @@ const STATUS_STYLES: Record<TokenStatus, { label: string; className: string }> =
 
 export default function ApiAccessView() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const canManage = canAccess(user?.role, MANAGEMENT_ROLES);
 
   const [tokens, setTokens] = useState<ApiTokenResponse[]>([]);
@@ -61,7 +63,6 @@ export default function ApiAccessView() {
   const [name, setName] = useState('');
   const [selectedScopes, setSelectedScopes] = useState<Set<ApiScope>>(new Set());
   const [expiresInDays, setExpiresInDays] = useState<number | undefined>(90);
-  const [formError, setFormError] = useState<string | null>(null);
 
   const [revealedToken, setRevealedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -80,7 +81,6 @@ export default function ApiAccessView() {
     setName('');
     setSelectedScopes(new Set());
     setExpiresInDays(90);
-    setFormError(null);
     setRevealedToken(null);
     setCopied(false);
     setShowCreateModal(true);
@@ -98,11 +98,11 @@ export default function ApiAccessView() {
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() === '') {
-      setFormError('Name is required.');
+      showToast('Name is required.', 'error');
       return;
     }
     if (selectedScopes.size === 0) {
-      setFormError('Select at least one scope.');
+      showToast('Select at least one scope.', 'error');
       return;
     }
     apiTokenApi.create(name.trim(), Array.from(selectedScopes), expiresInDays)
@@ -112,7 +112,7 @@ export default function ApiAccessView() {
       })
       .catch((e) => {
         console.error(e);
-        setFormError('Failed to create token.');
+        showToast('Failed to create token.', 'error');
       });
   };
 
@@ -350,12 +350,6 @@ export default function ApiAccessView() {
                   </select>
                 </div>
 
-                {formError && (
-                  <div className="flex items-center gap-2 text-[11px] text-rose-600 font-bold bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{formError}</span>
-                  </div>
-                )}
 
                 <div className="flex justify-end gap-3 pt-2">
                   <Button variant="secondary" size="sm" type="button" onClick={() => setShowCreateModal(false)}>

@@ -25,6 +25,7 @@ import {
   BarChart2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { SECTOR_NAME_TO_CODE } from '../api/mappers';
 import { canAccess, PLATFORM_ROLES } from '../permissions';
 import Button from './ui/Button';
@@ -125,6 +126,7 @@ const TOPIC_LIMIT_BY_MARKET: Record<'SME' | 'ACE Market' | 'Main Market', number
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, completeOnboarding } = useAuth();
+  const { showToast } = useToast();
 
   // Declared before any early return below so hook order stays stable across renders
   // (user starts null/undefined while the session rehydrates, then resolves to a role).
@@ -188,7 +190,7 @@ export default function OnboardingPage() {
 
   const handleGoToStep3 = () => {
     if (selectedFrameworks.length === 0) {
-      alert("Please select at least one disclosure framework to align your reporting cycles.");
+      showToast('Please select at least one disclosure framework to align your reporting cycles.', 'error');
       return;
     }
     setOnboardingStep(3);
@@ -196,7 +198,7 @@ export default function OnboardingPage() {
 
   const handleFinishOnboarding = async () => {
     if (selectedPriorities.length === 0) {
-      alert("Please select at least one priority ESG focus area to seed your reporting indicators.");
+      showToast('Please select at least one priority ESG focus area to seed your reporting indicators.', 'error');
       return;
     }
     setOnboardingStep(4);

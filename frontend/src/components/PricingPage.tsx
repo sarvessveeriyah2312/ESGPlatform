@@ -24,11 +24,12 @@ import Card from './ui/Card';
 
 interface PricingPageProps {
   onNavigateToDashboard: () => void;
+  onNavigateToFeatures: () => void;
   onNavigateToLanding: (section?: string) => void;
   onNavigateToAbout: () => void;
 }
 
-export default function PricingPage({ onNavigateToDashboard, onNavigateToLanding, onNavigateToAbout }: PricingPageProps) {
+export default function PricingPage({ onNavigateToDashboard, onNavigateToFeatures, onNavigateToLanding, onNavigateToAbout }: PricingPageProps) {
   // Billing cycle state: false = Monthly, true = Annual
   const [isAnnual, setIsAnnual] = useState(true);
 
@@ -167,7 +168,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToLanding
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-navy-600">
-            <button onClick={() => handleNav('product')} className="hover:text-primary-600 transition-colors cursor-pointer">Product</button>
+            <button onClick={onNavigateToFeatures} className="hover:text-primary-600 transition-colors cursor-pointer">Product</button>
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-primary-600 font-semibold cursor-pointer">Pricing</button>
             <button onClick={onNavigateToAbout} className="hover:text-primary-600 transition-colors cursor-pointer">About</button>
           </div>
@@ -678,9 +679,11 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToLanding
             <span className="font-bold text-white uppercase tracking-wider text-[10px]">Product</span>
             <ul className="space-y-2">
               <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Disclosure Engine</button></li>
-              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Scope 1 & 2 Carbon Calculator</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Scope 1, 2 & 3 Carbon Calculator</button></li>
               <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">SEDG Templates</button></li>
-              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Interactive Copilot</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">AI Drafting Assistant</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Custom Roles & Permissions</button></li>
+              <li><button onClick={onNavigateToDashboard} className="hover:text-white transition-colors cursor-pointer">Assurance Workspace</button></li>
             </ul>
           </div>
 

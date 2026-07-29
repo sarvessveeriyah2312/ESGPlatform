@@ -38,6 +38,11 @@ import {
   EmissionScopeType
 } from '../api/climateApi';
 import { targetsApi, PerformanceTargetResponse } from '../api/targetsApi';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import DraftWithAiButton from './ai/DraftWithAiButton';
+
+const CURRENT_FISCAL_YEAR = 2026;
 
 // TYPES FOR IFRS S1
 type FrontendRiskType = 'Risk' | 'Opportunity';
@@ -345,11 +350,12 @@ function fromScope3Category(c: Scope3CategoryResponse): Scope3CategoryUI {
 // 1. IFRS S1 COMPONENT
 // ========================================================
 export function IfrsS1Form() {
+  const { user } = useAuth();
+  const { showToast } = useToast();
   const [segments, setSegments] = useState<Segment[]>([]);
   const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
 
   const [newSegmentInput, setNewSegmentInput] = useState('');
-  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
   const [editSegmentNameInput, setEditSegmentNameInput] = useState('');
   const [confirmDeleteSegmentId, setConfirmDeleteSegmentId] = useState<string | null>(null);
@@ -369,8 +375,7 @@ export function IfrsS1Form() {
 
   // Visual confirmation only — every field edit already persists immediately via the API calls below.
   const handleSave = () => {
-    setShowSaveSuccess(true);
-    setTimeout(() => setShowSaveSuccess(false), 2000);
+    showToast('S1 Disclosures Saved!', 'success');
   };
 
   const togglePillar = (pillar: 'governance' | 'risk' | 'metrics') => {
@@ -389,7 +394,7 @@ export function IfrsS1Form() {
     const name = newSegmentInput.trim();
     if (!name) return;
     if (segments.some((s) => s.name === name)) {
-      alert('Segment already exists');
+      showToast('Segment already exists', 'error');
       return;
     }
     climateApi.createSegment(name).then((created) => {
@@ -411,7 +416,7 @@ export function IfrsS1Form() {
     const current = segments.find((s) => s.id === segmentId);
     if (!name || !current || name === current.name) return;
     if (segments.some((s) => s.id !== segmentId && s.name.toLowerCase() === name.toLowerCase())) {
-      alert('Segment already exists');
+      showToast('Segment already exists', 'error');
       return;
     }
     setSegments((prev) => prev.map((s) => (s.id === segmentId ? { ...s, name } : s)));
@@ -505,7 +510,14 @@ export function IfrsS1Form() {
         {openPillar === 'governance' && (
           <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-2 gap-5 text-xs font-semibold">
             <div className="space-y-1.5">
-              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Board-level Oversight of Sustainability Matters</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Board-level Oversight of Sustainability Matters</label>
+                <DraftWithAiButton
+                  draftType="ifrs-s1-oversight"
+                  context={{ sector: user?.sector ?? '', fiscalYear: String(CURRENT_FISCAL_YEAR) }}
+                  onDraft={(text) => updateDisclosureField('governance', 'oversightDescription', text)}
+                />
+              </div>
               <textarea
                 rows={3}
                 value={disclosure.governance.oversightDescription}
@@ -764,9 +776,16 @@ export function IfrsS1Form() {
 
                     {/* Left Column: Description */}
                     <div className="md:col-span-2 space-y-1.5">
-                      <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">
-                        Qualitative Description & Business Context
-                      </label>
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">
+                          Qualitative Description & Business Context
+                        </label>
+                        <DraftWithAiButton
+                          draftType="ifrs-s1-risk-item"
+                          context={{ segmentName: activeSegmentObj?.name ?? '', itemType: card.type, itemCategory: card.title }}
+                          onDraft={(text) => updateCardField(card.id, 'description', text)}
+                        />
+                      </div>
                       <textarea
                         rows={3}
                         value={card.description}
@@ -845,7 +864,14 @@ export function IfrsS1Form() {
         {openPillar === 'risk' && (
           <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-2 gap-5 text-xs font-semibold">
             <div className="space-y-1.5">
-              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Sustainability Risk Identification & Prioritisation Process</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Sustainability Risk Identification & Prioritisation Process</label>
+                <DraftWithAiButton
+                  draftType="ifrs-s1-identification"
+                  context={{ sector: user?.sector ?? '', marketClassification: user?.market ?? '' }}
+                  onDraft={(text) => updateDisclosureField('riskManagement', 'identificationProcess', text)}
+                />
+              </div>
               <textarea
                 rows={3}
                 value={disclosure.riskManagement.identificationProcess}
@@ -893,7 +919,14 @@ export function IfrsS1Form() {
         {openPillar === 'metrics' && (
           <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-3 gap-5 text-xs font-semibold">
             <div className="space-y-1.5">
-              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Metrics Tracked Across Material Matters</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Metrics Tracked Across Material Matters</label>
+                <DraftWithAiButton
+                  draftType="ifrs-s1-tracked-metrics"
+                  context={{ sector: user?.sector ?? '' }}
+                  onDraft={(text) => updateDisclosureField('metricsTargets', 'trackedMetrics', text)}
+                />
+              </div>
               <textarea
                 rows={4}
                 value={disclosure.metricsTargets.trackedMetrics}
@@ -903,7 +936,14 @@ export function IfrsS1Form() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Targets Summary (see Targets module for detail)</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Targets Summary (see Targets module for detail)</label>
+                <DraftWithAiButton
+                  draftType="ifrs-s1-targets-summary"
+                  context={{ sector: user?.sector ?? '' }}
+                  onDraft={(text) => updateDisclosureField('metricsTargets', 'targetsSummary', text)}
+                />
+              </div>
               <textarea
                 rows={4}
                 value={disclosure.metricsTargets.targetsSummary}
@@ -913,7 +953,14 @@ export function IfrsS1Form() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Connected Information (link to financial statements)</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Connected Information (link to financial statements)</label>
+                <DraftWithAiButton
+                  draftType="ifrs-s1-connected-information"
+                  context={{ sector: user?.sector ?? '' }}
+                  onDraft={(text) => updateDisclosureField('metricsTargets', 'connectedInformation', text)}
+                />
+              </div>
               <textarea
                 rows={4}
                 value={disclosure.metricsTargets.connectedInformation}
@@ -934,12 +981,7 @@ export function IfrsS1Form() {
         </div>
 
         <div className="flex items-center space-x-3">
-          {showSaveSuccess && (
-            <span className="text-xs font-bold text-emerald-600 flex items-center space-x-1 animate-fade-in">
-              <Check className="w-4 h-4" />
-              <span>S1 Disclosures Saved!</span>
-            </span>
-          )}
+
           <Button
             variant="primary"
             onClick={handleSave}
@@ -958,6 +1000,8 @@ export function IfrsS1Form() {
 // 2. IFRS S2 COMPONENT
 // ========================================================
 export function IfrsS2Form() {
+  const { user } = useAuth();
+  const { showToast } = useToast();
   const [sections, setSections] = useState<S2Sections>(EMPTY_S2_SECTIONS);
   const [emissions, setEmissions] = useState<S2EmissionsData>({ scope1: {}, scope2: {}, scope3: [] });
   const [linkedTargetId, setLinkedTargetId] = useState<string>('');
@@ -984,7 +1028,6 @@ export function IfrsS2Form() {
   const [scope3Expanded, setScope3Expanded] = useState<boolean>(true);
 
   // UI states
-  const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
   const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
   const [newScope3CategoryInput, setNewScope3CategoryInput] = useState('');
   const [newScope3TooltipInput, setNewScope3TooltipInput] = useState('');
@@ -992,8 +1035,7 @@ export function IfrsS2Form() {
 
   // Visual confirmation only — every field/table edit already persists immediately via the API calls below.
   const handleSaveS2 = () => {
-    setShowSaveSuccess(true);
-    setTimeout(() => setShowSaveSuccess(false), 2000);
+    showToast('S2 Disclosures Saved!', 'success');
   };
 
   const toggleAccordion = (sec: 'governance' | 'strategy' | 'risk' | 'metrics') => {
@@ -1159,7 +1201,14 @@ export function IfrsS2Form() {
           {openSection === 'governance' && (
             <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-2 gap-5 text-xs font-semibold">
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Board-level Oversight Details</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Board-level Oversight Details</label>
+                  <DraftWithAiButton
+                    draftType="ifrs-s2-oversight"
+                    context={{ sector: user?.sector ?? '', fiscalYear: String(CURRENT_FISCAL_YEAR) }}
+                    onDraft={(text) => updateSectionField('governance', 'oversightDescription', text)}
+                  />
+                </div>
                 <textarea
                   rows={3}
                   value={sections.governance.oversightDescription}
@@ -1214,7 +1263,14 @@ export function IfrsS2Form() {
           {openSection === 'strategy' && (
             <div className="p-5 border-t border-navy-50 grid grid-cols-1 gap-4 text-xs font-semibold">
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Identified Climate Risks & Opportunities</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Identified Climate Risks & Opportunities</label>
+                  <DraftWithAiButton
+                    draftType="ifrs-s2-physical-risks"
+                    context={{ sector: user?.sector ?? '', marketClassification: user?.market ?? '' }}
+                    onDraft={(text) => updateSectionField('strategy', 'physicalRisks', text)}
+                  />
+                </div>
                 <textarea
                   rows={2}
                   value={sections.strategy.physicalRisks}
@@ -1224,7 +1280,14 @@ export function IfrsS2Form() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Operational & Asset Transition Pathway</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Operational & Asset Transition Pathway</label>
+                  <DraftWithAiButton
+                    draftType="ifrs-s2-transition-plan"
+                    context={{ sector: user?.sector ?? '' }}
+                    onDraft={(text) => updateSectionField('strategy', 'transitionPlan', text)}
+                  />
+                </div>
                 <textarea
                   rows={2}
                   value={sections.strategy.transitionPlan}
@@ -1234,7 +1297,14 @@ export function IfrsS2Form() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Climate Resilience Scenarios Analysis</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Climate Resilience Scenarios Analysis</label>
+                  <DraftWithAiButton
+                    draftType="ifrs-s2-climate-resilience"
+                    context={{ sector: user?.sector ?? '', marketClassification: user?.market ?? '' }}
+                    onDraft={(text) => updateSectionField('strategy', 'climateResilience', text)}
+                  />
+                </div>
                 <textarea
                   rows={2}
                   value={sections.strategy.climateResilience}
@@ -1263,7 +1333,14 @@ export function IfrsS2Form() {
           {openSection === 'risk' && (
             <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-2 gap-5 text-xs font-semibold">
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Climate Risk Identification Processes</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Climate Risk Identification Processes</label>
+                  <DraftWithAiButton
+                    draftType="ifrs-s2-identification"
+                    context={{ sector: user?.sector ?? '' }}
+                    onDraft={(text) => updateSectionField('riskManagement', 'identificationProcess', text)}
+                  />
+                </div>
                 <textarea
                   rows={3}
                   value={sections.riskManagement.identificationProcess}
@@ -1315,7 +1392,14 @@ export function IfrsS2Form() {
           {openSection === 'metrics' && (
             <div className="p-5 border-t border-navy-50 grid grid-cols-1 md:grid-cols-3 gap-5 text-xs font-semibold">
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Tracked Metrics & KPIs</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Tracked Metrics & KPIs</label>
+                  <DraftWithAiButton
+                    draftType="ifrs-s2-tracked-metrics"
+                    context={{ sector: user?.sector ?? '' }}
+                    onDraft={(text) => updateSectionField('metricsTargets', 'trackedMetrics', text)}
+                  />
+                </div>
                 <textarea
                   rows={4}
                   value={sections.metricsTargets.trackedMetrics}
@@ -1325,7 +1409,14 @@ export function IfrsS2Form() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Active Carbon Reduction Goals</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Active Carbon Reduction Goals</label>
+                  <DraftWithAiButton
+                    draftType="ifrs-s2-reduction-targets"
+                    context={{ sector: user?.sector ?? '' }}
+                    onDraft={(text) => updateSectionField('metricsTargets', 'reductionTargets', text)}
+                  />
+                </div>
                 <textarea
                   rows={4}
                   value={sections.metricsTargets.reductionTargets}
@@ -1357,7 +1448,14 @@ export function IfrsS2Form() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Carbon Pricing — How It's Applied in Decision-Making</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[10px] text-navy-400 uppercase tracking-wider block">Carbon Pricing — How It's Applied in Decision-Making</label>
+                  <DraftWithAiButton
+                    draftType="ifrs-s2-carbon-pricing"
+                    context={{ sector: user?.sector ?? '' }}
+                    onDraft={(text) => updateSectionField('metricsTargets', 'carbonPricing', text)}
+                  />
+                </div>
                 <textarea
                   rows={4}
                   value={sections.metricsTargets.carbonPricing}
@@ -1462,13 +1560,22 @@ export function IfrsS2Form() {
                     <span className="text-[10px] text-navy-400 uppercase tracking-wider">Executive remuneration is linked to climate performance</span>
                   </label>
                   {sections.metricsTargets.executiveRemunerationLinked && (
-                    <textarea
-                      rows={2}
-                      value={sections.metricsTargets.executiveRemunerationDescription}
-                      onChange={(e) => updateSectionField('metricsTargets', 'executiveRemunerationDescription', e.target.value)}
-                      placeholder="Describe how — e.g. % of short-term incentive tied to which target..."
-                      className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
-                    />
+                    <>
+                      <div className="flex justify-end">
+                        <DraftWithAiButton
+                          draftType="ifrs-s2-exec-remuneration"
+                          context={{ sector: user?.sector ?? '' }}
+                          onDraft={(text) => updateSectionField('metricsTargets', 'executiveRemunerationDescription', text)}
+                        />
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={sections.metricsTargets.executiveRemunerationDescription}
+                        onChange={(e) => updateSectionField('metricsTargets', 'executiveRemunerationDescription', e.target.value)}
+                        placeholder="Describe how — e.g. % of short-term incentive tied to which target..."
+                        className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+                      />
+                    </>
                   )}
                 </div>
               </div>
@@ -1851,12 +1958,7 @@ export function IfrsS2Form() {
         </div>
 
         <div className="flex items-center space-x-3">
-          {showSaveSuccess && (
-            <span className="text-xs font-bold text-emerald-600 flex items-center space-x-1 animate-fade-in">
-              <Check className="w-4 h-4" />
-              <span>S2 Disclosures Saved!</span>
-            </span>
-          )}
+
           <Button
             variant="primary"
             onClick={handleSaveS2}

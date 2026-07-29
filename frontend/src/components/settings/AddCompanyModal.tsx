@@ -8,6 +8,7 @@ import { X, Building2, Landmark, Contact } from 'lucide-react';
 import { companyApi, CompanyGroupMember, CreateSubsidiaryRequest, ListingBoard, CompanyType } from '../../api/companyApi';
 import { referenceApi, SectorResponse } from '../../api/referenceApi';
 import { ApiError } from '../../api/client';
+import { useToast } from '../../contexts/ToastContext';
 
 interface AddCompanyModalProps {
   onClose: () => void;
@@ -35,9 +36,9 @@ const inputClass = 'w-full px-3 py-2 border border-gray-200 rounded-lg text-sm t
 const labelClass = 'text-xs font-semibold text-gray-700';
 
 export default function AddCompanyModal({ onClose, onCreated }: AddCompanyModalProps) {
+  const { showToast } = useToast();
   const [sectors, setSectors] = useState<SectorResponse[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Identity
   const [name, setName] = useState('');
@@ -78,7 +79,6 @@ export default function AddCompanyModal({ onClose, onCreated }: AddCompanyModalP
     e.preventDefault();
     if (!canSubmit) return;
     setSubmitting(true);
-    setError(null);
 
     const payload: CreateSubsidiaryRequest = {
       name: name.trim(),
@@ -103,7 +103,7 @@ export default function AddCompanyModal({ onClose, onCreated }: AddCompanyModalP
         onCreated(created);
         onClose();
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to add the company — please try again.'))
+      .catch((err) => showToast(err instanceof ApiError ? err.message : 'Failed to add the company — please try again.', 'error'))
       .finally(() => setSubmitting(false));
   };
 
@@ -126,12 +126,6 @@ export default function AddCompanyModal({ onClose, onCreated }: AddCompanyModalP
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {error && (
-            <div className="mb-4 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
-              {error}
-            </div>
-          )}
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <section className="space-y-3">
               <div className="flex items-center gap-1.5 text-gray-900">

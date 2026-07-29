@@ -21,12 +21,14 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { postLoginPath } from '../permissions';
 import Button from './ui/Button';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, completeMfaLogin, resendVerification, sessionExpired, clearSessionExpired } = useAuth();
+  const { showToast } = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,8 +36,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
 
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle');
@@ -49,7 +49,7 @@ export default function LoginPage() {
   // "Log out" click — explain why, then clear the flag so it doesn't resurface on a later visit.
   useEffect(() => {
     if (sessionExpired) {
-      setErrorMessage('Your session has expired. Please log in again.');
+      showToast('Your session has expired. Please log in again.', 'error');
       clearSessionExpired();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,17 +57,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage('');
-    setSuccessMessage('');
     setUnverifiedEmail('');
     setResendState('idle');
 
     if (!email) {
-      setErrorMessage('Please enter your corporate email address.');
+      showToast('Please enter your corporate email address.', 'error');
       return;
     }
     if (!password) {
-      setErrorMessage('Please enter your secure account password.');
+      showToast('Please enter your secure account password.', 'error');
       return;
     }
 
@@ -89,7 +87,7 @@ export default function LoginPage() {
         setIsSubmitting(false);
         return;
       }
-      setSuccessMessage('Authentication successful. Initializing secure workspace...');
+      showToast('Authentication successful. Initializing secure workspace...', 'success');
 
       // Short delay before redirecting for smooth UX
       setTimeout(() => {
@@ -97,23 +95,22 @@ export default function LoginPage() {
       }, 600);
     } catch (error: any) {
       setIsSubmitting(false);
-      setErrorMessage(error.message || 'Authentication failed. Please check your credentials.');
+      showToast(error.message || 'Authentication failed. Please check your credentials.', 'error');
     }
   };
 
   const handleMfaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage('');
     setIsSubmitting(true);
     try {
       const profile = await completeMfaLogin(mfaToken, mfaCode);
-      setSuccessMessage('Authentication successful. Initializing secure workspace...');
+      showToast('Authentication successful. Initializing secure workspace...', 'success');
       setTimeout(() => {
         navigate(postLoginPath(profile.role, profile.onboardingCompleted));
       }, 600);
     } catch (error: any) {
       setIsSubmitting(false);
-      setErrorMessage(error.message || 'Invalid code. Please try again.');
+      showToast(error.message || 'Invalid code. Please try again.', 'error');
       // The global 401 handler fires on this failed request too (it fires on every 401), which
       // would otherwise flip sessionExpired=true even though no session existed yet — clear it so
       // a later fresh visit to /login doesn't show a stale "session expired" banner.
@@ -136,13 +133,11 @@ export default function LoginPage() {
     setMfaToken('');
     setMfaCode('');
     setUseBackupCode(false);
-    setErrorMessage('');
   };
 
   const handleQuickLogin = async (demoEmail: string, isCorp: boolean) => {
     setEmail(demoEmail);
     setPassword('demo1234');
-    setErrorMessage('');
 
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 600));
@@ -162,7 +157,7 @@ export default function LoginPage() {
       }
       navigate(postLoginPath(outcome.profile.role, outcome.profile.onboardingCompleted));
     } catch (error: any) {
-      setErrorMessage(error.message);
+      showToast(error.message, 'error');
       setIsSubmitting(false);
     }
   };
@@ -240,20 +235,6 @@ export default function LoginPage() {
           {mfaStep ? (
           <form onSubmit={handleMfaSubmit} className="space-y-5">
 
-            {errorMessage && (
-              <div className="p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-semibold flex items-center shadow-sm">
-                <Lock className="w-4 h-4 mr-2" />
-                {errorMessage}
-              </div>
-            )}
-
-            {successMessage && (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center shadow-sm">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                {successMessage}
-              </div>
-            )}
-
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-700">
                 {useBackupCode ? 'Backup code' : 'Authentication code'}
@@ -307,22 +288,6 @@ export default function LoginPage() {
           ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
 
-            {/* Error Message */}
-            {errorMessage && (
-              <div className="p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-semibold flex items-center shadow-sm">
-                <Lock className="w-4 h-4 mr-2" />
-                {errorMessage}
-              </div>
-            )}
-
-            {/* Success Message */}
-            {successMessage && (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center shadow-sm">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                {successMessage}
-              </div>
-            )}
-
             {/* Email Not Verified */}
             {unverifiedEmail && (
               <div className="p-3.5 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl text-xs font-semibold shadow-sm space-y-2">
@@ -363,7 +328,7 @@ export default function LoginPage() {
                 <label className="text-xs font-bold text-gray-700">Password</label>
                 <button 
                   type="button"
-                  onClick={() => alert("Please contact platform administration at support@esgeasy.my to reset your enterprise-linked SSO credentials.")}
+                  onClick={() => showToast('Please contact platform administration at support@esgeasy.my to reset your enterprise-linked SSO credentials.', 'info')}
                   className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
                 >
                   Forgot Password?

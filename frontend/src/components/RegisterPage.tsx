@@ -24,11 +24,13 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import Button from './ui/Button';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register, resendVerification } = useAuth();
+  const { showToast } = useToast();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [registeredEmail, setRegisteredEmail] = useState('');
@@ -45,7 +47,6 @@ export default function RegisterPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   const valLength = password.length >= 8;
   const valNumber = /\d/.test(password);
@@ -53,22 +54,20 @@ export default function RegisterPage() {
   const valSpecial = /[^A-Za-z0-9]/.test(password);
 
   const validateStep1 = () => {
-    setErrorMessage('');
     if (!name.trim()) {
-      setErrorMessage('Please state your full authorized name.');
+      showToast('Please state your full authorized name.', 'error');
       return false;
     }
     if (!email.trim() || !email.includes('@')) {
-      setErrorMessage('Please specify a valid corporate work email address.');
+      showToast('Please specify a valid corporate work email address.', 'error');
       return false;
     }
     return true;
   };
 
   const validateStep2 = () => {
-    setErrorMessage('');
     if (!company.trim()) {
-      setErrorMessage('Please state your registered corporate entity name.');
+      showToast('Please state your registered corporate entity name.', 'error');
       return false;
     }
     return true;
@@ -76,18 +75,17 @@ export default function RegisterPage() {
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage('');
-    
+
     if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match.');
+      showToast('Passwords do not match.', 'error');
       return;
     }
     if (!valLength || !valNumber || !valCapital || !valSpecial) {
-      setErrorMessage('Please meet all password strength indicators.');
+      showToast('Please meet all password strength indicators.', 'error');
       return;
     }
     if (!termsAccepted) {
-      setErrorMessage('Please accept the general service and compliance terms.');
+      showToast('Please accept the general service and compliance terms.', 'error');
       return;
     }
 
@@ -98,7 +96,7 @@ export default function RegisterPage() {
       const registeredWith = await register(name, email, company, password);
       setRegisteredEmail(registeredWith);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Database connection handshake timed out. Please try again.');
+      showToast(err?.message || 'Database connection handshake timed out. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -125,7 +123,6 @@ export default function RegisterPage() {
   const handlePrevStep = () => {
     if (step > 1) {
       setStep((step - 1) as 1 | 2 | 3);
-      setErrorMessage('');
     }
   };
 
@@ -332,14 +329,6 @@ export default function RegisterPage() {
                 </div>
               ))}
             </div>
-
-            {/* Error Message */}
-            {errorMessage && (
-              <div className="mb-6 p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-semibold flex items-start shadow-sm">
-                <Info className="w-4 h-4 mr-2 shrink-0 mt-0.5" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
 
             {/* STEP 1: ADMIN PROFILE */}
             {step === 1 && (
