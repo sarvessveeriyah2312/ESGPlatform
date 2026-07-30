@@ -10,6 +10,7 @@ import { useToast } from '../contexts/ToastContext';
 import { ActivityLog, toActivityLog } from './admin/types';
 import { useAdminPagination } from './admin/useAdminPagination';
 import AdminPagination from './admin/AdminPagination';
+import AuditLogDetailView from './AuditLogDetailView';
 
 const FETCH_LIMIT = 500;
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
@@ -30,6 +31,7 @@ export default function AuditLogView() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [eventTypeFilter, setEventTypeFilter] = useState<BackendActivityEventType | 'all'>('all');
+  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
 
   const loadLogs = () => {
     setLoading(true);
@@ -51,6 +53,10 @@ export default function AuditLogView() {
   });
 
   const { page, setPage, pageSize, setPageSize, totalPages, pageItems: paginatedLogs } = useAdminPagination<ActivityLog>(filteredLogs, DEFAULT_PAGE_SIZE);
+
+  if (selectedLogId) {
+    return <AuditLogDetailView logId={selectedLogId} onBack={() => setSelectedLogId(null)} showToast={showToast} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -136,7 +142,11 @@ export default function AuditLogView() {
                 </tr>
               ) : (
                 paginatedLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr
+                    key={log.id}
+                    onClick={() => setSelectedLogId(log.id)}
+                    className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                  >
                     <td className="px-6 py-4 font-mono text-[11px] text-gray-500">{log.timestamp}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${log.badgeColor}`}>

@@ -51,6 +51,15 @@ public class PlatformActivityLogService {
                 .toList();
     }
 
+    /** Same lookup as {@link #getById}, but 404s on a real entry from another company rather than leaking its existence. */
+    @Transactional(readOnly = true)
+    public ActivityLogResponse getByIdForCompany(UUID companyId, UUID id) {
+        PlatformActivityLog log = repository.findById(id)
+                .filter(l -> companyId.equals(l.getCompanyId()))
+                .orElseThrow(() -> new NotFoundException("Audit log entry not found"));
+        return toResponse(log);
+    }
+
     private int effectiveLimit(Integer limit) {
         return limit == null ? DEFAULT_LIMIT : Math.max(1, Math.min(limit, MAX_LIMIT));
     }
