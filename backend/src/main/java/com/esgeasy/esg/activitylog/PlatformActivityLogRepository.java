@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface PlatformActivityLogRepository extends JpaRepository<PlatformActivityLog, UUID> {
     List<PlatformActivityLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    List<PlatformActivityLog> findByCompanyIdOrderByCreatedAtDesc(UUID companyId, Pageable pageable);
 }

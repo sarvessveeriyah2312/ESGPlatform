@@ -76,6 +76,7 @@ import TargetsView from './components/TargetsView';
 import SupportTicketsView from './components/SupportTicketsView';
 import ProfileView from './components/ProfileView';
 import TeamView from './components/TeamView';
+import AuditLogView from './components/AuditLogView';
 import CompanyDetailsView from './components/settings/CompanyDetailsView';
 
 // Import all sub-views from PlaceholderViews
@@ -148,6 +149,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
       'assurance-workspace': 'Assurance Workspace',
       'api-access': 'API Access',
       'team': 'Team Directory',
+      'audit-log': 'Audit Log',
       'settings': 'Settings',
       'profile': 'My Profile',
       'admin/overview': 'Platform Admin — Overview',
@@ -182,6 +184,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
     { key: 'assurance-workspace', label: 'Assurance Workspace', icon: <Lock className="w-4 h-4" />, path: '/assurance-workspace', premiumOnly: true },
     { key: 'api-access', label: 'API Access', icon: <KeyRound className="w-4 h-4" />, path: '/api-access' },
     { key: 'team', label: 'Team', icon: <Users className="w-4 h-4" />, path: '/team', requiresAnyPermission: ['team.view', 'team.manage', 'roles.view', 'roles.manage'] },
+    { key: 'audit-log', label: 'Audit Log', icon: <ScrollText className="w-4 h-4" />, path: '/audit-log', requiresAnyPermission: ['audit_log.view'] },
     { key: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" />, path: '/settings', requiresManagement: true },
   ];
 
@@ -439,6 +442,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/assurance-workspace': 'Assurance Workspace',
   '/api-access': 'API Access',
   '/team': 'Team Directory',
+  '/audit-log': 'Audit Log',
   '/settings': 'Settings',
   '/profile': 'My Profile',
   '/admin/overview': 'Platform Admin — Overview',
@@ -759,6 +763,14 @@ function AppContent() {
         element={
           <AuthenticatedLayout allowedRoles={TENANT_ROLES} requiredPermissions={['team.view', 'team.manage', 'roles.view', 'roles.manage']}>
             <TeamView />
+          </AuthenticatedLayout>
+        }
+      />
+      <Route
+        path="/audit-log"
+        element={
+          <AuthenticatedLayout allowedRoles={TENANT_ROLES} requiredPermissions={['audit_log.view']}>
+            <AuditLogView />
           </AuthenticatedLayout>
         }
       />

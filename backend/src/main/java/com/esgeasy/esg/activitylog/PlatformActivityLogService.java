@@ -32,8 +32,7 @@ public class PlatformActivityLogService {
 
     @Transactional(readOnly = true)
     public List<ActivityLogResponse> listRecent(Integer limit) {
-        int effectiveLimit = limit == null ? DEFAULT_LIMIT : Math.max(1, Math.min(limit, MAX_LIMIT));
-        return repository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, effectiveLimit)).stream()
+        return repository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, effectiveLimit(limit))).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -43,6 +42,17 @@ public class PlatformActivityLogService {
         PlatformActivityLog log = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Audit log entry not found"));
         return toResponse(log);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActivityLogResponse> listRecentForCompany(UUID companyId, Integer limit) {
+        return repository.findByCompanyIdOrderByCreatedAtDesc(companyId, PageRequest.of(0, effectiveLimit(limit))).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private int effectiveLimit(Integer limit) {
+        return limit == null ? DEFAULT_LIMIT : Math.max(1, Math.min(limit, MAX_LIMIT));
     }
 
     private ActivityLogResponse toResponse(PlatformActivityLog log) {

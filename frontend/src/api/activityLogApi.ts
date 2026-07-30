@@ -20,4 +20,7 @@ export const activityLogApi = {
   listRecent: (limit?: number) => apiClient.get<ActivityLogResponse[]>('/api/v1/admin/activity-log', limit ? { limit } : undefined),
 
   getById: (id: string) => apiClient.get<ActivityLogResponse>(`/api/v1/admin/activity-log/${id}`),
+
+  /** Company-scoped counterpart of listRecent — gated by the audit_log.view permission rather than a platform role. */
+  listMyCompany: (limit?: number) => apiClient.get<ActivityLogResponse[]>('/api/v1/activity-log', limit ? { limit } : undefined),
 };
