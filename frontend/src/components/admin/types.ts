@@ -5,6 +5,7 @@
 
 import { PlanType } from '../../contexts/PlanContext';
 import { TenantSummaryResponse } from '../../api/tenantAdminApi';
+import { ActivityLogResponse, BackendActivityEventType } from '../../api/activityLogApi';
 import { planFromBackend, marketFromBackend } from '../../api/mappers';
 import { MatterCategory, MatterSet } from '../../api/referenceApi';
 
@@ -35,10 +36,31 @@ export function toTenant(t: TenantSummaryResponse): Tenant {
 export interface ActivityLog {
   id: string;
   timestamp: string;
+  companyId: string | null;
   tenantName: string;
-  eventType: 'Signup' | 'Upgrade' | 'Cancellation' | 'Sync Success' | 'Support Request';
+  eventType: 'Signup' | 'Plan Change' | 'Sync Success' | 'Support Request';
   eventDescription: string;
   badgeColor: string;
+}
+
+const ACTIVITY_EVENT_DISPLAY: Record<BackendActivityEventType, { label: ActivityLog['eventType']; badgeColor: string }> = {
+  SIGNUP: { label: 'Signup', badgeColor: 'bg-blue-50 text-blue-700 border-blue-100' },
+  PLAN_CHANGE: { label: 'Plan Change', badgeColor: 'bg-purple-50 text-purple-700 border-purple-100' },
+  SUPPORT_TICKET: { label: 'Support Request', badgeColor: 'bg-amber-50 text-amber-700 border-amber-100' },
+  EXPORT_SUCCESS: { label: 'Sync Success', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+};
+
+export function toActivityLog(r: ActivityLogResponse): ActivityLog {
+  const display = ACTIVITY_EVENT_DISPLAY[r.eventType];
+  return {
+    id: r.id,
+    timestamp: new Date(r.timestamp).toLocaleString(),
+    companyId: r.companyId,
+    tenantName: r.companyName,
+    eventType: display.label,
+    eventDescription: r.description,
+    badgeColor: display.badgeColor,
+  };
 }
 
 export interface MatterFormState {

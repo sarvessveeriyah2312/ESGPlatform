@@ -9,6 +9,11 @@ import { tenantAdminApi, TenantUserResponse } from '../../api/tenantAdminApi';
 import { InvoiceResponse } from '../../api/invoiceAdminApi';
 import { Tenant, ShowToast } from './types';
 import { PLAN_PRICING, ROLE_LABELS } from './constants';
+import { useAdminPagination } from './useAdminPagination';
+import AdminPagination from './AdminPagination';
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 10;
 
 interface AdminTenantDetailViewProps {
   tenantId: string;
@@ -37,6 +42,11 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
   }, [tenantId]);
 
   const activeUserDetails = selectedUserId ? tenantUsers.find(u => u.id === selectedUserId) : null;
+
+  const tenantInvoices = invoices.filter(inv => inv.companyId === tenantId);
+
+  const usersPagination = useAdminPagination<TenantUserResponse>(tenantUsers, DEFAULT_PAGE_SIZE);
+  const invoicesPagination = useAdminPagination<InvoiceResponse>(tenantInvoices, DEFAULT_PAGE_SIZE);
 
   if (!activeTenantDetails) {
     return null;
@@ -199,7 +209,7 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
                       <td colSpan={5} className="text-center py-6 text-gray-400 text-xs font-medium">No users found for this tenant.</td>
                     </tr>
                   )}
-                  {tenantUsers.map((u) => (
+                  {usersPagination.pageItems.map((u) => (
                     <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-5 py-3.5">
                         <span onClick={() => setSelectedUserId(u.id)} className="font-semibold text-gray-900 hover:text-emerald-600 transition-colors cursor-pointer block">{u.name}</span>
@@ -234,6 +244,19 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
                 </tbody>
               </table>
             </div>
+
+            {!tenantUsersLoading && tenantUsers.length > 0 && (
+              <AdminPagination
+                page={usersPagination.page}
+                totalPages={usersPagination.totalPages}
+                totalItems={tenantUsers.length}
+                pageSize={usersPagination.pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageChange={usersPagination.setPage}
+                onPageSizeChange={usersPagination.setPageSize}
+                className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100"
+              />
+            )}
           </>
         )}
       </div>
@@ -262,9 +285,7 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
                   <td colSpan={5} className="text-center py-6 text-gray-400 text-xs font-medium">Loading invoices…</td>
                 </tr>
               )}
-              {!invoicesLoading && invoices
-                .filter(inv => inv.companyId === activeTenantDetails.id)
-                .map((inv) => (
+              {!invoicesLoading && invoicesPagination.pageItems.map((inv) => (
                   <tr key={inv.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-5 py-3.5 font-mono font-bold text-gray-900">{inv.invoiceNumber}</td>
                     <td className="px-5 py-3.5 font-mono text-gray-500">{inv.dueDate}</td>
@@ -289,7 +310,7 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
                     </td>
                   </tr>
                 ))}
-              {!invoicesLoading && invoices.filter(inv => inv.companyId === activeTenantDetails.id).length === 0 && (
+              {!invoicesLoading && tenantInvoices.length === 0 && (
                 <tr>
                   <td colSpan={5} className="text-center py-6 text-gray-400 text-xs font-medium">No previous paid subscription transactions registered on trial sandbox.</td>
                 </tr>
@@ -297,6 +318,19 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
             </tbody>
           </table>
         </div>
+
+        {!invoicesLoading && tenantInvoices.length > 0 && (
+          <AdminPagination
+            page={invoicesPagination.page}
+            totalPages={invoicesPagination.totalPages}
+            totalItems={tenantInvoices.length}
+            pageSize={invoicesPagination.pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageChange={invoicesPagination.setPage}
+            onPageSizeChange={invoicesPagination.setPageSize}
+            className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100"
+          />
+        )}
       </div>
 
     </div>

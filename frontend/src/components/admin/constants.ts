@@ -39,8 +39,8 @@ export const FEATURE_LABELS: Record<string, { name: string; description: string 
 // so it's derived rather than stored (see backend/.../tenant/TenantAdminController.java).
 export const PLAN_PRICING: Record<PlanType, number> = { starter: 299, growth: 699, 'issuer-ready': 1499 };
 
-export type AdminTab = 'overview' | 'tenants' | 'reference' | 'billing' | 'support' | 'plans' | 'settings';
-export const ADMIN_TABS: AdminTab[] = ['overview', 'tenants', 'reference', 'billing', 'support', 'plans', 'settings'];
+export type AdminTab = 'overview' | 'tenants' | 'reference' | 'billing' | 'support' | 'plans' | 'audit-log' | 'settings';
+export const ADMIN_TABS: AdminTab[] = ['overview', 'tenants', 'reference', 'billing', 'support', 'plans', 'audit-log', 'settings'];
 
 export const ROLE_LABELS: Record<BackendRole, string> = {
   COMPANY_ADMIN: 'Company Admin',

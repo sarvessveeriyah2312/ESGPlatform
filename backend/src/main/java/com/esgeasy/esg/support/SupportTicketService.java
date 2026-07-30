@@ -1,5 +1,7 @@
 package com.esgeasy.esg.support;
 
+import com.esgeasy.esg.activitylog.ActivityEventType;
+import com.esgeasy.esg.activitylog.PlatformActivityLogService;
 import com.esgeasy.esg.common.exceptions.ForbiddenException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.security.CurrentUserProvider;
@@ -25,15 +27,18 @@ public class SupportTicketService {
     private final AppUserRepository appUserRepository;
     private final CompanyRepository companyRepository;
     private final CurrentUserProvider currentUserProvider;
+    private final PlatformActivityLogService activityLogService;
 
     public SupportTicketService(SupportTicketRepository supportTicketRepository,
                                  AppUserRepository appUserRepository,
                                  CompanyRepository companyRepository,
-                                 CurrentUserProvider currentUserProvider) {
+                                 CurrentUserProvider currentUserProvider,
+                                 PlatformActivityLogService activityLogService) {
         this.supportTicketRepository = supportTicketRepository;
         this.appUserRepository = appUserRepository;
         this.companyRepository = companyRepository;
         this.currentUserProvider = currentUserProvider;
+        this.activityLogService = activityLogService;
     }
 
     @Transactional
@@ -51,7 +56,13 @@ public class SupportTicketService {
         ticket.setPriority(request.priority() != null ? request.priority() : TicketPriority.LOW);
         ticket.setStatus(TicketStatus.OPEN);
 
-        return toResponse(supportTicketRepository.save(ticket));
+        ticket = supportTicketRepository.save(ticket);
+
+        Company company = companyRepository.findById(ticket.getCompanyId()).orElse(null);
+        activityLogService.record(ticket.getCompanyId(), company != null ? company.getName() : "Unknown company",
+                ActivityEventType.SUPPORT_TICKET, "Logged ticket: \"" + ticket.getSubject() + "\"");
+
+        return toResponse(ticket);
     }
 
     @Transactional(readOnly = true)

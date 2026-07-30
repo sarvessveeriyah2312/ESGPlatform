@@ -20,6 +20,8 @@ import AdminReferenceTab from './admin/AdminReferenceTab';
 import AdminBillingTab from './admin/AdminBillingTab';
 import AdminSupportTab from './admin/AdminSupportTab';
 import AdminPlansTab from './admin/AdminPlansTab';
+import AdminAuditLogTab from './admin/AdminAuditLogTab';
+import AdminAuditLogDetailView from './admin/AdminAuditLogDetailView';
 import AdminSettingsTab from './admin/AdminSettingsTab';
 
 export default function AdminPanel() {
@@ -35,10 +37,16 @@ export default function AdminPanel() {
   // Selected tenant ID (if not null, render the detailed profile view instead of the active tab)
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
 
+  // Selected audit log entry ID (if not null, render the detail view instead of the active tab)
+  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
+
   // Navigating to a different sidebar section should exit the drill-down, not leave it stuck.
   useEffect(() => {
     if (activeTab !== 'tenants') {
       setSelectedTenantId(null);
+    }
+    if (activeTab !== 'audit-log') {
+      setSelectedLogId(null);
     }
   }, [activeTab]);
 
@@ -84,9 +92,16 @@ export default function AdminPanel() {
           onBack={() => setSelectedTenantId(null)}
           showToast={showToast}
         />
+      ) : selectedLogId ? (
+        <AdminAuditLogDetailView
+          logId={selectedLogId}
+          onBack={() => setSelectedLogId(null)}
+          onViewTenant={(companyId) => { setSelectedLogId(null); setSelectedTenantId(companyId); }}
+          showToast={showToast}
+        />
       ) : (
         <>
-          {activeTab === 'overview' && <AdminOverviewTab tenants={tenants} />}
+          {activeTab === 'overview' && <AdminOverviewTab tenants={tenants} showToast={showToast} />}
 
           {activeTab === 'tenants' && (
             <AdminTenantsTab
@@ -109,6 +124,8 @@ export default function AdminPanel() {
           )}
 
           {activeTab === 'plans' && <AdminPlansTab showToast={showToast} />}
+
+          {activeTab === 'audit-log' && <AdminAuditLogTab onSelectLog={setSelectedLogId} showToast={showToast} />}
 
           {activeTab === 'settings' && <AdminSettingsTab showToast={showToast} />}
         </>

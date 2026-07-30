@@ -40,7 +40,8 @@ import {
   Building2,
   Database,
   Ticket,
-  Package
+  Package,
+  ScrollText
 } from 'lucide-react';
 
 import { PlanProvider, usePlan, PlanType } from './contexts/PlanContext';
@@ -155,6 +156,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
       'admin/billing': 'Platform Admin — Subscriptions & Invoices',
       'admin/support': 'Platform Admin — Feedback & Support',
       'admin/plans': 'Platform Admin — Plan Management',
+      'admin/audit-log': 'Platform Admin — Audit Log',
       'admin/settings': 'Platform Admin — Settings'
     };
 
@@ -190,6 +192,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
     { key: 'admin-billing', label: 'Subscriptions & Invoices', icon: <CreditCard className="w-4 h-4" />, path: '/admin/billing' },
     { key: 'admin-support', label: 'Feedback & Support', icon: <Ticket className="w-4 h-4" />, path: '/admin/support' },
     { key: 'admin-plans', label: 'Plan Management', icon: <Package className="w-4 h-4" />, path: '/admin/plans' },
+    { key: 'admin-audit-log', label: 'Audit Log', icon: <ScrollText className="w-4 h-4" />, path: '/admin/audit-log' },
     { key: 'admin-settings', label: 'Platform Settings', icon: <Settings className="w-4 h-4" />, path: '/admin/settings' },
   ];
 
@@ -444,6 +447,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/billing': 'Platform Admin — Subscriptions & Invoices',
   '/admin/support': 'Platform Admin — Feedback & Support',
   '/admin/plans': 'Platform Admin — Plan Management',
+  '/admin/audit-log': 'Platform Admin — Audit Log',
   '/admin/settings': 'Platform Admin — Settings',
 };
 
@@ -511,6 +515,14 @@ function AppContent() {
       />
       <Route
         path="/admin/plans"
+        element={
+          <AuthenticatedLayout allowedRoles={PLATFORM_ROLES}>
+            <AdminPanel />
+          </AuthenticatedLayout>
+        }
+      />
+      <Route
+        path="/admin/audit-log"
         element={
           <AuthenticatedLayout allowedRoles={PLATFORM_ROLES}>
             <AdminPanel />

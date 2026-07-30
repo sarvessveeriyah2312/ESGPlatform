@@ -12,6 +12,8 @@ import com.esgeasy.esg.auth.dto.RegisterResponse;
 import com.esgeasy.esg.auth.dto.SessionMetadata;
 import com.esgeasy.esg.auth.dto.UpdateProfileRequest;
 import com.esgeasy.esg.auth.dto.VerifyMfaRequest;
+import com.esgeasy.esg.activitylog.ActivityEventType;
+import com.esgeasy.esg.activitylog.PlatformActivityLogService;
 import com.esgeasy.esg.common.exceptions.ConflictException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.emailverification.EmailVerificationService;
@@ -59,6 +61,7 @@ public class AuthService {
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
     private final PlatformSettingsService platformSettingsService;
+    private final PlatformActivityLogService activityLogService;
     private final long jwtExpirationMinutes;
 
     public AuthService(AppUserRepository appUserRepository,
@@ -73,6 +76,7 @@ public class AuthService {
                         EmailVerificationService emailVerificationService,
                         PasswordResetService passwordResetService,
                         PlatformSettingsService platformSettingsService,
+                        PlatformActivityLogService activityLogService,
                         JwtProperties jwtProperties) {
         this.appUserRepository = appUserRepository;
         this.companyRepository = companyRepository;
@@ -86,6 +90,7 @@ public class AuthService {
         this.emailVerificationService = emailVerificationService;
         this.passwordResetService = passwordResetService;
         this.platformSettingsService = platformSettingsService;
+        this.activityLogService = activityLogService;
         this.jwtExpirationMinutes = jwtProperties.getExpirationMinutes();
     }
 
@@ -112,6 +117,9 @@ public class AuthService {
         user = appUserRepository.save(user);
 
         emailVerificationService.sendVerificationEmail(user);
+
+        activityLogService.record(company.getId(), company.getName(), ActivityEventType.SIGNUP,
+                user.getName() + " registered a new workspace");
 
         return new RegisterResponse(user.getEmail());
     }

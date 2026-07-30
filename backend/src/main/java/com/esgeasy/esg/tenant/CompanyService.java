@@ -1,5 +1,7 @@
 package com.esgeasy.esg.tenant;
 
+import com.esgeasy.esg.activitylog.ActivityEventType;
+import com.esgeasy.esg.activitylog.PlatformActivityLogService;
 import com.esgeasy.esg.common.exceptions.ConflictException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.email.EmailService;
@@ -49,13 +51,14 @@ public class CompanyService {
     private final EmailService emailService;
     private final PlatformSettingsService platformSettingsService;
     private final CustomRoleService customRoleService;
+    private final PlatformActivityLogService activityLogService;
     private final SecureRandom random = new SecureRandom();
 
     public CompanyService(CompanyRepository companyRepository, SectorRepository sectorRepository,
                            AppUserRepository appUserRepository, TeamInviteRepository teamInviteRepository,
                            CurrentUserProvider currentUserProvider, PasswordEncoder passwordEncoder,
                            EmailService emailService, PlatformSettingsService platformSettingsService,
-                           CustomRoleService customRoleService) {
+                           CustomRoleService customRoleService, PlatformActivityLogService activityLogService) {
         this.companyRepository = companyRepository;
         this.sectorRepository = sectorRepository;
         this.appUserRepository = appUserRepository;
@@ -65,6 +68,7 @@ public class CompanyService {
         this.emailService = emailService;
         this.platformSettingsService = platformSettingsService;
         this.customRoleService = customRoleService;
+        this.activityLogService = activityLogService;
     }
 
     /**
@@ -104,8 +108,11 @@ public class CompanyService {
     @Transactional
     public CompanyResponse updatePlan(UpdatePlanRequest request) {
         Company company = currentCompany();
+        SubscriptionPlan previousPlan = company.getSubscriptionPlan();
         company.setSubscriptionPlan(request.plan());
-        return CompanyResponse.from(companyRepository.save(company));
+        company = companyRepository.save(company);
+        logPlanChange(company, previousPlan, request.plan());
+        return CompanyResponse.from(company);
     }
 
     @Transactional
@@ -410,8 +417,19 @@ public class CompanyService {
     @Transactional
     public TenantSummaryResponse adminUpdatePlan(UUID companyId, UpdatePlanRequest request) {
         Company company = findCompany(companyId);
+        SubscriptionPlan previousPlan = company.getSubscriptionPlan();
         company.setSubscriptionPlan(request.plan());
-        return toSummary(companyRepository.save(company));
+        company = companyRepository.save(company);
+        logPlanChange(company, previousPlan, request.plan());
+        return toSummary(company);
+    }
+
+    private void logPlanChange(Company company, SubscriptionPlan previousPlan, SubscriptionPlan newPlan) {
+        if (previousPlan == newPlan) {
+            return;
+        }
+        activityLogService.record(company.getId(), company.getName(), ActivityEventType.PLAN_CHANGE,
+                "Subscription plan changed from " + previousPlan + " to " + newPlan);
     }
 
     @Transactional
