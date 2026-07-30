@@ -65,7 +65,7 @@ interface AuthContextProps {
   isAuthenticated: boolean;
   /** True while rehydrating the session from a stored token on initial app load. */
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<LoginOutcome>;
+  login: (email: string, password: string, rememberMe: boolean) => Promise<LoginOutcome>;
   completeMfaLogin: (mfaToken: string, code: string) => Promise<UserProfile>;
   register: (name: string, email: string, company: string, password: string) => Promise<string>;
   resendVerification: (email: string) => Promise<void>;
@@ -128,8 +128,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; currentPlan: Pl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (email: string, password: string): Promise<LoginOutcome> => {
-    const result = await authApi.login(email, password);
+  const login = async (email: string, password: string, rememberMe: boolean): Promise<LoginOutcome> => {
+    const result = await authApi.login(email, password, rememberMe);
     if (result.emailVerificationRequired) {
       return { status: 'email_verification_required', email };
     }

@@ -75,7 +75,7 @@ export default function LoginPage() {
     await new Promise(resolve => setTimeout(resolve, 800));
 
     try {
-      const outcome = await login(email, password);
+      const outcome = await login(email, password, rememberMe);
       if (outcome.status === 'email_verification_required') {
         setUnverifiedEmail(outcome.email);
         setIsSubmitting(false);
@@ -133,33 +133,6 @@ export default function LoginPage() {
     setMfaToken('');
     setMfaCode('');
     setUseBackupCode(false);
-  };
-
-  const handleQuickLogin = async (demoEmail: string, isCorp: boolean) => {
-    setEmail(demoEmail);
-    setPassword('demo1234');
-
-    setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    try {
-      const outcome = await login(demoEmail, 'demo1234');
-      if (outcome.status === 'email_verification_required') {
-        setUnverifiedEmail(outcome.email);
-        setIsSubmitting(false);
-        return;
-      }
-      if (outcome.status === 'mfa_required') {
-        setMfaToken(outcome.mfaToken);
-        setMfaStep(true);
-        setIsSubmitting(false);
-        return;
-      }
-      navigate(postLoginPath(outcome.profile.role, outcome.profile.onboardingCompleted));
-    } catch (error: any) {
-      showToast(error.message, 'error');
-      setIsSubmitting(false);
-    }
   };
 
   return (
@@ -326,9 +299,9 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <label className="text-xs font-bold text-gray-700">Password</label>
-                <button 
+                <button
                   type="button"
-                  onClick={() => showToast('Please contact platform administration at support@esgeasy.my to reset your enterprise-linked SSO credentials.', 'info')}
+                  onClick={() => navigate('/forgot-password')}
                   className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
                 >
                   Forgot Password?
@@ -398,41 +371,6 @@ export default function LoginPage() {
             >
               Sign Up
             </button>
-          </div>
-          )}
-
-          {/* Quick Sandbox Login Section */}
-          {!mfaStep && (
-          <div className="pt-8 border-t border-gray-100 space-y-4">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">
-              Sandbox Test Accounts
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              
-              <button
-                onClick={() => handleQuickLogin('sarvesh@esgeasy.my', true)}
-                disabled={isSubmitting}
-                className="p-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-left cursor-pointer transition-all space-y-1.5 shadow-sm group"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-xs font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">Sarvesh Veeri</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">Starter</span>
-                </div>
-                <span className="text-[10px] text-gray-500 block">SME User (SEDG)</span>
-              </button>
-              
-              <button
-                onClick={() => handleQuickLogin('sarah.lim@gamuda.com', true)}
-                disabled={isSubmitting}
-                className="p-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-left cursor-pointer transition-all space-y-1.5 shadow-sm group"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-xs font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">Sarah Lim</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700">Issuer</span>
-                </div>
-                <span className="text-[10px] text-gray-500 block">Corp. Admin (IFRS)</span>
-              </button>
-            </div>
           </div>
           )}
 

@@ -16,6 +16,7 @@ import com.esgeasy.esg.common.exceptions.ConflictException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.emailverification.EmailVerificationService;
 import com.esgeasy.esg.mfa.MfaService;
+import com.esgeasy.esg.passwordreset.PasswordResetService;
 import com.esgeasy.esg.platform.PlatformSettingsService;
 import com.esgeasy.esg.security.CurrentUserProvider;
 import com.esgeasy.esg.security.JwtProperties;
@@ -44,6 +45,8 @@ import java.util.UUID;
 @Service
 public class AuthService {
 
+    private static final long REMEMBER_ME_EXPIRATION_MINUTES = 30L * 24 * 60;
+
     private final AppUserRepository appUserRepository;
     private final CompanyRepository companyRepository;
     private final SectorRepository sectorRepository;
@@ -54,6 +57,7 @@ public class AuthService {
     private final MfaService mfaService;
     private final UserSessionService userSessionService;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
     private final PlatformSettingsService platformSettingsService;
     private final long jwtExpirationMinutes;
 
@@ -67,6 +71,7 @@ public class AuthService {
                         MfaService mfaService,
                         UserSessionService userSessionService,
                         EmailVerificationService emailVerificationService,
+                        PasswordResetService passwordResetService,
                         PlatformSettingsService platformSettingsService,
                         JwtProperties jwtProperties) {
         this.appUserRepository = appUserRepository;
@@ -79,6 +84,7 @@ public class AuthService {
         this.mfaService = mfaService;
         this.userSessionService = userSessionService;
         this.emailVerificationService = emailVerificationService;
+        this.passwordResetService = passwordResetService;
         this.platformSettingsService = platformSettingsService;
         this.jwtExpirationMinutes = jwtProperties.getExpirationMinutes();
     }
@@ -124,11 +130,11 @@ public class AuthService {
         }
 
         if (mfaService.isEnabled(user.getId())) {
-            String mfaToken = jwtService.generateMfaChallengeToken(user.getId());
+            String mfaToken = jwtService.generateMfaChallengeToken(user.getId(), request.rememberMe());
             return new LoginResponse(true, mfaToken, false, null);
         }
 
-        return new LoginResponse(false, null, false, issueSession(user, meta));
+        return new LoginResponse(false, null, false, issueSession(user, meta, expirationMinutesFor(request.rememberMe())));
     }
 
     @Transactional
@@ -142,23 +148,46 @@ public class AuthService {
     }
 
     @Transactional
+    public void requestPasswordReset(String email) {
+        passwordResetService.requestReset(email);
+    }
+
+    @Transactional(readOnly = true)
+    public void validatePasswordResetToken(String token) {
+        passwordResetService.validate(token);
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        passwordResetService.resetPassword(token, newPassword);
+    }
+
+    @Transactional
     public AuthResponse verifyMfa(VerifyMfaRequest request, SessionMetadata meta) {
-        UUID userId = jwtService.parseMfaChallenge(request.mfaToken())
+        JwtService.MfaChallenge challenge = jwtService.parseMfaChallenge(request.mfaToken())
                 .orElseThrow(() -> new BadCredentialsException("MFA session expired — please log in again"));
-        AppUser user = appUserRepository.findById(userId)
+        AppUser user = appUserRepository.findById(challenge.userId())
                 .orElseThrow(() -> new BadCredentialsException("MFA session expired — please log in again"));
 
-        if (!mfaService.verifyLoginCode(userId, request.code())) {
+        if (!mfaService.verifyLoginCode(user.getId(), request.code())) {
             throw new BadCredentialsException("Invalid verification code");
         }
 
-        return issueSession(user, meta);
+        return issueSession(user, meta, expirationMinutesFor(challenge.rememberMe()));
+    }
+
+    private long expirationMinutesFor(boolean rememberMe) {
+        return rememberMe ? REMEMBER_ME_EXPIRATION_MINUTES : jwtExpirationMinutes;
     }
 
     private AuthResponse issueSession(AppUser user, SessionMetadata meta) {
+        return issueSession(user, meta, jwtExpirationMinutes);
+    }
+
+    private AuthResponse issueSession(AppUser user, SessionMetadata meta, long expirationMinutes) {
         UUID jti = UUID.randomUUID();
-        String token = jwtService.generateToken(user, jti);
-        Instant expiresAt = Instant.now().plus(jwtExpirationMinutes, ChronoUnit.MINUTES);
+        String token = jwtService.generateToken(user, jti, expirationMinutes);
+        Instant expiresAt = Instant.now().plus(expirationMinutes, ChronoUnit.MINUTES);
         userSessionService.record(user.getId(), jti, meta.ipAddress(), meta.userAgent(), expiresAt);
         return new AuthResponse(token, toMeResponse(user));
     }

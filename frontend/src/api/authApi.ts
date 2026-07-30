@@ -48,6 +48,10 @@ export interface ResendVerificationResponse {
   message: string;
 }
 
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
 export interface InvitePreviewResponse {
   companyName: string;
   name: string;
@@ -60,8 +64,8 @@ export const authApi = {
   register: (name: string, email: string, password: string, companyName: string) =>
     apiClient.post<RegisterResponse>('/api/v1/auth/register', { name, email, password, companyName }),
 
-  login: (email: string, password: string) =>
-    apiClient.post<LoginResponse>('/api/v1/auth/login', { email, password }),
+  login: (email: string, password: string, rememberMe: boolean) =>
+    apiClient.post<LoginResponse>('/api/v1/auth/login', { email, password, rememberMe }),
 
   verifyMfa: (mfaToken: string, code: string) =>
     apiClient.post<AuthResponse>('/api/v1/auth/login/verify-mfa', { mfaToken, code }),
@@ -70,6 +74,14 @@ export const authApi = {
 
   resendVerification: (email: string) =>
     apiClient.post<ResendVerificationResponse>('/api/v1/auth/resend-verification', { email }),
+
+  forgotPassword: (email: string) =>
+    apiClient.post<ForgotPasswordResponse>('/api/v1/auth/forgot-password', { email }),
+
+  validateResetToken: (token: string) => apiClient.get<void>(`/api/v1/auth/reset-password/${encodeURIComponent(token)}`),
+
+  resetPassword: (token: string, newPassword: string) =>
+    apiClient.post<void>(`/api/v1/auth/reset-password/${encodeURIComponent(token)}`, { newPassword }),
 
   me: () => apiClient.get<MeResponse>('/api/v1/auth/me'),
 

@@ -2,6 +2,8 @@ package com.esgeasy.esg.auth;
 
 import com.esgeasy.esg.auth.dto.AcceptInviteRequest;
 import com.esgeasy.esg.auth.dto.AuthResponse;
+import com.esgeasy.esg.auth.dto.ForgotPasswordRequest;
+import com.esgeasy.esg.auth.dto.ForgotPasswordResponse;
 import com.esgeasy.esg.auth.dto.InvitePreviewResponse;
 import com.esgeasy.esg.auth.dto.LoginRequest;
 import com.esgeasy.esg.auth.dto.LoginResponse;
@@ -11,6 +13,7 @@ import com.esgeasy.esg.auth.dto.RegisterRequest;
 import com.esgeasy.esg.auth.dto.RegisterResponse;
 import com.esgeasy.esg.auth.dto.ResendVerificationRequest;
 import com.esgeasy.esg.auth.dto.ResendVerificationResponse;
+import com.esgeasy.esg.auth.dto.ResetPasswordRequest;
 import com.esgeasy.esg.auth.dto.SessionMetadata;
 import com.esgeasy.esg.auth.dto.UpdateProfileRequest;
 import com.esgeasy.esg.auth.dto.VerifyEmailRequest;
@@ -63,6 +66,25 @@ public class AuthController {
         authService.resendVerification(request.email());
         return ResponseEntity.ok(new ResendVerificationResponse(
                 "If an account exists for that email and it isn't verified yet, we've sent a new verification link."));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ForgotPasswordResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.requestPasswordReset(request.email());
+        return ResponseEntity.ok(new ForgotPasswordResponse(
+                "If an account exists for that email, we've sent a password reset link."));
+    }
+
+    @GetMapping("/reset-password/{token}")
+    public ResponseEntity<Void> validateResetToken(@PathVariable String token) {
+        authService.validatePasswordResetToken(token);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reset-password/{token}")
+    public ResponseEntity<Void> resetPassword(@PathVariable String token, @Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(token, request.newPassword());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/login")

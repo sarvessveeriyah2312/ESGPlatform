@@ -51,6 +51,8 @@ import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import AcceptInvitePage from './components/AcceptInvitePage';
 import VerifyEmailPage from './components/VerifyEmailPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import OnboardingPage from './components/OnboardingPage';
 import UpgradeGate from './components/ui/UpgradeGate';
 import AuthTopBar from './components/ui/AuthTopBar';
@@ -420,6 +422,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/register': 'Create Account',
   '/accept-invite': 'Accept Invite',
   '/verify-email': 'Verify Email',
+  '/forgot-password': 'Forgot Password',
+  '/reset-password': 'Reset Password',
   '/onboarding': 'Onboarding',
   '/dashboard': 'Dashboard',
   '/materiality': 'Materiality Assessment',
@@ -538,6 +542,14 @@ function AppContent() {
       <Route
         path="/verify-email"
         element={<VerifyEmailPage />}
+      />
+      <Route
+        path="/forgot-password"
+        element={<ForgotPasswordPage />}
+      />
+      <Route
+        path="/reset-password"
+        element={<ResetPasswordPage />}
       />
       <Route
         path="/onboarding"

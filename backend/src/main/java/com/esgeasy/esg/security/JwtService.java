@@ -31,8 +31,12 @@ public class JwtService {
     }
 
     public String generateToken(AppUser user, UUID jti) {
+        return generateToken(user, jti, properties.getExpirationMinutes());
+    }
+
+    public String generateToken(AppUser user, UUID jti, long expirationMinutes) {
         Instant now = Instant.now();
-        Instant expiry = now.plus(Duration.ofMinutes(properties.getExpirationMinutes()));
+        Instant expiry = now.plus(Duration.ofMinutes(expirationMinutes));
 
         var builder = Jwts.builder()
                 .subject(user.getId().toString())
@@ -85,18 +89,19 @@ public class JwtService {
      * verification during login. Carries no role/tokenVersion/jti claims so it can never be
      * mistaken for (or accepted as) a real session token by JwtAuthenticationFilter.
      */
-    public String generateMfaChallengeToken(UUID userId) {
+    public String generateMfaChallengeToken(UUID userId, boolean rememberMe) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("purpose", MFA_CHALLENGE_PURPOSE)
+                .claim("rememberMe", rememberMe)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(MFA_CHALLENGE_TTL)))
                 .signWith(key)
                 .compact();
     }
 
-    public Optional<UUID> parseMfaChallenge(String token) {
+    public Optional<MfaChallenge> parseMfaChallenge(String token) {
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(key)
@@ -107,12 +112,16 @@ public class JwtService {
             if (!MFA_CHALLENGE_PURPOSE.equals(claims.get("purpose", String.class))) {
                 return Optional.empty();
             }
-            return Optional.of(UUID.fromString(claims.getSubject()));
+            boolean rememberMe = Boolean.TRUE.equals(claims.get("rememberMe", Boolean.class));
+            return Optional.of(new MfaChallenge(UUID.fromString(claims.getSubject()), rememberMe));
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
         }
     }
 
     public record DecodedToken(UUID userId, UUID companyId, Role role, String email, int tokenVersion, UUID jti) {
+    }
+
+    public record MfaChallenge(UUID userId, boolean rememberMe) {
     }
 }
