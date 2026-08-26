@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Trees,
   Check,
@@ -21,36 +21,86 @@ import {
 
 import Button from './ui/Button';
 import Card from './ui/Card';
+import { publicApi, PublicPlanPricing, PublicFeatureFlag } from '../api/publicApi';
+import { FEATURE_REGISTRY, PlanType } from '../contexts/PlanContext';
 
 interface PricingPageProps {
   onNavigateToDashboard: () => void;
   onNavigateToFeatures: () => void;
   onNavigateToLanding: (section?: string) => void;
   onNavigateToAbout: () => void;
+  onNavigateToRegister: () => void;
 }
 
-export default function PricingPage({ onNavigateToDashboard, onNavigateToFeatures, onNavigateToLanding, onNavigateToAbout }: PricingPageProps) {
+function formatRM(amount: number): string {
+  return `RM ${Math.round(amount).toLocaleString('en-MY')}`;
+}
+
+const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-ready': 3 };
+
+// Onboarding (OnboardingPage.tsx) derives the plan tier from a market classification the user
+// picks in Step 1, defaulting to 'SME' with no memory of which pricing card was clicked — so a
+// "Start free trial" click here stashes the intended market and OnboardingPage picks it up as its
+// initial selection instead of re-asking from scratch. localStorage survives the login/register/
+// email-verification redirect chain between here and onboarding, unlike a URL param.
+export const PRICING_INTENT_MARKET_KEY = 'esgeasy_pricing_intent_market';
+const MARKET_BY_PLAN: Record<'starter' | 'growth' | 'issuer', 'SME' | 'ACE Market' | 'Main Market'> = {
+  starter: 'SME',
+  growth: 'ACE Market',
+  issuer: 'Main Market'
+};
+
+export default function PricingPage({ onNavigateToDashboard, onNavigateToFeatures, onNavigateToLanding, onNavigateToAbout, onNavigateToRegister }: PricingPageProps) {
   // Billing cycle state: false = Monthly, true = Annual
   const [isAnnual, setIsAnnual] = useState(true);
 
-  // Pricing plans prices
+  const handleStartTrial = (planKey: 'starter' | 'growth' | 'issuer') => {
+    localStorage.setItem(PRICING_INTENT_MARKET_KEY, MARKET_BY_PLAN[planKey]);
+    onNavigateToRegister();
+  };
+
+  // Live pricing + feature gating — the same admin-managed data (Platform Admin > Plan
+  // Management) the app itself runs on, via the unauthenticated /api/v1/public/* endpoints, so
+  // this page can't silently drift from what a subscriber actually gets.
+  const [planPricing, setPlanPricing] = useState<PublicPlanPricing[]>([]);
+  const [featureFlags, setFeatureFlags] = useState<PublicFeatureFlag[]>([]);
+
+  useEffect(() => {
+    publicApi.planPricing().then(setPlanPricing).catch(() => {});
+    publicApi.features().then(setFeatureFlags).catch(() => {});
+  }, []);
+
+  const starterPricing = planPricing.find((p) => p.plan === 'STARTER');
+  const growthPricing = planPricing.find((p) => p.plan === 'GROWTH');
+  const issuerPricing = planPricing.find((p) => p.plan === 'ISSUER_READY');
+
   const prices = {
     starter: {
-      monthly: 'RM 149',
-      annual: 'RM 99',
-      annualBilled: 'RM 1,188'
+      monthly: starterPricing ? formatRM(starterPricing.monthlyPrice) : '—',
+      annual: starterPricing ? formatRM(starterPricing.annualMonthlyPrice) : '—',
+      annualBilled: starterPricing ? formatRM(starterPricing.annualMonthlyPrice * 12) : '—'
     },
     growth: {
-      monthly: 'RM 399',
-      annual: 'RM 299',
-      annualBilled: 'RM 3,588'
+      monthly: growthPricing ? formatRM(growthPricing.monthlyPrice) : '—',
+      annual: growthPricing ? formatRM(growthPricing.annualMonthlyPrice) : '—',
+      annualBilled: growthPricing ? formatRM(growthPricing.annualMonthlyPrice * 12) : '—'
     },
     issuer: {
-      monthly: 'Contact Sales',
-      annual: 'Contact Sales',
-      annualBilled: 'Custom Enterprise Agreement'
+      monthly: issuerPricing ? formatRM(issuerPricing.monthlyPrice) : '—',
+      annual: issuerPricing ? formatRM(issuerPricing.annualMonthlyPrice) : '—',
+      annualBilled: issuerPricing ? formatRM(issuerPricing.annualMonthlyPrice * 12) : '—'
     }
   };
+
+  // Simple Included / Not-included comparison, grouped by the minimum plan tier that unlocks each
+  // feature — driven by the real feature_flag gating data (same source the app uses to lock
+  // features), rather than hand-written per-cell marketing copy that could drift from reality.
+  const featureRows = featureFlags
+    .map((flag) => ({ flag, meta: FEATURE_REGISTRY[flag.featureKey] }))
+    .filter((row) => row.meta)
+    .sort((a, b) => PLAN_LEVELS[a.meta.minPlan] - PLAN_LEVELS[b.meta.minPlan] || a.meta.name.localeCompare(b.meta.name));
+
+  const includedAt = (minPlan: PlanType, column: PlanType) => PLAN_LEVELS[column] >= PLAN_LEVELS[minPlan];
 
   // FAQ state: open questions indexes
   const [openFaqs, setOpenFaqs] = useState<Record<number, boolean>>({
@@ -94,56 +144,6 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
     }
   ];
 
-  // Comparison Table Structure
-  const tableData = [
-    {
-      section: "Materiality & Governance",
-      features: [
-        { name: "Materiality Assessment Tool", starter: "Basic guided", growth: "Standard guided", issuer: "Full multi-stakeholder assessment" },
-        { name: "Governance Structure Setup", starter: "Basic template", growth: "Interactive governance mapping", issuer: "Assurance-ready board-level workflows" },
-        { name: "Internal ESG Policies", starter: "3 essential templates", growth: "10+ custom templates", issuer: "Unlimited fully customized policies" },
-        { name: "Materiality Heatmaps", starter: false, growth: true, issuer: true },
-      ]
-    },
-    {
-      section: "Indicator Coverage",
-      features: [
-        { name: "SEDG Mapped Disclosures", starter: "Core indicators only", growth: "All 35 core + advanced indicators", issuer: "Full SEDG library" },
-        { name: "Bursa Common Sustainability Matters", starter: false, starterText: "—", growth: false, growthText: "—", issuer: "All 9/11 Common matters by market sector" },
-        { name: "IFRS S1 General Disclosures Module", starter: false, starterText: "—", growth: false, growthText: "—", issuer: true },
-        { name: "IFRS S2 Climate Disclosures Module", starter: false, starterText: "—", growth: false, growthText: "—", issuer: true },
-        { name: "Sector-Specific Modules", starter: false, starterText: "—", growth: "1 Sector module included", issuer: "Unlimited sector library access" },
-      ]
-    },
-    {
-      section: "Data & Tracking",
-      features: [
-        { name: "Historical Tracking Range", starter: "Single-year entry", growth: "3-year range with target tracking", issuer: "Unlimited historical tracking & multi-scenario targets" },
-        { name: "Scope 1 Emissions", starter: "Basic estimation calculator", growth: "Full calculation engine", issuer: "Auditable real-time emissions monitoring" },
-        { name: "Scope 2 Emissions", starter: false, starterText: "—", growth: "Grid-factor emissions calculator", issuer: "Location and market-based tracking" },
-        { name: "Scope 3 Emissions", starter: false, starterText: "—", growth: false, growthText: "—", issuer: "Complete Scope 3 tracking with supplier portal" },
-        { name: "Transition-Relief Handling", starter: false, starterText: "—", growth: false, growthText: "—", issuer: "Fully built-in regulatory reliefs" },
-      ]
-    },
-    {
-      section: "Assurance & Export",
-      features: [
-        { name: "Audit Trail Logging", starter: "Basic system log", growth: "Comprehensive user-change audit log", issuer: "Cryptographically verified immutable audit log" },
-        { name: "Internal Sign-off Workflows", starter: false, starterText: "—", growth: "Single reviewer approval", issuer: "Multi-level department & board sign-off" },
-        { name: "Assurance-Readiness Workspace", starter: false, starterText: "—", growth: false, growthText: "—", issuer: "Full third-party assurance auditor login portal" },
-        { name: "Export Formats", starter: "Summary PDF", growth: "Excel, PDF & standard Word", issuer: "CSI-compatible JSON, Custom PDF/Excel & slide decks" },
-      ]
-    },
-    {
-      section: "Support & Access",
-      features: [
-        { name: "Team Collaborators", starter: "1 user limit", growth: "Up to 5 seats", issuer: "Unlimited multi-department seats" },
-        { name: "Department Role Controls", starter: false, starterText: "—", growth: "Standard manager role", issuer: "Granular multi-department permissions & RBAC" },
-        { name: "Customer Support Support", starter: "Knowledge Base", growth: "Next business day email/chat", issuer: "Dedicated Sustainability Advisor + 4hr SLA" },
-      ]
-    }
-  ];
-
   const handleNav = (section?: string) => {
     onNavigateToLanding(section);
   };
@@ -181,7 +181,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
             >
               Log in
             </button>
-            <Button variant="primary" size="sm" onClick={onNavigateToDashboard}>
+            <Button variant="primary" size="sm" onClick={onNavigateToRegister}>
               Get Started
             </Button>
           </div>
@@ -290,19 +290,20 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
               </div>
 
               <div className="mt-8">
-                <Button variant="secondary" size="md" className="w-full text-center" onClick={onNavigateToDashboard}>
+                <Button variant="secondary" size="md" className="w-full text-center" onClick={() => handleStartTrial('starter')}>
                   Start free trial
                 </Button>
               </div>
             </Card>
 
             {/* PLAN 2: GROWTH (RECOMMENDED / Visually Emphasized) */}
-            <Card className="bg-white border-2 border-primary-500 relative flex flex-col justify-between h-full shadow-xl shadow-primary-500/5" padded="lg">
-              {/* Popular Badge */}
-              <div className="absolute top-0 right-1/2 transform translate-x-1/2 -translate-y-1/2 bg-primary-500 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest shadow-md">
+            <div className="relative">
+              {/* Popular Badge — rendered outside Card (which clips overflow) so it isn't cut off where it pokes above the card edge */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-primary-500 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest shadow-md">
                 MOST POPULAR
               </div>
 
+              <Card className="bg-white border-2 border-primary-500 relative flex flex-col justify-between h-full shadow-xl shadow-primary-500/5" padded="lg">
               <div>
                 <div className="flex items-center space-x-2.5 mb-4">
                   <div className="p-2 bg-primary-100 text-primary-600 rounded-xl">
@@ -356,11 +357,12 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
               </div>
 
               <div className="mt-8">
-                <Button variant="primary" size="md" className="w-full text-center" onClick={onNavigateToDashboard}>
+                <Button variant="primary" size="md" className="w-full text-center" onClick={() => handleStartTrial('growth')}>
                   Start free trial
                 </Button>
               </div>
-            </Card>
+              </Card>
+            </div>
 
             {/* PLAN 3: ISSUER READY */}
             <Card hoverEffect className="bg-bg-light border border-navy-100 flex flex-col justify-between h-full" padded="lg">
@@ -378,12 +380,13 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
                 {/* Price */}
                 <div className="my-6">
                   <div className="flex items-baseline text-navy-950">
-                    <span className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                      Contact Sales
+                    <span className="text-3xl md:text-4xl font-extrabold tracking-tight">
+                      {isAnnual ? prices.issuer.annual : prices.issuer.monthly}
                     </span>
+                    <span className="ml-1 text-xs font-medium text-navy-500">/ month</span>
                   </div>
                   <span className="text-[10px] text-navy-400 font-medium block mt-1">
-                    Bespoke SLA & Custom Enterprise Agreement
+                    {isAnnual ? `Billed annually at ${prices.issuer.annualBilled}/year` : 'Billed monthly'}
                   </span>
                 </div>
 
@@ -416,8 +419,8 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
               </div>
 
               <div className="mt-8">
-                <Button variant="secondary" size="md" className="w-full text-center hover:bg-navy-100" onClick={onNavigateToDashboard}>
-                  Contact Sales
+                <Button variant="secondary" size="md" className="w-full text-center hover:bg-navy-100" onClick={() => handleStartTrial('issuer')}>
+                  Start free trial
                 </Button>
               </div>
             </Card>
@@ -431,8 +434,8 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-xs font-bold text-primary-600 uppercase tracking-wider block mb-2">Granular Details</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-navy-950">Detailed Feature Comparison</h2>
-            <p className="text-sm text-navy-500 mt-2">See how our custom reporting modules map to different business goals.</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-navy-950">Feature Comparison</h2>
+            <p className="text-sm text-navy-500 mt-2">Exactly what's included at each tier — the same gating rules your workspace runs on.</p>
           </div>
 
           {/* DESKTOP STICKY COMPARISON TABLE (hidden on mobile) */}
@@ -441,7 +444,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
               {/* Sticky Table Header */}
               <thead className="sticky top-[73px] z-30 bg-navy-50 border-b border-navy-200/80 shadow-sm">
                 <tr>
-                  <th className="py-4.5 px-6 text-xs font-bold text-navy-900 uppercase tracking-wider w-1/3">Feature Capabilities</th>
+                  <th className="py-4.5 px-6 text-xs font-bold text-navy-900 uppercase tracking-wider w-1/3">Feature</th>
                   <th className="py-4.5 px-6 text-xs font-bold text-navy-900 uppercase tracking-wider text-center w-1/5">SME Starter</th>
                   <th className="py-4.5 px-6 text-xs font-bold text-navy-900 uppercase tracking-wider text-center w-1/5 bg-primary-50/40">SME Growth</th>
                   <th className="py-4.5 px-6 text-xs font-bold text-navy-900 uppercase tracking-wider text-center w-1/5">Issuer-Ready</th>
@@ -450,61 +453,34 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
 
               {/* Table Content */}
               <tbody className="divide-y divide-navy-100">
-                {tableData.map((section, sIdx) => (
-                  <React.Fragment key={sIdx}>
-                    {/* Section Row */}
-                    <tr className="bg-navy-50/40">
-                      <td colSpan={4} className="py-3 px-6 text-xs font-bold text-primary-800 uppercase tracking-widest bg-navy-50/50">
-                        {section.section}
-                      </td>
-                    </tr>
-                    {section.features.map((feat, fIdx) => (
-                      <tr key={fIdx} className="hover:bg-navy-50/30 transition-colors">
-                        <td className="py-4 px-6 text-xs font-semibold text-navy-900 flex items-center space-x-2">
-                          <span>{feat.name}</span>
-                        </td>
-                        
-                        {/* Starter Column */}
-                        <td className="py-4 px-6 text-xs text-navy-600 text-center">
-                          {typeof feat.starter === 'boolean' ? (
-                            feat.starter ? (
-                              <Check className="w-5 h-5 text-emerald-600 mx-auto" />
-                            ) : (
-                              <Minus className="w-4 h-4 text-navy-300 mx-auto" />
-                            )
-                          ) : (
-                            <span className="font-medium text-navy-800">{feat.starter}</span>
-                          )}
-                        </td>
-
-                        {/* Growth Column (Emphasized) */}
-                        <td className="py-4 px-6 text-xs text-navy-600 text-center bg-primary-50/10 font-medium">
-                          {typeof feat.growth === 'boolean' ? (
-                            feat.growth ? (
-                              <Check className="w-5 h-5 text-emerald-600 mx-auto font-bold" />
-                            ) : (
-                              <Minus className="w-4 h-4 text-navy-300 mx-auto" />
-                            )
-                          ) : (
-                            <span className="font-semibold text-primary-700">{feat.growth}</span>
-                          )}
-                        </td>
-
-                        {/* Issuer Ready Column */}
-                        <td className="py-4 px-6 text-xs text-navy-600 text-center">
-                          {typeof feat.issuer === 'boolean' ? (
-                            feat.issuer ? (
-                              <Check className="w-5 h-5 text-purple-600 mx-auto" />
-                            ) : (
-                              <Minus className="w-4 h-4 text-navy-300 mx-auto" />
-                            )
-                          ) : (
-                            <span className="font-semibold text-navy-950">{feat.issuer}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </React.Fragment>
+                {featureRows.map(({ flag, meta }) => (
+                  <tr key={flag.featureKey} className="hover:bg-navy-50/30 transition-colors">
+                    <td className="py-4 px-6">
+                      <span className="text-xs font-semibold text-navy-900 block">{meta.name}</span>
+                      {meta.description && <span className="text-[11px] text-navy-400 block mt-0.5">{meta.description}</span>}
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      {includedAt(meta.minPlan, 'starter') ? (
+                        <Check className="w-5 h-5 text-emerald-600 mx-auto" />
+                      ) : (
+                        <Minus className="w-4 h-4 text-navy-300 mx-auto" />
+                      )}
+                    </td>
+                    <td className="py-4 px-6 text-center bg-primary-50/10">
+                      {includedAt(meta.minPlan, 'growth') ? (
+                        <Check className="w-5 h-5 text-emerald-600 mx-auto" />
+                      ) : (
+                        <Minus className="w-4 h-4 text-navy-300 mx-auto" />
+                      )}
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      {includedAt(meta.minPlan, 'issuer-ready') ? (
+                        <Check className="w-5 h-5 text-purple-600 mx-auto" />
+                      ) : (
+                        <Minus className="w-4 h-4 text-navy-300 mx-auto" />
+                      )}
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -512,22 +488,22 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
 
           {/* MOBILE ACCORDION (shown on mobile, collapsed per plan) */}
           <div className="lg:hidden space-y-4">
-            
+
             {/* Toggle buttons for Mobile comparison */}
             <div className="flex bg-navy-100/60 p-1 rounded-xl">
-              <button 
+              <button
                 onClick={() => setOpenMobilePlan('starter')}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${openMobilePlan === 'starter' ? 'bg-white text-navy-950 shadow-sm' : 'text-navy-500'}`}
               >
                 Starter
               </button>
-              <button 
+              <button
                 onClick={() => setOpenMobilePlan('growth')}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${openMobilePlan === 'growth' ? 'bg-white text-navy-950 shadow-sm' : 'text-navy-500'}`}
               >
                 Growth
               </button>
-              <button 
+              <button
                 onClick={() => setOpenMobilePlan('issuer')}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${openMobilePlan === 'issuer' ? 'bg-white text-navy-950 shadow-sm' : 'text-navy-500'}`}
               >
@@ -544,44 +520,27 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
                   {openMobilePlan === 'issuer' && "Issuer-Ready Package Details"}
                 </span>
                 <span className="text-xs font-bold px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full">
-                  {openMobilePlan === 'starter' && (isAnnual ? "RM 99/mo" : "RM 149/mo")}
-                  {openMobilePlan === 'growth' && (isAnnual ? "RM 299/mo" : "RM 399/mo")}
-                  {openMobilePlan === 'issuer' && "Custom SLA"}
+                  {openMobilePlan === 'starter' && `${isAnnual ? prices.starter.annual : prices.starter.monthly}/mo`}
+                  {openMobilePlan === 'growth' && `${isAnnual ? prices.growth.annual : prices.growth.monthly}/mo`}
+                  {openMobilePlan === 'issuer' && `${isAnnual ? prices.issuer.annual : prices.issuer.monthly}/mo`}
                 </span>
               </div>
 
-              <div className="space-y-6">
-                {tableData.map((section, sIdx) => (
-                  <div key={sIdx} className="space-y-2">
-                    <h4 className="text-[10px] font-bold text-primary-700 uppercase tracking-widest">{section.section}</h4>
-                    <ul className="divide-y divide-navy-50">
-                      {section.features.map((feat, fIdx) => {
-                        let val: string | boolean = false;
-                        if (openMobilePlan === 'starter') val = feat.starter;
-                        if (openMobilePlan === 'growth') val = feat.growth;
-                        if (openMobilePlan === 'issuer') val = feat.issuer;
-
-                        return (
-                          <li key={fIdx} className="py-2.5 flex items-center justify-between text-xs">
-                            <span className="text-navy-500 font-medium">{feat.name}</span>
-                            <span className="text-right font-bold text-navy-800">
-                              {typeof val === 'boolean' ? (
-                                val ? (
-                                  <span className="text-emerald-600 font-bold">Included</span>
-                                ) : (
-                                  <span className="text-navy-300 font-medium">—</span>
-                                )
-                              ) : (
-                                <span className="text-navy-900">{val}</span>
-                              )}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              <ul className="divide-y divide-navy-50">
+                {featureRows.map(({ flag, meta }) => {
+                  const included = includedAt(meta.minPlan, openMobilePlan === 'issuer' ? 'issuer-ready' : openMobilePlan ?? 'starter');
+                  return (
+                    <li key={flag.featureKey} className="py-2.5 flex items-center justify-between text-xs gap-4">
+                      <span className="text-navy-500 font-medium">{meta.name}</span>
+                      {included ? (
+                        <span className="text-emerald-600 font-bold shrink-0">Included</span>
+                      ) : (
+                        <span className="text-navy-300 font-medium shrink-0">—</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </Card>
 
           </div>
@@ -647,7 +606,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
               variant="premium"
               size="lg"
               className="px-8 py-4 text-base"
-              onClick={onNavigateToDashboard}
+              onClick={onNavigateToRegister}
               icon={<ArrowRight className="w-4.5 h-4.5" />}
               iconPosition="right"
             >

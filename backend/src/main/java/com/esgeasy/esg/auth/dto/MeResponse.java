@@ -4,6 +4,7 @@ import com.esgeasy.esg.tenant.MarketClassification;
 import com.esgeasy.esg.tenant.SubscriptionPlan;
 import com.esgeasy.esg.user.Role;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,8 @@ public record MeResponse(
         String bio,
         boolean hasAvatar,
         boolean mfaSetupRequired,
-        List<String> permissions
+        List<String> permissions,
+        Instant trialEndsAt,
+        boolean trialConverted
 ) {
 }

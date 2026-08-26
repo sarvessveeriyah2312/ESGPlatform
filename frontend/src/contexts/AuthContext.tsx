@@ -31,9 +31,20 @@ export interface UserProfile {
   mfaSetupRequired: boolean;
   /** Effective custom-role permission keys (empty for COMPANY_ADMIN — see permissions.hasPermission). */
   permissions: Set<string>;
+  /** Null until onboarding completes (see AuthService.completeOnboarding), 14 days out from then. */
+  trialEndsAt: string | null;
+  /** Manually set by a PLATFORM_ADMIN once the company has actually paid — see TenantAdminController. */
+  trialConverted: boolean;
 }
 
-function toUserProfile(me: MeResponse): UserProfile {
+/** Single source of truth for "is this account's trial over" — used by AuthenticatedLayout's gate and the Billing page. */
+export function isTrialExpired(user: Pick<UserProfile, 'trialEndsAt' | 'trialConverted'> | null): boolean {
+  if (!user || !user.trialEndsAt || user.trialConverted) return false;
+  return new Date(user.trialEndsAt).getTime() < Date.now();
+}
+
+/** Exported so callers that just changed server-side state (e.g. BillingView after a plan change via Stripe) can re-fetch /me and get a fully consistent UserProfile back, rather than hand-patching individual fields via updateUser. */
+export function toUserProfile(me: MeResponse): UserProfile {
   return {
     name: me.name,
     email: me.email,
@@ -52,6 +63,8 @@ function toUserProfile(me: MeResponse): UserProfile {
     hasAvatar: me.hasAvatar,
     mfaSetupRequired: me.mfaSetupRequired,
     permissions: new Set(me.permissions ?? []),
+    trialEndsAt: me.trialEndsAt,
+    trialConverted: me.trialConverted,
   };
 }
 

@@ -20,6 +20,7 @@ import com.esgeasy.esg.tenant.dto.TenantUserResponse;
 import com.esgeasy.esg.tenant.dto.UpdateCompanyProfileRequest;
 import com.esgeasy.esg.tenant.dto.UpdatePlanRequest;
 import com.esgeasy.esg.tenant.dto.UpdateTenantStatusRequest;
+import com.esgeasy.esg.tenant.dto.UpdateTenantTrialRequest;
 import com.esgeasy.esg.tenant.dto.UpdateUserRoleRequest;
 import com.esgeasy.esg.user.AppUser;
 import com.esgeasy.esg.user.AppUserRepository;
@@ -439,6 +440,20 @@ public class CompanyService {
         return toSummary(companyRepository.save(company));
     }
 
+    /** Manually marks a trial as converted to paid — see TrialAccessFilter and V72's migration comment for why this is manual. */
+    @Transactional
+    public TenantSummaryResponse adminUpdateTrial(UUID companyId, UpdateTenantTrialRequest request) {
+        Company company = findCompany(companyId);
+        boolean wasConverted = Boolean.TRUE.equals(company.getTrialConverted());
+        company.setTrialConverted(request.converted());
+        company = companyRepository.save(company);
+        if (Boolean.TRUE.equals(request.converted()) && !wasConverted) {
+            activityLogService.record(company.getId(), company.getName(), ActivityEventType.TRIAL_CONVERTED,
+                    "Trial manually marked as converted to paid");
+        }
+        return toSummary(company);
+    }
+
     @Transactional(readOnly = true)
     public List<TenantUserResponse> listTenantUsers(UUID companyId) {
         findCompany(companyId);
@@ -469,7 +484,9 @@ public class CompanyService {
                 Boolean.TRUE.equals(company.getActive()),
                 company.getCreatedAt(),
                 primaryContact != null ? primaryContact.getName() : null,
-                primaryContact != null ? primaryContact.getEmail() : null
+                primaryContact != null ? primaryContact.getEmail() : null,
+                company.getTrialEndsAt(),
+                Boolean.TRUE.equals(company.getTrialConverted())
         );
     }
 }

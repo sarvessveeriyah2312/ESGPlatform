@@ -36,10 +36,17 @@ public class GeminiClient implements AiProviderClient {
     }
 
     @Override
-    public AiCompletionResult complete(String apiKey, String model, String systemPrompt, String userPrompt) {
+    public AiCompletionResult complete(String apiKey, String model, String systemPrompt, String userPrompt,
+                                        String imageMimeType, String imageBase64Data) {
+        // Field names are snake_case per Google's documented REST JSON schema for generateContent
+        // (inline_data/mime_type, system_instruction) — NOT the camelCase proto-JSON form other
+        // Gemini surfaces use, and this endpoint does not reliably accept camelCase here.
+        List<Object> requestParts = imageBase64Data == null
+                ? List.of(Map.of("text", userPrompt))
+                : List.of(Map.of("text", userPrompt), Map.of("inline_data", Map.of("mime_type", imageMimeType, "data", imageBase64Data)));
         Map<String, Object> body = Map.of(
-                "systemInstruction", Map.of("parts", List.of(Map.of("text", systemPrompt))),
-                "contents", List.of(Map.of("parts", List.of(Map.of("text", userPrompt))))
+                "system_instruction", Map.of("parts", List.of(Map.of("text", systemPrompt))),
+                "contents", List.of(Map.of("parts", requestParts))
         );
 
         try {
@@ -72,6 +79,10 @@ public class GeminiClient implements AiProviderClient {
             Map<String, Object> usage = (Map<String, Object>) response.get("usageMetadata");
             int inputTokens = usage != null ? ((Number) usage.getOrDefault("promptTokenCount", 0)).intValue() : 0;
             int outputTokens = usage != null ? ((Number) usage.getOrDefault("candidatesTokenCount", 0)).intValue() : 0;
+
+            if (log.isDebugEnabled()) {
+                log.debug("Gemini response text: {} | promptFeedback: {}", text, response.get("promptFeedback"));
+            }
 
             return new AiCompletionResult(text, inputTokens, outputTokens);
         } catch (RestClientException e) {

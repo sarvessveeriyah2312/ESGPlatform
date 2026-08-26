@@ -27,12 +27,17 @@ public class AnthropicClient implements AiProviderClient {
     }
 
     @Override
-    public AiCompletionResult complete(String apiKey, String model, String systemPrompt, String userPrompt) {
+    public AiCompletionResult complete(String apiKey, String model, String systemPrompt, String userPrompt,
+                                        String imageMimeType, String imageBase64Data) {
+        Object userContent = imageBase64Data == null ? userPrompt : List.of(
+                Map.of("type", "image", "source", Map.of("type", "base64", "media_type", imageMimeType, "data", imageBase64Data)),
+                Map.of("type", "text", "text", userPrompt)
+        );
         Map<String, Object> body = Map.of(
                 "model", model,
                 "max_tokens", MAX_TOKENS,
                 "system", systemPrompt,
-                "messages", List.of(Map.of("role", "user", "content", userPrompt))
+                "messages", List.of(Map.of("role", "user", "content", userContent))
         );
 
         try {

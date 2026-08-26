@@ -4,8 +4,11 @@ import com.esgeasy.esg.apiaccess.ApiTokenRepository;
 import com.esgeasy.esg.security.ApiTokenAuthenticationFilter;
 import com.esgeasy.esg.security.JwtAuthenticationFilter;
 import com.esgeasy.esg.security.JwtService;
+import com.esgeasy.esg.security.TrialAccessFilter;
 import com.esgeasy.esg.session.UserSessionRepository;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import com.esgeasy.esg.user.AppUserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -50,6 +53,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public TrialAccessFilter trialAccessFilter(CompanyRepository companyRepository, ObjectMapper objectMapper) {
+        return new TrialAccessFilter(companyRepository, objectMapper);
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(allowedOrigins));
@@ -64,7 +72,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
-                                            ApiTokenAuthenticationFilter apiTokenAuthenticationFilter) throws Exception {
+                                            ApiTokenAuthenticationFilter apiTokenAuthenticationFilter,
+                                            TrialAccessFilter trialAccessFilter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -74,12 +83,15 @@ public class SecurityConfig {
                                 "/api/v1/auth/verify-email", "/api/v1/auth/resend-verification").permitAll()
                         .requestMatchers("/api/v1/auth/forgot-password", "/api/v1/auth/reset-password/**").permitAll()
                         .requestMatchers("/api/v1/auth/invites/**").permitAll()
+                        .requestMatchers("/api/v1/public/**").permitAll()
+                        .requestMatchers("/api/v1/webhooks/**").permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(apiTokenAuthenticationFilter, JwtAuthenticationFilter.class);
+                .addFilterBefore(apiTokenAuthenticationFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(trialAccessFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

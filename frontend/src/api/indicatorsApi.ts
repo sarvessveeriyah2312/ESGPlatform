@@ -59,6 +59,13 @@ export interface IndicatorResponse {
   history: IndicatorAuditEntryDto[];
 }
 
+export interface ExtractionResponse {
+  value: number | null;
+  confidence: 'high' | 'medium' | 'low';
+  sourceQuote: string;
+  reason: string;
+}
+
 export const indicatorsApi = {
   list: () => apiClient.get<IndicatorResponse[]>('/api/v1/indicators'),
 
@@ -92,4 +99,11 @@ export const indicatorsApi = {
 
   downloadEvidence: (auditEntryId: string) =>
     apiClient.getBlob(`/api/v1/indicators/audit-entries/${auditEntryId}/evidence`),
+
+  extractValue: (indicatorId: string, fiscalYear: number, file: File) => {
+    const formData = new FormData();
+    formData.append('fiscalYear', String(fiscalYear));
+    formData.append('file', file);
+    return apiClient.postFile<ExtractionResponse>(`/api/v1/indicators/${indicatorId}/extract`, formData);
+  },
 };

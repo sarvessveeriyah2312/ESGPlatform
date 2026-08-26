@@ -1,6 +1,7 @@
 package com.esgeasy.esg.common;
 
 import com.esgeasy.esg.ai.provider.AiProviderException;
+import com.esgeasy.esg.billing.StripeException;
 import com.esgeasy.esg.common.exceptions.ConflictException;
 import com.esgeasy.esg.common.exceptions.ForbiddenException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
@@ -47,6 +48,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AiProviderException.class)
     public ResponseEntity<ApiError> handleAiProviderError(AiProviderException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiError.of(502, "Bad Gateway", ex.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(StripeException.class)
+    public ResponseEntity<ApiError> handleStripeError(StripeException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .body(ApiError.of(502, "Bad Gateway", ex.getMessage(), request.getRequestURI()));
     }

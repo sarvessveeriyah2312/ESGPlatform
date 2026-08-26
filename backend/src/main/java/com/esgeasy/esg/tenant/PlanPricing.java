@@ -26,4 +26,18 @@ public class PlanPricing {
 
     @Column(name = "monthly_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal monthlyPrice;
+
+    /** The monthly-equivalent price when billed annually (i.e. annual total / 12) — shown on the public pricing page's "Billed Annually" toggle. */
+    @Column(name = "annual_monthly_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal annualMonthlyPrice;
+
+    /**
+     * Lazily created on first use (see CompanyBillingService.ensureStripeProduct) rather than
+     * seeded up front — Stripe's subscription-update endpoint requires an existing
+     * {@code price_data[product]}, unlike Checkout Session creation which accepts an inline
+     * {@code product_data} to create one ad hoc; this is what changeSubscriptionPlan references
+     * instead. Reused across price changes so admin-edited monthlyPrice doesn't need a new product.
+     */
+    @Column(name = "stripe_product_id")
+    private String stripeProductId;
 }

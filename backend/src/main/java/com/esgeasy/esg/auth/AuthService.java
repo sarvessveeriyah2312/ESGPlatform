@@ -286,6 +286,7 @@ public class AuthService {
         company.setMarketClassification(request.market());
         company.setSubscriptionPlan(planForMarket(request.market()));
         company.setOnboardingCompleted(true);
+        company.setTrialEndsAt(Instant.now().plus(14, ChronoUnit.DAYS));
         company.setFrameworks(request.frameworks() != null ? request.frameworks() : java.util.List.of());
         company.setPriorities(request.priorities() != null ? request.priorities() : java.util.List.of());
 
@@ -329,7 +330,9 @@ public class AuthService {
                 user.getBio(),
                 user.getAvatarPath() != null,
                 mfaSetupRequired,
-                user.getCustomRole() != null ? user.getCustomRole().getPermissionKeys() : java.util.List.of()
+                user.getCustomRole() != null ? user.getCustomRole().getPermissionKeys() : java.util.List.of(),
+                company != null ? company.getTrialEndsAt() : null,
+                company != null && Boolean.TRUE.equals(company.getTrialConverted())
         );
     }
 }

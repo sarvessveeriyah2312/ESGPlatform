@@ -40,7 +40,7 @@ class JwtServiceTest {
     @Test
     void mfaChallengeTokenIsRejectedByOrdinarySessionParse() {
         UUID userId = UUID.randomUUID();
-        String challengeToken = jwtService.generateMfaChallengeToken(userId);
+        String challengeToken = jwtService.generateMfaChallengeToken(userId, false);
 
         assertFalse(jwtService.parse(challengeToken).isPresent());
     }
@@ -56,7 +56,7 @@ class JwtServiceTest {
     @Test
     void mfaChallengeTokenRoundTripsToTheOriginalUserId() {
         UUID userId = UUID.randomUUID();
-        String challengeToken = jwtService.generateMfaChallengeToken(userId);
+        String challengeToken = jwtService.generateMfaChallengeToken(userId, false);
 
         var decoded = jwtService.parseMfaChallenge(challengeToken);
 

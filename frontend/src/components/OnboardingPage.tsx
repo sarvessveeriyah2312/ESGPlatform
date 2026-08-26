@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
@@ -28,6 +28,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { SECTOR_NAME_TO_CODE } from '../api/mappers';
 import { canAccess, PLATFORM_ROLES } from '../permissions';
+import { PRICING_INTENT_MARKET_KEY } from './PricingPage';
 import Button from './ui/Button';
 
 // Sectors available in Malaysia
@@ -132,7 +133,22 @@ export default function OnboardingPage() {
   // (user starts null/undefined while the session rehydrates, then resolves to a role).
   const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3 | 4>(1);
 
-  const [market, setMarket] = useState<'SME' | 'ACE Market' | 'Main Market'>('SME');
+  // Pre-select whichever plan the user clicked "Start free trial" on from the pricing page, if
+  // any (see PricingPage.tsx's PRICING_INTENT_MARKET_KEY) — otherwise default to SME, same as
+  // before. The initializer only reads — it must stay pure since React (in StrictMode dev) can
+  // invoke it twice; the actual one-time consume-and-clear happens in the effect below instead.
+  const [market, setMarket] = useState<'SME' | 'ACE Market' | 'Main Market'>(() => {
+    const intent = localStorage.getItem(PRICING_INTENT_MARKET_KEY);
+    return intent === 'ACE Market' || intent === 'Main Market' ? intent : 'SME';
+  });
+
+  // Clears the stashed intent after mount so a later, unrelated visit to onboarding (e.g. after a
+  // logout/re-register) doesn't silently reuse a stale prior intent. Safe to run twice (StrictMode
+  // dev mounts effects twice) — removing an already-absent key is a no-op.
+  useEffect(() => {
+    localStorage.removeItem(PRICING_INTENT_MARKET_KEY);
+  }, []);
+
   const [sector, setSector] = useState(MALAYSIAN_SECTORS[0]);
   const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>(['SEDG']);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>(['Carbon Emissions', 'Anti-Corruption']);

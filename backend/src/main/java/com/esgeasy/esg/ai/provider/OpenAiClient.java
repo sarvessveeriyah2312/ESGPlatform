@@ -26,13 +26,18 @@ public class OpenAiClient implements AiProviderClient {
     }
 
     @Override
-    public AiCompletionResult complete(String apiKey, String model, String systemPrompt, String userPrompt) {
+    public AiCompletionResult complete(String apiKey, String model, String systemPrompt, String userPrompt,
+                                        String imageMimeType, String imageBase64Data) {
+        Object userContent = imageBase64Data == null ? userPrompt : List.of(
+                Map.of("type", "text", "text", userPrompt),
+                Map.of("type", "image_url", "image_url", Map.of("url", "data:" + imageMimeType + ";base64," + imageBase64Data))
+        );
         Map<String, Object> body = Map.of(
                 "model", model,
                 "max_tokens", MAX_TOKENS,
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
-                        Map.of("role", "user", "content", userPrompt)
+                        Map.of("role", "user", "content", userContent)
                 )
         );
 

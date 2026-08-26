@@ -24,14 +24,21 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
-  Send
+  Send,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Download
 } from 'lucide-react';
 import { usePlan, PlanType } from '../contexts/PlanContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, toUserProfile } from '../contexts/AuthContext';
 import { canAccess, hasPermission, MANAGEMENT_ROLES } from '../permissions';
 import { authApi } from '../api/authApi';
 import { emailSettingsApi, EmailSettingsResponse } from '../api/emailSettingsApi';
 import { referenceApi, PublicPlanPricingResponse } from '../api/referenceApi';
+import { billingApi, InvoicePageResponse } from '../api/billingApi';
+import { planToBackend } from '../api/mappers';
+import { useToast } from '../contexts/ToastContext';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import SecuritySettingsTab from './settings/SecuritySettingsTab';
@@ -117,10 +124,51 @@ const PLAN_COPY: Record<PlanType, { title: string; subtitle: string; description
   }
 };
 
+const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-ready': 3 };
+
 export function BillingView() {
   const { plan } = usePlan();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [pricing, setPricing] = useState<Record<PlanType, number> | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [checkingOut, setCheckingOut] = useState<PlanType | null>(null);
+  const [changingPlan, setChangingPlan] = useState<PlanType | null>(null);
+  const [invoicePage, setInvoicePage] = useState<InvoicePageResponse | null>(null);
+  const [invoicePageIndex, setInvoicePageIndex] = useState(0);
+  const [invoicePageSize, setInvoicePageSize] = useState(10);
+  const [nextBillingDate, setNextBillingDate] = useState<string | null>(null);
+  const confirmedSessionRef = useRef<string | null>(null);
+
+  const refreshInvoices = (page: number = invoicePageIndex, size: number = invoicePageSize) => {
+    billingApi.listInvoices(page, size).then(setInvoicePage).catch(() => setInvoicePage({ content: [], page: 0, size, totalElements: 0, totalPages: 0 }));
+  };
+
+  const refreshNextBillingDate = () => {
+    billingApi.getNextBillingDate().then((res) => setNextBillingDate(res.nextBillingDate)).catch(() => setNextBillingDate(null));
+  };
+
+  useEffect(() => { refreshInvoices(0, invoicePageSize); refreshNextBillingDate(); }, []);
+
+  const goToInvoicePage = (page: number) => {
+    setInvoicePageIndex(page);
+    refreshInvoices(page, invoicePageSize);
+  };
+
+  const changeInvoicePageSize = (size: number) => {
+    setInvoicePageSize(size);
+    setInvoicePageIndex(0);
+    refreshInvoices(0, size);
+  };
+
+  const nextBillingDateLabel = nextBillingDate
+    ? new Date(nextBillingDate).toLocaleDateString('en-MY', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null;
+
+  const trialEndsAt = user?.trialEndsAt ? new Date(user.trialEndsAt) : null;
+  const daysLeft = trialEndsAt ? Math.ceil((trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+  const trialEndedLabel = trialEndsAt?.toLocaleDateString('en-MY', { day: 'numeric', month: 'long', year: 'numeric' }) ?? null;
 
   useEffect(() => {
     referenceApi.planPricing()
@@ -136,6 +184,76 @@ export function BillingView() {
       .catch(() => {});
   }, []);
 
+  // Stripe redirects back here after checkout (see backend CompanyBillingService — no webhook, so
+  // confirmation happens by re-fetching the session synchronously on this return trip).
+  useEffect(() => {
+    const checkout = searchParams.get('checkout');
+    if (checkout === 'success') {
+      const sessionId = searchParams.get('session_id');
+      // Guards against firing confirmCheckout twice for the same return trip (dev-mode StrictMode
+      // double-effect, or a refresh before the finally() below clears session_id from the URL) —
+      // the backend call is idempotent, but a second call still re-logs a duplicate activity entry.
+      if (sessionId && confirmedSessionRef.current !== sessionId) {
+        confirmedSessionRef.current = sessionId;
+        billingApi.confirmCheckout(sessionId)
+          .then((res) => {
+            if (res.converted) {
+              // Re-fetch /me rather than hand-patching trialConverted — this checkout might have
+              // been for a different plan than the one they were on (see CompanyBillingService's
+              // metadata.target_plan), so subscriptionPlan/marketClassification may have changed too.
+              authApi.me().then((me) => updateUser(toUserProfile(me))).catch(() => {});
+              showToast('Payment confirmed — your account is now active.', 'success');
+              setInvoicePageIndex(0);
+              refreshInvoices(0, invoicePageSize);
+              refreshNextBillingDate();
+            } else {
+              showToast(res.message || 'Payment could not be confirmed yet.', 'error');
+            }
+          })
+          .catch((err) => showToast(err?.message || 'Could not confirm payment.', 'error'))
+          .finally(() => setSearchParams({ tab: 'billing' }, { replace: true }));
+      }
+    } else if (checkout === 'cancelled') {
+      showToast('Checkout cancelled — no changes made.', 'info');
+      setSearchParams({ tab: 'billing' }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // First-ever payment for this company — no saved payment method yet, so a hosted Stripe
+  // Checkout page is required. Works for any target plan, not just the current one: someone still
+  // in trial can go straight to a different tier without ever "converting" on their original one.
+  const handleUpgrade = (targetPlan: PlanType) => {
+    setCheckingOut(targetPlan);
+    billingApi.createCheckoutSession(planToBackend(targetPlan), 'BILLING')
+      .then((res) => {
+        window.location.href = res.checkoutUrl;
+      })
+      .catch((err) => {
+        showToast(err?.message || 'Failed to start checkout.', 'error');
+        setCheckingOut(null);
+      });
+  };
+
+  // Already has an active subscription — modify its price in place (with proration) rather than
+  // sending them through Checkout again, which would create a second parallel subscription.
+  const handleChangePlan = (targetPlan: PlanType) => {
+    setChangingPlan(targetPlan);
+    billingApi.changePlan(planToBackend(targetPlan))
+      .then((res) => {
+        // Re-fetch /me rather than just patching `plan` — market classification changed too
+        // (CompanyBillingService keeps them in sync), and other UserProfile fields derive from it.
+        return authApi.me().then((me) => updateUser(toUserProfile(me))).then(() => {
+          showToast(res.message || 'Plan changed.', 'success');
+          setInvoicePageIndex(0);
+          refreshInvoices(0, invoicePageSize);
+          refreshNextBillingDate();
+        });
+      })
+      .catch((err) => showToast(err?.message || 'Failed to change plan.', 'error'))
+      .finally(() => setChangingPlan(null));
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-gray-900 to-primary-950 border border-gray-800 rounded-2xl p-6 text-white relative overflow-hidden shadow-md">
@@ -145,7 +263,7 @@ export function BillingView() {
           <span className="text-[9px] font-bold uppercase tracking-widest text-primary-400 bg-primary-950/80 px-2 py-0.5 rounded border border-primary-900">Workspace Plan</span>
           <h3 className="text-2xl font-black tracking-tight mt-3 mb-2">Your Subscription</h3>
           <p className="text-xs text-gray-200 leading-relaxed mb-6">
-            Your plan tier is determined by the target market you registered under and is fixed for the life of the account. To change markets or upgrade your tier, contact support — this is not a self-service toggle.
+            Upgrade or downgrade below at any time — your plan tier also determines the target market classification (SME / ACE Market / Main Market) used to select applicable indicators and frameworks.
           </p>
 
           <div className="flex items-center space-x-2 bg-white/5 border border-white/10 rounded-xl p-3.5 max-w-md text-xs">
@@ -156,6 +274,26 @@ export function BillingView() {
               {plan === 'issuer-ready' && '✨ Issuer-Ready Plan (Listed Enterprise)'}
             </span>
           </div>
+
+          {trialEndsAt && !user?.trialConverted && (
+            <div className={`flex items-center space-x-2 border rounded-xl p-3.5 max-w-md text-xs mt-3 ${
+              daysLeft !== null && daysLeft <= 0 ? 'bg-red-500/10 border-red-400/30' : 'bg-amber-400/10 border-amber-300/30'
+            }`}>
+              <span className="text-gray-300">Free Trial:</span>
+              <span className="text-white font-bold text-[11px]">
+                {daysLeft !== null && daysLeft > 0
+                  ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left — ends ${trialEndedLabel}`
+                  : `Ended ${trialEndedLabel}`}
+              </span>
+            </div>
+          )}
+
+          {user?.trialConverted && nextBillingDateLabel && (
+            <div className="flex items-center space-x-2 bg-white/5 border border-white/10 rounded-xl p-3.5 max-w-md text-xs mt-3">
+              <span className="text-gray-300">Next Billing Date:</span>
+              <span className="text-white font-bold text-[11px]">{nextBillingDateLabel}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -188,9 +326,33 @@ export function BillingView() {
                 <p className="text-xs text-gray-500 leading-relaxed">{copy.description}</p>
               </div>
               <div className="p-6 bg-gray-50/50 border-t border-gray-100">
-                <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-500 border border-gray-200">
-                  {isActive ? 'Your Current Plan' : `Requires ${copy.title}`}
-                </div>
+                {isActive && !user?.trialConverted && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full"
+                    loading={checkingOut === tier}
+                    onClick={() => handleUpgrade(tier)}
+                  >
+                    Pay Now — Continue with this Plan
+                  </Button>
+                )}
+                {isActive && user?.trialConverted && (
+                  <div className="w-full py-2.5 rounded-xl text-xs font-bold text-center bg-gray-100 text-gray-500 border border-gray-200">
+                    Your Current Plan
+                  </div>
+                )}
+                {!isActive && (
+                  <Button
+                    variant={PLAN_LEVELS[tier] > PLAN_LEVELS[plan] ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="w-full"
+                    loading={checkingOut === tier || changingPlan === tier}
+                    onClick={() => (user?.trialConverted ? handleChangePlan(tier) : handleUpgrade(tier))}
+                  >
+                    {PLAN_LEVELS[tier] > PLAN_LEVELS[plan] ? `Upgrade to ${copy.title}` : `Downgrade to ${copy.title}`}
+                  </Button>
+                )}
               </div>
             </Card>
           );
@@ -199,12 +361,135 @@ export function BillingView() {
 
       <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-5">
         <div>
-          <h4 className="text-sm font-bold text-gray-900">Need a different plan?</h4>
-          <p className="text-xs text-gray-500 mt-0.5">Plan changes go through support since they involve re-classifying your registered target market.</p>
+          <h4 className="text-sm font-bold text-gray-900">Need help with billing?</h4>
+          <p className="text-xs text-gray-500 mt-0.5">Custom enterprise agreements, annual billing, or anything else not covered above.</p>
         </div>
         <Button variant="primary" size="sm" onClick={() => navigate('/support', { state: { openNewTicket: true } })}>
           Contact Support
         </Button>
+      </div>
+
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h4 className="text-sm font-bold text-gray-900">Payment History</h4>
+            <p className="text-xs text-gray-500 mt-0.5">Invoices recorded from Stripe as payments are made.</p>
+          </div>
+          {invoicePage !== null && invoicePage.totalElements > 0 && (
+            <label className="flex items-center space-x-2 text-xs text-gray-500">
+              <span>Rows per page</span>
+              <select
+                value={invoicePageSize}
+                onChange={(e) => changeInvoicePageSize(Number(e.target.value))}
+                className="border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 cursor-pointer"
+              >
+                {[5, 10, 25, 50].map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+        {invoicePage === null ? (
+          <div className="text-center py-8 text-gray-400 text-xs font-medium">Loading…</div>
+        ) : invoicePage.content.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-xs font-medium">No invoices yet.</div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
+                    <th className="px-5 py-3">Date</th>
+                    <th className="px-5 py-3">Invoice</th>
+                    <th className="px-5 py-3">Description</th>
+                    <th className="px-5 py-3">Amount</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {invoicePage.content.map((inv) => (
+                    <tr key={inv.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-5 py-3 font-mono text-gray-500">{inv.dueDate}</td>
+                      <td className="px-5 py-3 font-mono font-semibold text-gray-900">{inv.invoiceNumber}</td>
+                      <td className="px-5 py-3 text-gray-600">{inv.description ?? '—'}</td>
+                      <td className="px-5 py-3 font-mono font-bold text-gray-900">RM {inv.amount.toFixed(2)}</td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          inv.status === 'PAID' ? 'bg-emerald-50 text-emerald-700'
+                            : inv.status === 'OVERDUE' ? 'bg-red-50 text-red-700'
+                            : 'bg-amber-50 text-amber-700'
+                        }`}>
+                          {inv.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        {inv.hostedInvoiceUrl || inv.pdfUrl ? (
+                          <div className="flex items-center space-x-3">
+                            {inv.hostedInvoiceUrl && (
+                              <a
+                                href={inv.hostedInvoiceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center space-x-1 text-gray-500 hover:text-primary-600 transition-colors font-semibold"
+                                title="View invoice"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                                <span>View</span>
+                              </a>
+                            )}
+                            {inv.pdfUrl && (
+                              <a
+                                href={inv.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center space-x-1 text-gray-500 hover:text-primary-600 transition-colors font-semibold"
+                                title="Download PDF"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Download</span>
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 text-xs text-gray-500">
+              <span>
+                Showing {invoicePage.page * invoicePage.size + 1}
+                –{invoicePage.page * invoicePage.size + invoicePage.content.length} of {invoicePage.totalElements}
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  disabled={invoicePage.page <= 0}
+                  onClick={() => goToInvoicePage(invoicePage.page - 1)}
+                  className="flex items-center justify-center w-7 h-7 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="font-semibold text-gray-700">
+                  Page {invoicePage.page + 1} of {Math.max(invoicePage.totalPages, 1)}
+                </span>
+                <button
+                  type="button"
+                  disabled={invoicePage.page >= invoicePage.totalPages - 1}
+                  onClick={() => goToInvoicePage(invoicePage.page + 1)}
+                  className="flex items-center justify-center w-7 h-7 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 cursor-pointer"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

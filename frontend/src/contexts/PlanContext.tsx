@@ -23,7 +23,7 @@ const PlanContext = createContext<PlanContextProps | undefined>(undefined);
  * the backend's feature_flag table (see ReferenceService.listFeatureFlags), since a Platform
  * Admin can change them via the Plan Management module. These defaults are just the fallback
  * shown before that fetch resolves. */
-const FEATURE_REGISTRY: Record<string, { name: string; minPlan: PlanType; description: string }> = {
+export const FEATURE_REGISTRY: Record<string, { name: string; minPlan: PlanType; description: string }> = {
   'dashboard': { name: 'Dashboard', minPlan: 'starter', description: 'Real-time overview of your sustainability reporting progress.' },
   'materiality': { name: 'Materiality Assessment', minPlan: 'starter', description: 'Identify and prioritize ESG issues most relevant to your business.' },
   'indicators': { name: 'Indicators', minPlan: 'starter', description: 'Track key sustainability metrics and qualitative disclosures.' },

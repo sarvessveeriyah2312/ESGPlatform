@@ -27,11 +27,12 @@ import {
   ArrowUp,
   Building2,
   Compass,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { canAccess, MANAGEMENT_ROLES } from '../permissions';
+import { canAccess, hasPermission, MANAGEMENT_ROLES } from '../permissions';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { useApplicableMatters } from '../hooks/useApplicableMatters';
@@ -40,6 +41,7 @@ import { companyApi } from '../api/companyApi';
 import { TenantUserResponse } from '../api/tenantAdminApi';
 import { exportApi, downloadCsv } from '../api/exportApi';
 import { categoryFromBackend } from '../api/mappers';
+import { ApiError } from '../api/client';
 import Switch from './ui/Switch';
 
 // TypeScript Types
@@ -159,6 +161,8 @@ export default function IndicatorsView() {
   const [newAuditMonth, setNewAuditMonth] = useState<number>(1);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isSavingAudit, setIsSavingAudit] = useState<boolean>(false);
+  const [isExtracting, setIsExtracting] = useState<boolean>(false);
+  const [extractionHint, setExtractionHint] = useState<string | null>(null);
 
   // Editing state for table cells
   const [editingCell, setEditingCell] = useState<string | null>(null);
@@ -341,6 +345,20 @@ export default function IndicatorsView() {
       const firstOpenMonth = monthly.findIndex((v) => v === null);
       setNewAuditMonth(firstOpenMonth >= 0 ? firstOpenMonth + 1 : 1);
     }
+    // Clear the previous indicator's in-progress adjustment form — otherwise its value, comment,
+    // and pending evidence file (the "upload tray") visibly carry over into this indicator.
+    setNewAuditVal('');
+    setNewAuditComment('');
+    setPendingFile(null);
+    setExtractionHint(null);
+  };
+
+  const closeHistoryPanel = () => {
+    setSelectedIndicatorForHistory(null);
+    setNewAuditVal('');
+    setNewAuditComment('');
+    setPendingFile(null);
+    setExtractionHint(null);
   };
 
   const handleAddManualAuditLog = () => {
@@ -386,6 +404,36 @@ export default function IndicatorsView() {
     setNewAuditVal('');
     setNewAuditComment('');
     setPendingFile(null);
+    setExtractionHint(null);
+  };
+
+  // "Extract with AI" — reads the pending evidence file server-side and suggests a value using
+  // the company's configured AI provider (Settings > AI Assistant). Always a suggestion the user
+  // reviews in the Value field before saving — never applied or saved automatically.
+  const handleExtractWithAi = () => {
+    if (!selectedIndicatorForHistory || !pendingFile) return;
+    setIsExtracting(true);
+    setExtractionHint(null);
+    indicatorsApi.extractValue(selectedIndicatorForHistory.id, fiscalYearNumber(focusYear), pendingFile)
+      .then((res) => {
+        if (res.value === null || res.value === undefined) {
+          const base = 'AI couldn’t find a value for this indicator in the document';
+          showToast(res.reason ? `${base}: ${res.reason}` : `${base} — enter it manually.`, 'error');
+          return;
+        }
+        setNewAuditVal(String(res.value));
+        setExtractionHint(
+          `AI-suggested (${res.confidence} confidence)${res.sourceQuote ? `: "${res.sourceQuote}"` : ''} — review before saving.`
+        );
+      })
+      .catch((err: ApiError) => {
+        if (err?.status === 409) {
+          showToast('AI isn’t set up yet — ask a company admin to configure it in Settings > AI Assistant.', 'error');
+        } else {
+          showToast(err?.message || 'Failed to extract a value from this document.', 'error');
+        }
+      })
+      .finally(() => setIsExtracting(false));
   };
 
   const handleApproveValue = (indicatorId: string, yearKey: string) => {
@@ -938,7 +986,7 @@ export default function IndicatorsView() {
       {selectedIndicatorForHistory && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div
-            onClick={() => setSelectedIndicatorForHistory(null)}
+            onClick={closeHistoryPanel}
             className="absolute inset-0 bg-navy-950/40 backdrop-blur-xs transition-opacity"
           />
 
@@ -959,7 +1007,7 @@ export default function IndicatorsView() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setSelectedIndicatorForHistory(null)}
+                    onClick={closeHistoryPanel}
                     className="text-navy-400 hover:text-navy-600 p-1 rounded-lg cursor-pointer hover:bg-navy-100/50"
                   >
                     <X className="w-5 h-5" />
@@ -1145,14 +1193,33 @@ export default function IndicatorsView() {
                           type="file"
                           accept=".pdf,.png,.jpg,.jpeg,.xlsx,.csv,.docx"
                           className="hidden"
-                          onChange={(e) => setPendingFile(e.target.files?.[0] ?? null)}
+                          onChange={(e) => {
+                            setPendingFile(e.target.files?.[0] ?? null);
+                            setExtractionHint(null);
+                          }}
                         />
                       </label>
 
                       {pendingFile ? (
-                        <div className="text-[10px] text-emerald-600 font-extrabold flex items-center justify-center space-x-1">
-                          <Check className="w-3 h-3" />
-                          <span>Selected: {pendingFile.name}</span>
+                        <div className="space-y-2">
+                          <div className="text-[10px] text-emerald-600 font-extrabold flex items-center justify-center space-x-1">
+                            <Check className="w-3 h-3" />
+                            <span>Selected: {pendingFile.name}</span>
+                          </div>
+                          {hasPermission(user?.role, user?.permissions, 'ai.use') && (
+                            <button
+                              type="button"
+                              onClick={handleExtractWithAi}
+                              disabled={isExtracting}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-lg cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {isExtracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                              {isExtracting ? 'Extracting…' : 'Extract with AI'}
+                            </button>
+                          )}
+                          {extractionHint && (
+                            <p className="text-[10px] text-primary-600 font-semibold italic">{extractionHint}</p>
+                          )}
                         </div>
                       ) : (
                         <p className="text-[10px] text-navy-400 font-medium">PDF, image, XLSX, CSV, or DOCX — up to 10MB. Attach utility invoice receipts or ISO certifications.</p>
@@ -1167,7 +1234,7 @@ export default function IndicatorsView() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setSelectedIndicatorForHistory(null)}
+                  onClick={closeHistoryPanel}
                 >
                   Cancel
                 </Button>

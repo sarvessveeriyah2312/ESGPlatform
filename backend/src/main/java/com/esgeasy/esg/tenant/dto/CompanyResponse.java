@@ -5,6 +5,7 @@ import com.esgeasy.esg.tenant.CompanySizeBand;
 import com.esgeasy.esg.tenant.MarketClassification;
 import com.esgeasy.esg.tenant.SubscriptionPlan;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public record CompanyResponse(
@@ -15,13 +16,16 @@ public record CompanyResponse(
         MarketClassification marketClassification,
         SubscriptionPlan subscriptionPlan,
         boolean sectorModuleEnabled,
-        boolean onboardingCompleted
+        boolean onboardingCompleted,
+        Instant trialEndsAt,
+        boolean trialConverted
 ) {
     public static CompanyResponse from(Company c) {
         return new CompanyResponse(
                 c.getId(), c.getName(), c.getSector() != null ? c.getSector().getCode() : null,
                 c.getSizeBand(), c.getMarketClassification(), c.getSubscriptionPlan(),
-                Boolean.TRUE.equals(c.getSectorModuleEnabled()), Boolean.TRUE.equals(c.getOnboardingCompleted())
+                Boolean.TRUE.equals(c.getSectorModuleEnabled()), Boolean.TRUE.equals(c.getOnboardingCompleted()),
+                c.getTrialEndsAt(), Boolean.TRUE.equals(c.getTrialConverted())
         );
     }
 }

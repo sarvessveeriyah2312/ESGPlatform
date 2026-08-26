@@ -83,6 +83,21 @@ public class Company extends BaseEntity {
     @Column(name = "closed_at")
     private Instant closedAt;
 
+    /** Set once, when onboarding completes (see AuthService.completeOnboarding) — null before that. */
+    @Column(name = "trial_ends_at")
+    private Instant trialEndsAt;
+
+    /** Manually flipped by a PLATFORM_ADMIN once the company has actually paid — see TrialAccessFilter. */
+    @Column(name = "trial_converted", nullable = false)
+    private Boolean trialConverted = false;
+
+    /** Set once, on first successful Stripe Checkout (see CompanyBillingService.confirmCheckout) — lets the webhook handler map a subscription-cancelled event back to this company. */
+    @Column(name = "stripe_customer_id", length = 255)
+    private String stripeCustomerId;
+
+    @Column(name = "stripe_subscription_id", length = 255)
+    private String stripeSubscriptionId;
+
     // --- Identity ---
 
     @Column(name = "registration_number", length = 100)

@@ -45,7 +45,7 @@ import {
 } from 'lucide-react';
 
 import { PlanProvider, usePlan, PlanType } from './contexts/PlanContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, isTrialExpired } from './contexts/AuthContext';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { Role, canAccess, hasPermission, MANAGEMENT_ROLES, PLATFORM_ROLES, TENANT_ROLES } from './permissions';
 import LoginPage from './components/LoginPage';
@@ -55,6 +55,7 @@ import VerifyEmailPage from './components/VerifyEmailPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
 import OnboardingPage from './components/OnboardingPage';
+import TrialExpiredPage from './components/TrialExpiredPage';
 import UpgradeGate from './components/ui/UpgradeGate';
 import AuthTopBar from './components/ui/AuthTopBar';
 import AskAiPanel from './components/ai/AskAiPanel';
@@ -116,6 +117,13 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
   const requiresOnboarding = user && !user.onboardingCompleted && !canAccess(user.role, PLATFORM_ROLES);
   if (requiresOnboarding && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Free trial ended and nobody's flipped trialConverted for this company yet (Platform Admin >
+  // Tenants) — platform-level roles aren't tied to a single company's trial, so they're exempt.
+  const trialExpired = isTrialExpired(user) && !canAccess(user?.role, PLATFORM_ROLES);
+  if (trialExpired && location.pathname !== '/trial-expired') {
+    return <Navigate to="/trial-expired" replace />;
   }
 
   // Platform-wide "require 2FA for all users" toggle (Platform Settings → Security) — every role
@@ -569,7 +577,11 @@ function AppContent() {
       />
       <Route
         path="/onboarding"
-        element={<OnboardingPage />} 
+        element={<OnboardingPage />}
+      />
+      <Route
+        path="/trial-expired"
+        element={<TrialExpiredPage />}
       />
 
       {/* Public Pages */}
@@ -612,6 +624,7 @@ function AppContent() {
             onNavigateToDashboard={() => navigate('/dashboard')}
             onNavigateToFeatures={() => navigate('/features')}
             onNavigateToAbout={() => navigate('/about')}
+            onNavigateToRegister={() => navigate('/register')}
             onNavigateToLanding={(section) => {
               navigate('/');
               if (section) {

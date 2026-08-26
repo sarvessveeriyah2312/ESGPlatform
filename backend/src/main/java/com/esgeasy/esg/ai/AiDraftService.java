@@ -70,9 +70,26 @@ public class AiDraftService {
      * provider, and log to ai_usage_log under the given feature name ("draft" or "qa").
      */
     public String complete(String feature, String draftType, Map<String, String> context) {
+        return complete(feature, draftType, context, null, null);
+    }
+
+    /** Same as {@link #complete(String, String, Map)}, with an optional image attached to the model call — see IndicatorExtractionService. */
+    public String complete(String feature, String draftType, Map<String, String> context, String imageMimeType, String imageBase64Data) {
+        UUID companyId = currentUserProvider.requireCompanyId();
+        ResolvedPromptTemplate template = promptTemplateService.resolve(draftType, companyId);
+        return completeWithTemplate(feature, draftType, template, context, imageMimeType, imageBase64Data);
+    }
+
+    /**
+     * Same orchestration as {@link #complete(String, String, Map, String, String)}, but with an
+     * already-resolved prompt template rather than one resolved by draftType — used where the
+     * caller resolves its own override, e.g. per-indicator "Extract with AI" prompts
+     * (IndicatorPromptService) instead of the single shared draftType default.
+     */
+    public String completeWithTemplate(String feature, String draftType, ResolvedPromptTemplate template,
+                                        Map<String, String> context, String imageMimeType, String imageBase64Data) {
         UUID companyId = currentUserProvider.requireCompanyId();
         DecryptedAiProviderConfig config = providerConfigService.resolveDecrypted(companyId);
-        ResolvedPromptTemplate template = promptTemplateService.resolve(draftType, companyId);
 
         Map<String, String> fullContext = new HashMap<>(context);
         fullContext.putAll(companyIdentityFields(companyId));
@@ -82,7 +99,7 @@ public class AiDraftService {
 
         try {
             AiCompletionResult result = providerClientFactory.forProvider(config.provider())
-                    .complete(config.apiKey(), config.model(), systemPrompt, userPrompt);
+                    .complete(config.apiKey(), config.model(), systemPrompt, userPrompt, imageMimeType, imageBase64Data);
             logUsage(companyId, feature, draftType, config, result.inputTokens(), result.outputTokens(), true, null);
             return result.text();
         } catch (AiProviderException e) {

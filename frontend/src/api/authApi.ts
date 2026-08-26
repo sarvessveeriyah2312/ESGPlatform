@@ -26,6 +26,8 @@ export interface MeResponse {
   hasAvatar: boolean;
   mfaSetupRequired: boolean;
   permissions: string[];
+  trialEndsAt: string | null;
+  trialConverted: boolean;
 }
 
 export interface AuthResponse {
