@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**EsgEasy** — a frontend-only ESG (Environmental, Social & Governance) reporting SaaS for Bursa Malaysia compliance. Scaffolded from Google AI Studio. The `backend/` directory is currently empty; all logic lives in `frontend/`.
+**EsgEasy** — an ESG (Environmental, Social & Governance) reporting SaaS for Bursa Malaysia compliance. Frontend scaffolded from Google AI Studio, backed by a real Spring Boot service in `backend/` (Java, `pom.xml`, Docker) with REST controllers for auth, billing/Stripe, MFA, indicators, materiality, governance, IFRS S1/S2 & emissions, assurance, exports, support tickets, tenant/platform admin, and more.
 
 ## Commands
 
@@ -44,7 +44,7 @@ PlanProvider
 
 ### Auth
 
-`AuthContext.tsx` is entirely localStorage-based (no real backend). Login accepts any email; the onboarding market selection determines the initial plan tier (SME → starter, ACE Market → growth, Main Market → issuer-ready). Default sandbox user is `sarvesh@esgeasy.my`.
+`AuthContext.tsx` holds no `localStorage` calls — it drives auth entirely through `authApi` (JWT via `tokenStore`) against the real backend. The onboarding market selection determines the initial plan tier (SME → starter, ACE Market → growth, Main Market → issuer-ready). Default sandbox user is `sarvesh@esgeasy.my`.
 
 ### Route structure
 
@@ -57,4 +57,4 @@ PlanProvider
 
 `AuthenticatedLayout` in `App.tsx` renders the collapsible sidebar + `AuthTopBar` + scrollable main content. It reads `usePlan()` and `useAuth()` directly to control which nav items appear.
 
-Reusable primitives are in `src/components/ui/`. Feature views are flat in `src/components/`. Placeholder views that share a file live in `PlaceholderViews.tsx` (`TargetsView`, `ClimateModuleView`, `CsiExportView`, `TeamView`, `BillingView`, `SettingsView`).
+Reusable primitives are in `src/components/ui/`. Feature views are flat in `src/components/`, each backed by a real API client in `src/api/`. `PlaceholderViews.tsx` — despite the filename — now only holds two real, API-wired views: `BillingView` (Stripe checkout/plan-change/invoices) and `SettingsView` (tabs container, including the inline `ProfileTab`/`SmtpSettingsTab`).

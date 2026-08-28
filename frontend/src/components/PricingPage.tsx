@@ -412,7 +412,7 @@ export default function PricingPage({ onNavigateToDashboard, onNavigateToFeature
                     </li>
                     <li className="flex items-start text-xs text-navy-700">
                       <Check className="w-4 h-4 text-purple-500 mr-2.5 shrink-0 mt-0.5" />
-                      <span>CSI-compatible JSON export formats</span>
+                      <span>CSI-ready export summarising your Common Sustainability Matters data</span>
                     </li>
                   </ul>
                 </div>

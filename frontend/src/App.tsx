@@ -188,8 +188,8 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
 
   const managementsItems = [
     { key: 'governance', label: 'Compliance', icon: <ShieldCheck className="w-4 h-4" />, path: '/governance', gated: true },
-    { key: 'ifrs-s1-s2', label: 'IFRS S1/S2', icon: <Globe className="w-4 h-4" />, path: '/ifrs-s1-s2', premiumOnly: true },
-    { key: 'assurance-workspace', label: 'Assurance Workspace', icon: <Lock className="w-4 h-4" />, path: '/assurance-workspace', premiumOnly: true },
+    { key: 'ifrs-s1-s2', label: 'IFRS S1/S2', icon: <Globe className="w-4 h-4" />, path: '/ifrs-s1-s2', gated: true, premiumOnly: true },
+    { key: 'assurance-workspace', label: 'Assurance Workspace', icon: <Lock className="w-4 h-4" />, path: '/assurance-workspace', gated: true, premiumOnly: true },
     { key: 'api-access', label: 'API Access', icon: <KeyRound className="w-4 h-4" />, path: '/api-access' },
     { key: 'team', label: 'Team', icon: <Users className="w-4 h-4" />, path: '/team', requiresAnyPermission: ['team.view', 'team.manage', 'roles.view', 'roles.manage'] },
     { key: 'audit-log', label: 'Audit Log', icon: <ScrollText className="w-4 h-4" />, path: '/audit-log', requiresAnyPermission: ['audit_log.view'] },

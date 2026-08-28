@@ -48,48 +48,6 @@ import NotificationsTab from './settings/NotificationsTab';
 import AiSettingsTab from './settings/AiSettingsTab';
 import PromptLibraryTab from './settings/PromptLibraryTab';
 
-// 1. MATERIALITY ASSESSMENT
-export function MaterialityAssessmentView() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-gray-900">Materiality Assessment</h3>
-        <p className="text-xs text-gray-500 mt-1">Determine the ESG matters of greatest significance to your operations and stakeholders.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card padded="lg" className="bg-white border-gray-100 flex flex-col justify-between">
-          <div className="space-y-4">
-            <span className="text-[10px] font-bold text-primary-600 uppercase tracking-wider bg-primary-50 px-2 py-0.5 rounded border border-primary-100 inline-block">Double Materiality</span>
-            <h4 className="text-sm font-bold text-gray-900">Stakeholder Survey Status</h4>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Conduct surveys automatically to map stakeholder concerns against commercial and climate risk factors. Automatically generates materiality matrix curves compliant with Bursa guidelines.
-            </p>
-          </div>
-          <div className="border-t border-gray-50 pt-4 mt-6 flex items-center justify-between text-xs">
-            <span className="text-gray-500 font-medium">Completed surveys: <strong className="text-gray-900">14 / 20</strong></span>
-            <Button variant="primary" size="sm">Manage Surveys</Button>
-          </div>
-        </Card>
-
-        <Card padded="lg" className="bg-white border-gray-100 flex flex-col justify-between">
-          <div className="space-y-4">
-            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 inline-block">Matrix Mapping</span>
-            <h4 className="text-sm font-bold text-gray-900">Materiality Matrix</h4>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Visualize your top-priority economic, environmental, and social disclosures mapped across twin axes: stakeholder significance and corporate impact.
-            </p>
-          </div>
-          <div className="border-t border-gray-50 pt-4 mt-6 flex items-center justify-between text-xs">
-            <span className="text-gray-500 font-medium">Priority ESG topics: <strong className="text-gray-900">9 Matters</strong></span>
-            <Button variant="secondary" size="sm">View Matrix Plot</Button>
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
 // 2. GOVERNANCE (Gated for Starter - Moved to separate component)
 
 // 3. INDICATORS (Moved to separate component)
@@ -117,7 +75,7 @@ const PLAN_COPY: Record<PlanType, { title: string; subtitle: string; description
   'issuer-ready': {
     title: 'Issuer-Ready',
     subtitle: 'Listed Corporations',
-    description: 'Complete IFRS Scope 3, assurance logs, and direct uploads to Bursa’s Centralised Intelligence (CSI) system.',
+    description: 'Complete IFRS Scope 3, assurance logs, and CSI-ready exports for Bursa’s Centralised Sustainability Intelligence (CSI) platform.',
     accent: 'border-purple-500',
     ring: 'ring-purple-500/30',
     badge: 'text-purple-700 bg-purple-50 border-purple-200'
@@ -575,16 +533,6 @@ export function SettingsView() {
           })}
         </nav>
       </div>
-
-      {activeTab !== 'profile' && activeTab !== 'smtp' && activeTab !== 'security' && activeTab !== 'company' && activeTab !== 'privacy' && activeTab !== 'notifications' && activeTab !== 'billing' && activeTab !== 'ai' && activeTab !== 'prompts' && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
-            {React.createElement(SETTINGS_TABS.find((t) => t.id === activeTab)!.icon, { className: 'w-5 h-5 text-gray-400' })}
-          </div>
-          <h3 className="text-sm font-bold text-gray-900">{SETTINGS_TABS.find((t) => t.id === activeTab)!.label}</h3>
-          <p className="text-xs text-gray-500 max-w-sm">This section is coming soon.</p>
-        </div>
-      )}
 
       {activeTab === 'profile' && <ProfileTab />}
       {activeTab === 'security' && <SecuritySettingsTab />}

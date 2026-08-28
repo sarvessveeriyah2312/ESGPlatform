@@ -32,7 +32,7 @@ export const FEATURE_LABELS: Record<string, { name: string; description: string 
   'ifrs-s1-s2': { name: 'IFRS S1/S2', description: 'Climate-related risk reporting aligned to global IFRS standards.' },
   'climate-module': { name: 'Climate Module', description: 'Scope 1, 2 & 3 GHG calculations and analytics.' },
   'assurance-workspace': { name: 'Assurance Workspace', description: 'Audit-ready trails for external assurance providers.' },
-  'csi-export': { name: 'CSI Export', description: 'Direct integration and export to Bursa Malaysia\'s CSI portal.' },
+  'csi-export': { name: 'CSI Export', description: 'CSI-ready summary of Common Sustainability Matters and IFRS S2 data, formatted for manual entry into Bursa Malaysia\'s CSI platform.' },
 };
 
 // Client-computed monthly price per plan tier — there's no billing/invoice table backing this,
