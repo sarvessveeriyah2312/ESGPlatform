@@ -45,6 +45,7 @@ public class IndicatorController {
     }
 
     @PatchMapping("/{indicatorId}/values/{fiscalYear}")
+    @PreAuthorize("@perm.check('indicators.edit')")
     public IndicatorResponse setValue(@PathVariable String indicatorId,
                                        @PathVariable int fiscalYear,
                                        @Valid @RequestBody SetIndicatorValueRequest request) {
@@ -52,6 +53,7 @@ public class IndicatorController {
     }
 
     @PatchMapping("/{indicatorId}/monthly/{fiscalYear}/{month}")
+    @PreAuthorize("@perm.check('indicators.edit')")
     public IndicatorResponse setMonthlyValue(@PathVariable String indicatorId,
                                               @PathVariable int fiscalYear,
                                               @PathVariable @Min(1) @Max(12) int month,
@@ -60,6 +62,7 @@ public class IndicatorController {
     }
 
     @PatchMapping("/{indicatorId}/target")
+    @PreAuthorize("@perm.check('indicators.edit')")
     public IndicatorResponse setTarget(@PathVariable String indicatorId,
                                         @Valid @RequestBody SetIndicatorTargetRequest request) {
         return indicatorService.setTarget(indicatorId, request);

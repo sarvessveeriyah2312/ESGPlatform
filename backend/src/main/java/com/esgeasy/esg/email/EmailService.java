@@ -34,23 +34,32 @@ public class EmailService {
     private final CompanyEmailSettingsRepository companyEmailSettingsRepository;
     private final PlatformSettingsRepository platformSettingsRepository;
     private final SecretCryptoService cryptoService;
+    private final SmtpHostValidator smtpHostValidator;
 
     public EmailService(JavaMailSender platformMailSender,
                          @Value("${esgeasy.mail.from}") String platformFromAddress,
                          @Value("${spring.mail.host:}") String platformMailHost,
                          CompanyEmailSettingsRepository companyEmailSettingsRepository,
                          PlatformSettingsRepository platformSettingsRepository,
-                         SecretCryptoService cryptoService) {
+                         SecretCryptoService cryptoService,
+                         SmtpHostValidator smtpHostValidator) {
         this.platformMailSender = platformMailSender;
         this.platformFromAddress = platformFromAddress;
         this.platformConfigured = platformMailHost != null && !platformMailHost.isBlank();
         this.companyEmailSettingsRepository = companyEmailSettingsRepository;
         this.platformSettingsRepository = platformSettingsRepository;
         this.cryptoService = cryptoService;
+        this.smtpHostValidator = smtpHostValidator;
     }
 
     public void sendInviteEmail(UUID companyId, String toEmail, String toName, String companyName, String inviterName, Object role, String inviteUrl) {
-        Sender sender = resolveSender(companyId);
+        Sender sender;
+        try {
+            sender = resolveSender(companyId);
+        } catch (Exception e) {
+            log.warn("Invalid SMTP settings for company {} — skipping invite email to {}: {}", companyId, toEmail, e.getMessage());
+            return;
+        }
         if (sender == null) {
             log.info("No SMTP configured for company {} or the platform — skipping invite email to {}; share the invite link manually.", companyId, toEmail);
             return;
@@ -74,7 +83,13 @@ public class EmailService {
     }
 
     public void sendVerificationEmail(UUID companyId, String toEmail, String toName, String verifyUrl) {
-        Sender sender = resolveSender(companyId);
+        Sender sender;
+        try {
+            sender = resolveSender(companyId);
+        } catch (Exception e) {
+            log.warn("Invalid SMTP settings for company {} — skipping verification email to {}: {}", companyId, toEmail, e.getMessage());
+            return;
+        }
         if (sender == null) {
             log.info("No SMTP configured for company {} or the platform — skipping verification email to {}; verify link: {}", companyId, toEmail, verifyUrl);
             return;
@@ -97,7 +112,13 @@ public class EmailService {
     }
 
     public void sendPasswordResetEmail(UUID companyId, String toEmail, String toName, String resetUrl) {
-        Sender sender = resolveSender(companyId);
+        Sender sender;
+        try {
+            sender = resolveSender(companyId);
+        } catch (Exception e) {
+            log.warn("Invalid SMTP settings for company {} — skipping password reset email to {}: {}", companyId, toEmail, e.getMessage());
+            return;
+        }
         if (sender == null) {
             log.info("No SMTP configured for company {} or the platform — skipping password reset email to {}; reset link: {}", companyId, toEmail, resetUrl);
             return;
@@ -178,6 +199,11 @@ public class EmailService {
     }
 
     private JavaMailSenderImpl buildSender(SmtpConfig config) {
+        // SSRF guard — config.host() is attacker/tenant-controlled (CompanyEmailSettings) or
+        // admin-controlled (PlatformSettings), unlike the env-var-configured platformMailSender
+        // above, so it must be validated before this backend ever opens a socket to it.
+        smtpHostValidator.assertPubliclyRoutable(config.host());
+
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
         sender.setHost(config.host());
         sender.setPort(config.port());

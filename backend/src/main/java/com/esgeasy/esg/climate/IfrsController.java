@@ -40,32 +40,38 @@ public class IfrsController {
     }
 
     @PostMapping("/s1/segments")
+    @PreAuthorize("@perm.check('ifrs.edit')")
     public ResponseEntity<BusinessSegmentResponse> createSegment(@Valid @RequestBody CreateSegmentRequest request) {
         return ResponseEntity.ok(ifrsService.createSegment(request));
     }
 
     @PutMapping("/s1/segments/{segmentId}")
+    @PreAuthorize("@perm.check('ifrs.edit')")
     public BusinessSegmentResponse renameSegment(@PathVariable UUID segmentId, @Valid @RequestBody CreateSegmentRequest request) {
         return ifrsService.renameSegment(segmentId, request);
     }
 
     @DeleteMapping("/s1/segments/{segmentId}")
+    @PreAuthorize("@perm.check('ifrs.edit')")
     public ResponseEntity<Void> deleteSegment(@PathVariable UUID segmentId) {
         ifrsService.deleteSegment(segmentId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/s1/segments/{segmentId}/items")
+    @PreAuthorize("@perm.check('ifrs.edit')")
     public ResponseEntity<S1ItemResponse> addItem(@PathVariable UUID segmentId, @Valid @RequestBody UpsertS1ItemRequest request) {
         return ResponseEntity.ok(ifrsService.addItem(segmentId, request));
     }
 
     @PutMapping("/s1/items/{itemId}")
+    @PreAuthorize("@perm.check('ifrs.edit')")
     public S1ItemResponse updateItem(@PathVariable UUID itemId, @Valid @RequestBody UpsertS1ItemRequest request) {
         return ifrsService.updateItem(itemId, request);
     }
 
     @DeleteMapping("/s1/items/{itemId}")
+    @PreAuthorize("@perm.check('ifrs.edit')")
     public ResponseEntity<Void> deleteItem(@PathVariable UUID itemId) {
         ifrsService.deleteItem(itemId);
         return ResponseEntity.noContent().build();
@@ -77,6 +83,7 @@ public class IfrsController {
     }
 
     @PutMapping("/s1/disclosure")
+    @PreAuthorize("@perm.check('ifrs.edit')")
     public IfrsS1DisclosureResponse updateS1Disclosure(@Valid @RequestBody UpdateIfrsS1DisclosureRequest request) {
         return ifrsService.updateS1Disclosure(request);
     }
@@ -87,6 +94,7 @@ public class IfrsController {
     }
 
     @PutMapping("/s2")
+    @PreAuthorize("@perm.check('ifrs.edit')")
     public IfrsS2Response updateS2(@Valid @RequestBody UpdateIfrsS2Request request) {
         return ifrsService.updateS2(request);
     }

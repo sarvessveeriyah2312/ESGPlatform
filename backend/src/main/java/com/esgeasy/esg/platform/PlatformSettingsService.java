@@ -2,6 +2,7 @@ package com.esgeasy.esg.platform;
 
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.email.EmailService;
+import com.esgeasy.esg.email.SmtpHostValidator;
 import com.esgeasy.esg.email.dto.TestEmailResponse;
 import com.esgeasy.esg.platform.dto.PlatformSettingsResponse;
 import com.esgeasy.esg.platform.dto.UpdatePlatformSettingsRequest;
@@ -24,6 +25,7 @@ public class PlatformSettingsService {
     private final CurrentUserProvider currentUserProvider;
     private final SecretCryptoService cryptoService;
     private final EmailService emailService;
+    private final SmtpHostValidator smtpHostValidator;
     private final String defaultAppBaseUrl;
     private final long sessionExpirationMinutes;
 
@@ -32,6 +34,7 @@ public class PlatformSettingsService {
                                     CurrentUserProvider currentUserProvider,
                                     SecretCryptoService cryptoService,
                                     EmailService emailService,
+                                    SmtpHostValidator smtpHostValidator,
                                     JwtProperties jwtProperties,
                                     @Value("${esgeasy.app.base-url}") String defaultAppBaseUrl) {
         this.repository = repository;
@@ -39,6 +42,7 @@ public class PlatformSettingsService {
         this.currentUserProvider = currentUserProvider;
         this.cryptoService = cryptoService;
         this.emailService = emailService;
+        this.smtpHostValidator = smtpHostValidator;
         this.defaultAppBaseUrl = defaultAppBaseUrl;
         this.sessionExpirationMinutes = jwtProperties.getExpirationMinutes();
     }
@@ -87,6 +91,9 @@ public class PlatformSettingsService {
             }
         }
 
+        if (request.smtpHost() != null && !request.smtpHost().isBlank()) {
+            smtpHostValidator.assertPubliclyRoutable(request.smtpHost());
+        }
         settings.setSmtpHost(request.smtpHost());
         settings.setSmtpPort(request.smtpPort());
         settings.setSmtpUsername(request.smtpUsername());

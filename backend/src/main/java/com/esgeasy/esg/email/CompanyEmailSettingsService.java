@@ -22,17 +22,20 @@ public class CompanyEmailSettingsService {
     private final AppUserRepository appUserRepository;
     private final SecretCryptoService cryptoService;
     private final EmailService emailService;
+    private final SmtpHostValidator smtpHostValidator;
 
     public CompanyEmailSettingsService(CompanyEmailSettingsRepository repository,
                                         CurrentUserProvider currentUserProvider,
                                         AppUserRepository appUserRepository,
                                         SecretCryptoService cryptoService,
-                                        EmailService emailService) {
+                                        EmailService emailService,
+                                        SmtpHostValidator smtpHostValidator) {
         this.repository = repository;
         this.currentUserProvider = currentUserProvider;
         this.appUserRepository = appUserRepository;
         this.cryptoService = cryptoService;
         this.emailService = emailService;
+        this.smtpHostValidator = smtpHostValidator;
     }
 
     @Transactional(readOnly = true)
@@ -58,6 +61,7 @@ public class CompanyEmailSettingsService {
             throw new IllegalArgumentException("Password is required when configuring SMTP for the first time");
         }
 
+        smtpHostValidator.assertPubliclyRoutable(request.smtpHost());
         settings.setSmtpHost(request.smtpHost());
         settings.setSmtpPort(request.smtpPort());
         settings.setSmtpUsername(request.smtpUsername());

@@ -1,13 +1,16 @@
 package com.esgeasy.esg.permission;
 
 import com.esgeasy.esg.common.exceptions.ConflictException;
+import com.esgeasy.esg.common.exceptions.ForbiddenException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.permission.dto.CreateCustomRoleRequest;
 import com.esgeasy.esg.permission.dto.CustomRoleResponse;
 import com.esgeasy.esg.permission.dto.UpdateCustomRoleRequest;
 import com.esgeasy.esg.security.CurrentUserProvider;
 import com.esgeasy.esg.tenant.TeamInviteRepository;
+import com.esgeasy.esg.user.AppUser;
 import com.esgeasy.esg.user.AppUserRepository;
+import com.esgeasy.esg.user.Role;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -113,6 +116,27 @@ public class CustomRoleService {
         if (!unknown.isEmpty()) {
             throw new IllegalArgumentException("Unknown permission key(s): " + unknown);
         }
+
+        // Privilege-escalation guard: a role can never grant more than its creator/editor already
+        // holds — otherwise a user delegated only 'roles.manage' could mint a role with every
+        // permission that exists (e.g. billing.manage) and hand it to another account. COMPANY_ADMIN
+        // is exempt since it implicitly holds every permission (see PermissionGateService).
+        if (currentUserProvider.getPrincipal().role() != Role.COMPANY_ADMIN) {
+            Set<String> callerKeys = callerPermissionKeys();
+            List<String> notHeld = requestedKeys.stream().filter(k -> !callerKeys.contains(k)).toList();
+            if (!notHeld.isEmpty()) {
+                throw new ForbiddenException("Cannot grant permission(s) you don't hold yourself: " + notHeld);
+            }
+        }
+
         return List.copyOf(Set.copyOf(requestedKeys));
+    }
+
+    private Set<String> callerPermissionKeys() {
+        AppUser user = appUserRepository.findById(currentUserProvider.getPrincipal().userId()).orElse(null);
+        if (user == null || user.getCustomRole() == null) {
+            return Set.of();
+        }
+        return Set.copyOf(user.getCustomRole().getPermissionKeys());
     }
 }

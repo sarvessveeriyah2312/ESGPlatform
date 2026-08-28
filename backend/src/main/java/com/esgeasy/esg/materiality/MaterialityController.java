@@ -42,16 +42,19 @@ public class MaterialityController {
     }
 
     @PostMapping("/stakeholder-options")
+    @PreAuthorize("@perm.check('materiality.edit')")
     public ResponseEntity<StakeholderOptionResponse> addStakeholder(@Valid @RequestBody AddStakeholderRequest request) {
         return ResponseEntity.ok(materialityService.addStakeholder(request));
     }
 
     @PatchMapping("/stakeholder-options/{id}")
+    @PreAuthorize("@perm.check('materiality.edit')")
     public StakeholderOptionResponse toggleStakeholder(@PathVariable UUID id, @Valid @RequestBody ToggleStakeholderRequest request) {
         return materialityService.toggleStakeholder(id, request);
     }
 
     @DeleteMapping("/stakeholder-options/{id}")
+    @PreAuthorize("@perm.check('materiality.edit')")
     public ResponseEntity<Void> deleteStakeholder(@PathVariable UUID id) {
         materialityService.deleteStakeholder(id);
         return ResponseEntity.noContent().build();
@@ -76,6 +79,7 @@ public class MaterialityController {
     }
 
     @PostMapping("/assessments")
+    @PreAuthorize("@perm.check('materiality.edit')")
     public ResponseEntity<AssessmentDetailResponse> createAssessment(@Valid @RequestBody CreateAssessmentRequest request) {
         return ResponseEntity.ok(materialityService.createAssessment(request));
     }

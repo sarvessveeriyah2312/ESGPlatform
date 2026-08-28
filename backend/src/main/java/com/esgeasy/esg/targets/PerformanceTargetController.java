@@ -39,16 +39,19 @@ public class PerformanceTargetController {
     }
 
     @PostMapping
+    @PreAuthorize("@perm.check('targets.edit')")
     public ResponseEntity<PerformanceTargetResponse> create(@Valid @RequestBody UpsertPerformanceTargetRequest request) {
         return ResponseEntity.ok(service.create(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@perm.check('targets.edit')")
     public PerformanceTargetResponse update(@PathVariable UUID id, @Valid @RequestBody UpsertPerformanceTargetRequest request) {
         return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@perm.check('targets.edit')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

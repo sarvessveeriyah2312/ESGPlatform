@@ -1,5 +1,6 @@
 package com.esgeasy.esg.mfa;
 
+import com.esgeasy.esg.common.exceptions.ConflictException;
 import com.esgeasy.esg.common.exceptions.ForbiddenException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.mfa.dto.BackupCodesResponse;
@@ -69,6 +70,15 @@ public class MfaService {
     @Transactional
     public TotpEnrollResponse enroll() {
         UUID userId = currentUserProvider.getPrincipal().userId();
+
+        // Mirrors disable()'s own precondition (2FA must be enabled) in reverse: enrolling is
+        // only for setting up a *first* factor. A bare bearer token must never be enough to
+        // silently overwrite and disable an already-active one — that requires disable()'s
+        // password+code reauth first, same as any other change to an active factor.
+        if (totpSecretRepository.findByUserIdAndEnabledTrue(userId).isPresent()) {
+            throw new ConflictException("Two-factor authentication is already enabled — disable it first before enrolling a new authenticator.");
+        }
+
         String email = currentUserProvider.getPrincipal().email();
         String secret = secretGenerator.generate();
 
