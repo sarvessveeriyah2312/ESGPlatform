@@ -57,8 +57,25 @@ interface ActivityItem {
   fiscalYear: number;
 }
 
+// SUM/AVERAGE/COUNT indicators build their annual figure up from monthly entries across the
+// year — judging a still-in-progress total against the full annual target (e.g. flagging a
+// training-hours target "breached" in March because only 3 of 12 months are logged yet) would
+// misreport a metric that's merely incomplete as one that's failing. LATEST (point-in-time
+// snapshots like headcount) and DIRECT_ANNUAL (a single figure typed directly) have no such
+// partial state — the reported value is always the customer's current, final answer.
+function isAnnualValueComplete(indicator: IndicatorResponse): boolean {
+  if (indicator.aggregationRule === 'LATEST' || indicator.aggregationRule === 'DIRECT_ANNUAL') return true;
+  const monthsReported = new Set(
+    indicator.monthlyValues
+      .filter((m) => m.fiscalYear === CURRENT_FISCAL_YEAR && m.value !== null)
+      .map((m) => m.month)
+  ).size;
+  return monthsReported >= 12;
+}
+
 function isBreachingTarget(indicator: IndicatorResponse, currentValue: number): boolean {
   if (indicator.effectiveTarget === null || indicator.effectiveTarget === undefined) return false;
+  if (!isAnnualValueComplete(indicator)) return false;
   return indicator.effectiveTargetDirection === 'DOWN'
     ? currentValue > indicator.effectiveTarget
     : currentValue < indicator.effectiveTarget;

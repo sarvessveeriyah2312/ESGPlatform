@@ -574,6 +574,11 @@ function ProfileTab() {
   const [avatarError, setAvatarError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Guards against an earlier, slower save request resolving after a later one and clobbering
+  // its result — e.g. a stale error landing on top of an already-shown "Profile saved." success
+  // — by only ever applying the outcome of the most recently *issued* request.
+  const saveRequestId = useRef(0);
+
   useEffect(() => {
     if (!user?.hasAvatar) {
       setAvatarUrl(null);
@@ -592,6 +597,7 @@ function ProfileTab() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const requestId = ++saveRequestId.current;
     setSaving(true);
     setSaveMessage(null);
     try {
@@ -603,11 +609,17 @@ function ProfileTab() {
         address,
         bio
       });
-      setSaveMessage({ type: 'success', text: 'Profile saved.' });
+      if (saveRequestId.current === requestId) {
+        setSaveMessage({ type: 'success', text: 'Profile saved.' });
+      }
     } catch (err: any) {
-      setSaveMessage({ type: 'error', text: err?.message || 'Failed to save profile.' });
+      if (saveRequestId.current === requestId) {
+        setSaveMessage({ type: 'error', text: err?.message || 'Failed to save profile.' });
+      }
     } finally {
-      setSaving(false);
+      if (saveRequestId.current === requestId) {
+        setSaving(false);
+      }
     }
   };
 
