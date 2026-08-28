@@ -49,16 +49,16 @@ public class SupportTicketController {
 
     @PatchMapping("/{id}/note")
     public SupportTicketResponse updateNote(@PathVariable UUID id, @Valid @RequestBody UpdateTicketNoteRequest request) {
-        return supportTicketService.updateNote(id, request);
+        return supportTicketService.updateNoteForCurrentCompany(id, request);
     }
 
     @GetMapping("/{id}/messages")
     public List<TicketMessageResponse> listMessages(@PathVariable UUID id) {
-        return ticketMessageService.listMessages(id);
+        return ticketMessageService.listMessagesForCurrentCompany(id);
     }
 
     @PostMapping("/{id}/messages")
     public TicketMessageResponse postMessage(@PathVariable UUID id, @Valid @RequestBody CreateTicketMessageRequest request) {
-        return ticketMessageService.postMessage(id, request);
+        return ticketMessageService.postMessageForCurrentCompany(id, request);
     }
 }

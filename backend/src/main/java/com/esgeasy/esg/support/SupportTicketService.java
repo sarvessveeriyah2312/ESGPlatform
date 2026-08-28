@@ -102,13 +102,37 @@ public class SupportTicketService {
         return toResponse(supportTicketRepository.save(ticket));
     }
 
-    /** The note is shared between the company and platform admin — either side may edit it. */
+    /**
+     * The note is shared between the company and platform admin — either side may edit it.
+     * Platform-admin use only (SupportTicketAdminController is role-gated) — deliberately not
+     * company-scoped, since admins manage every tenant's tickets. Tenant-facing edits must go
+     * through {@link #updateNoteForCurrentCompany} instead.
+     */
     @Transactional
     public SupportTicketResponse updateNote(UUID id, UpdateTicketNoteRequest request) {
         SupportTicket ticket = supportTicketRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Ticket not found"));
         ticket.setNote(request.note());
         return toResponse(supportTicketRepository.save(ticket));
+    }
+
+    /** Tenant-facing use (SupportTicketController) — the ticket must belong to the caller's own company. */
+    @Transactional
+    public SupportTicketResponse updateNoteForCurrentCompany(UUID id, UpdateTicketNoteRequest request) {
+        SupportTicket ticket = requireOwnedTicket(id);
+        ticket.setNote(request.note());
+        return toResponse(supportTicketRepository.save(ticket));
+    }
+
+    /** Same lookup {@link #updateStatus} etc. use, plus a same-company check — the tenant-facing entry point into this service. */
+    private SupportTicket requireOwnedTicket(UUID id) {
+        SupportTicket ticket = supportTicketRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Ticket not found"));
+        UUID companyId = currentUserProvider.requireCompanyId();
+        if (!companyId.equals(ticket.getCompanyId())) {
+            throw new NotFoundException("Ticket not found");
+        }
+        return ticket;
     }
 
     private SupportTicketResponse toResponse(SupportTicket ticket) {

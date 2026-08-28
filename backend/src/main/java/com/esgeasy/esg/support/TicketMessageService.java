@@ -30,25 +30,48 @@ public class TicketMessageService {
         this.currentUserProvider = currentUserProvider;
     }
 
+    /** Platform-admin use only (SupportTicketAdminController is role-gated to PLATFORM_ADMIN/SUPERADMIN) — deliberately not company-scoped, since admins manage every tenant's tickets. */
     @Transactional(readOnly = true)
     public List<TicketMessageResponse> listMessages(UUID ticketId) {
         requireTicket(ticketId);
+        return fetchMessages(ticketId);
+    }
+
+    /** Tenant-facing use (SupportTicketController) — the ticket must belong to the caller's own company. */
+    @Transactional(readOnly = true)
+    public List<TicketMessageResponse> listMessagesForCurrentCompany(UUID ticketId) {
+        requireOwnedTicket(ticketId);
+        return fetchMessages(ticketId);
+    }
+
+    /** Platform-admin use only — see {@link #listMessages}. */
+    @Transactional
+    public TicketMessageResponse postMessage(UUID ticketId, CreateTicketMessageRequest request) {
+        SupportTicket ticket = requireTicket(ticketId);
+        return saveMessage(ticket, request);
+    }
+
+    /** Tenant-facing use — see {@link #listMessagesForCurrentCompany}. */
+    @Transactional
+    public TicketMessageResponse postMessageForCurrentCompany(UUID ticketId, CreateTicketMessageRequest request) {
+        SupportTicket ticket = requireOwnedTicket(ticketId);
+        return saveMessage(ticket, request);
+    }
+
+    private List<TicketMessageResponse> fetchMessages(UUID ticketId) {
         return ticketMessageRepository.findByTicketIdOrderByCreatedAtAsc(ticketId).stream()
                 .map(TicketMessageResponse::from)
                 .toList();
     }
 
-    @Transactional
-    public TicketMessageResponse postMessage(UUID ticketId, CreateTicketMessageRequest request) {
-        SupportTicket ticket = requireTicket(ticketId);
-
+    private TicketMessageResponse saveMessage(SupportTicket ticket, CreateTicketMessageRequest request) {
         UUID userId = currentUserProvider.getPrincipal().userId();
         AppUser sender = appUserRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         TicketMessage message = new TicketMessage();
         message.setCompanyId(ticket.getCompanyId());
-        message.setTicketId(ticketId);
+        message.setTicketId(ticket.getId());
         message.setSender(sender);
         message.setMessage(request.message());
 
@@ -58,5 +81,15 @@ public class TicketMessageService {
     private SupportTicket requireTicket(UUID ticketId) {
         return supportTicketRepository.findById(ticketId)
                 .orElseThrow(() -> new NotFoundException("Ticket not found"));
+    }
+
+    /** Same lookup as {@link #requireTicket}, plus a same-company check — the tenant-facing entry point into this service. */
+    private SupportTicket requireOwnedTicket(UUID ticketId) {
+        SupportTicket ticket = requireTicket(ticketId);
+        UUID companyId = currentUserProvider.requireCompanyId();
+        if (!companyId.equals(ticket.getCompanyId())) {
+            throw new NotFoundException("Ticket not found");
+        }
+        return ticket;
     }
 }
