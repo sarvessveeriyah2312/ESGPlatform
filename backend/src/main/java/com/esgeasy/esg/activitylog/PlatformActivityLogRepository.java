@@ -10,4 +10,7 @@ public interface PlatformActivityLogRepository extends JpaRepository<PlatformAct
     List<PlatformActivityLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     List<PlatformActivityLog> findByCompanyIdOrderByCreatedAtDesc(UUID companyId, Pageable pageable);
+
+    /** Backs the partner console's Audit Log tab — every company linked to one partner. */
+    List<PlatformActivityLog> findByCompanyIdInOrderByCreatedAtDesc(List<UUID> companyIds, Pageable pageable);
 }

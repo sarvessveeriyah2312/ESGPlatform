@@ -60,6 +60,26 @@ public class PlatformActivityLogService {
         return toResponse(log);
     }
 
+    /** Partner console's Audit Log tab — companyIds resolved by the caller (PartnerService), same "take the ids, don't resolve them yourself" shape as {@link #listRecentForCompany}. */
+    @Transactional(readOnly = true)
+    public List<ActivityLogResponse> listRecentForCompanies(List<UUID> companyIds, Integer limit) {
+        if (companyIds.isEmpty()) {
+            return List.of();
+        }
+        return repository.findByCompanyIdInOrderByCreatedAtDesc(companyIds, PageRequest.of(0, effectiveLimit(limit))).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    /** Same lookup as {@link #getById}, but 404s on an entry outside the given company set rather than leaking its existence. */
+    @Transactional(readOnly = true)
+    public ActivityLogResponse getByIdForCompanies(List<UUID> companyIds, UUID id) {
+        PlatformActivityLog log = repository.findById(id)
+                .filter(l -> companyIds.contains(l.getCompanyId()))
+                .orElseThrow(() -> new NotFoundException("Audit log entry not found"));
+        return toResponse(log);
+    }
+
     private int effectiveLimit(Integer limit) {
         return limit == null ? DEFAULT_LIMIT : Math.max(1, Math.min(limit, MAX_LIMIT));
     }

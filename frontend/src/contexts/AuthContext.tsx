@@ -10,6 +10,7 @@ import { tokenStore } from '../api/tokenStore';
 import { setUnauthorizedHandler } from '../api/client';
 import { planFromBackend, marketFromBackend, marketToBackend, FrontendMarket } from '../api/mappers';
 import { Role } from '../permissions';
+import { resolveSubdomainSlug } from '../hooks/useSubdomainBrand';
 
 export interface UserProfile {
   name: string;
@@ -149,7 +150,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; currentPlan: Pl
   }, []);
 
   const login = async (email: string, password: string, rememberMe: boolean): Promise<LoginOutcome> => {
-    const result = await authApi.login(email, password, rememberMe);
+    const partnerSlug = resolveSubdomainSlug(window.location.hostname);
+    const result = await authApi.login(email, password, rememberMe, partnerSlug);
     if (result.emailVerificationRequired) {
       return { status: 'email_verification_required', email };
     }

@@ -5,15 +5,19 @@
 
 import React, { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Building2, Palette, Percent, Users as UsersIcon, ChevronLeft, ChevronRight, LogOut, Hash } from 'lucide-react';
+import { LayoutDashboard, Building2, CreditCard, LifeBuoy, Percent, Users as UsersIcon, ScrollText, Settings as SettingsIcon, ChevronLeft, ChevronRight, LogOut, Hash } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { PartnerTab } from './constants';
 
 const NAV_ITEMS: { key: PartnerTab; label: string; icon: React.ReactNode; path: string }[] = [
-  { key: 'companies', label: 'Companies', icon: <Building2 className="w-4 h-4" />, path: '/partner' },
-  { key: 'branding', label: 'Branding', icon: <Palette className="w-4 h-4" />, path: '/partner/branding' },
+  { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, path: '/partner' },
+  { key: 'companies', label: 'Tenant Companies', icon: <Building2 className="w-4 h-4" />, path: '/partner/companies' },
+  { key: 'billing', label: 'Billing & Invoices', icon: <CreditCard className="w-4 h-4" />, path: '/partner/billing' },
+  { key: 'support', label: 'Feedback & Support', icon: <LifeBuoy className="w-4 h-4" />, path: '/partner/support' },
   { key: 'revenue', label: 'Revenue', icon: <Percent className="w-4 h-4" />, path: '/partner/revenue' },
   { key: 'users', label: 'Users', icon: <UsersIcon className="w-4 h-4" />, path: '/partner/users' },
+  { key: 'audit-log', label: 'Audit Log', icon: <ScrollText className="w-4 h-4" />, path: '/partner/audit-log' },
+  { key: 'settings', label: 'Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/partner/settings' },
 ];
 
 /**
@@ -116,7 +120,7 @@ export default function PartnerConsoleLayout({ children }: { children: React.Rea
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <header className="w-full flex items-center justify-between py-3 px-8 bg-white border-b border-gray-100 z-35 h-[72px] shrink-0">
-          <span className="text-sm font-semibold text-gray-900">{NAV_ITEMS.find((i) => i.path === location.pathname)?.label ?? 'Companies'}</span>
+          <span className="text-sm font-semibold text-gray-900">{NAV_ITEMS.find((i) => i.path === location.pathname)?.label ?? 'Dashboard'}</span>
           <div className="flex items-center space-x-3">
             <div className="text-right">
               <p className="text-xs font-bold text-gray-900 truncate max-w-[180px]">{user?.name}</p>

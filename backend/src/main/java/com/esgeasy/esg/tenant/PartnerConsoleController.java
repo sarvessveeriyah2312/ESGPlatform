@@ -1,13 +1,22 @@
 package com.esgeasy.esg.tenant;
 
+import com.esgeasy.esg.activitylog.ActivityLogResponse;
+import com.esgeasy.esg.billing.dto.InvoiceResponse;
+import com.esgeasy.esg.support.dto.CreateTicketMessageRequest;
+import com.esgeasy.esg.support.dto.SupportTicketResponse;
+import com.esgeasy.esg.support.dto.TicketMessageResponse;
+import com.esgeasy.esg.support.dto.UpdateTicketNoteRequest;
+import com.esgeasy.esg.support.dto.UpdateTicketStatusRequest;
 import com.esgeasy.esg.tenant.dto.CreatePartnerAdminUserRequest;
 import com.esgeasy.esg.tenant.dto.CreatePartnerAdminUserResponse;
 import com.esgeasy.esg.tenant.dto.PartnerBrandingResponse;
 import com.esgeasy.esg.tenant.dto.PartnerCompanySummaryResponse;
 import com.esgeasy.esg.tenant.dto.PartnerRevenueSummaryResponse;
+import com.esgeasy.esg.tenant.dto.PartnerSecuritySettingsResponse;
 import com.esgeasy.esg.tenant.dto.PartnerUserResponse;
 import com.esgeasy.esg.tenant.dto.StripeConnectLinkResponse;
 import com.esgeasy.esg.tenant.dto.UpdatePartnerBrandingRequest;
+import com.esgeasy.esg.tenant.dto.UpdatePartnerSecuritySettingsRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,11 +35,13 @@ import java.util.UUID;
 
 /**
  * A signed-in partner's own scoped self-service console (WHITELABEL_PLAN.md Phase 4, expanded):
- * its companies (read-only), its own branding, its Stripe Connect revenue-share status, and its
- * own team of PARTNER_ADMIN logins. Every method delegates to a {@code PartnerService} method that
- * resolves the caller's partner via {@code CurrentUserProvider.requirePartnerId()} — there is no
- * partnerId path variable anywhere here, unlike the platform-admin {@link PartnerController}, so a
- * partner can never reach into another partner's data by changing an id in the URL.
+ * its companies, its own branding, its Stripe Connect revenue-share status, its own team of
+ * PARTNER_ADMIN logins, billing history, audit log, and first-line support over its client
+ * companies' tickets (reply, note, claim/resolve). Every method delegates to a
+ * {@code PartnerService} method that resolves the caller's partner via
+ * {@code CurrentUserProvider.requirePartnerId()} — there is no partnerId path variable anywhere
+ * here, unlike the platform-admin {@link PartnerController}, so a partner can never reach into
+ * another partner's data by changing an id in the URL.
  */
 @RestController
 @RequestMapping("/api/v1/partner")
@@ -68,11 +79,6 @@ public class PartnerConsoleController {
         return partnerService.startMyStripeConnectOnboarding();
     }
 
-    @PostMapping("/stripe-connect/dashboard-link")
-    public StripeConnectLinkResponse stripeDashboardLink() {
-        return partnerService.createMyStripeDashboardLink();
-    }
-
     @GetMapping("/users")
     public List<PartnerUserResponse> users() {
         return partnerService.listMyUsers();
@@ -87,5 +93,55 @@ public class PartnerConsoleController {
     public ResponseEntity<Void> setUserActive(@PathVariable UUID userId, @RequestParam boolean active) {
         partnerService.setMyTeammateActive(userId, active);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/invoices")
+    public List<InvoiceResponse> invoices() {
+        return partnerService.listMyInvoices();
+    }
+
+    @GetMapping("/support-tickets")
+    public List<SupportTicketResponse> supportTickets() {
+        return partnerService.listMyTickets();
+    }
+
+    @GetMapping("/support-tickets/{ticketId}/messages")
+    public List<TicketMessageResponse> supportTicketMessages(@PathVariable UUID ticketId) {
+        return partnerService.listMyTicketMessages(ticketId);
+    }
+
+    @PostMapping("/support-tickets/{ticketId}/messages")
+    public TicketMessageResponse postSupportTicketMessage(@PathVariable UUID ticketId, @Valid @RequestBody CreateTicketMessageRequest request) {
+        return partnerService.postMyTicketMessage(ticketId, request.message());
+    }
+
+    @PatchMapping("/support-tickets/{ticketId}/status")
+    public SupportTicketResponse updateSupportTicketStatus(@PathVariable UUID ticketId, @Valid @RequestBody UpdateTicketStatusRequest request) {
+        return partnerService.updateMyTicketStatus(ticketId, request.status());
+    }
+
+    @PatchMapping("/support-tickets/{ticketId}/note")
+    public SupportTicketResponse updateSupportTicketNote(@PathVariable UUID ticketId, @RequestBody UpdateTicketNoteRequest request) {
+        return partnerService.updateMyTicketNote(ticketId, request.note());
+    }
+
+    @GetMapping("/audit-log")
+    public List<ActivityLogResponse> auditLog(@RequestParam(required = false) Integer limit) {
+        return partnerService.listMyActivityLog(limit);
+    }
+
+    @GetMapping("/audit-log/{id}")
+    public ActivityLogResponse auditLogEntry(@PathVariable UUID id) {
+        return partnerService.getMyActivityLogEntry(id);
+    }
+
+    @GetMapping("/security-settings")
+    public PartnerSecuritySettingsResponse securitySettings() {
+        return partnerService.getMySecuritySettings();
+    }
+
+    @PutMapping("/security-settings")
+    public PartnerSecuritySettingsResponse updateSecuritySettings(@Valid @RequestBody UpdatePartnerSecuritySettingsRequest request) {
+        return partnerService.updateMySecuritySettings(request);
     }
 }

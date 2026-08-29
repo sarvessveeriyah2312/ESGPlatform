@@ -77,10 +77,11 @@ public class StripeClient {
 
     // --- Stripe Connect (WHITELABEL_PLAN.md Phase 5) — a partner's own connected account, used to
     // route a share of their referred companies' payments to them via destination charges. See
-    // PartnerService for the orchestration; none of this has been exercised against a real
-    // onboarded account (scaffolded, not verified — see WHITELABEL_PLAN.md's own caveat on this).
+    // PartnerService for the orchestration. Account creation verified live against this platform's
+    // own Stripe test account (a real acct_... id, a real onboarding page) — a human still needs to
+    // complete that onboarding form before charges_enabled/payouts_enabled ever flip true.
 
-    /** type=express — Stripe hosts the onboarding UI (identity, bank details); this platform never sees that data. */
+    /** Params are caller-supplied (see PartnerService.startStripeConnectOnboarding for the controller[...] shape a MY-domiciled platform needs) — Stripe hosts the onboarding UI (identity, bank details) either way; this platform never sees that data. */
     public Map<String, Object> createConnectedAccount(String secretKey, MultiValueMap<String, String> params) {
         return post(secretKey, "/accounts", params);
     }
@@ -93,11 +94,6 @@ public class StripeClient {
     /** Live status check (charges_enabled/payouts_enabled/details_submitted) rather than caching via account.updated webhooks — fewer moving parts for a feature with no real connected account to exercise it against yet. */
     public Map<String, Object> retrieveAccount(String secretKey, String accountId) {
         return get(secretKey, "/accounts/" + accountId);
-    }
-
-    /** A single-use link straight into the partner's own Express dashboard (their payouts, balance, bank details) — Stripe hosts it, this platform never sees or stores that data. */
-    public Map<String, Object> createLoginLink(String secretKey, String accountId) {
-        return post(secretKey, "/accounts/" + accountId + "/login_links", new LinkedMultiValueMap<>());
     }
 
     private Map<String, Object> post(String secretKey, String path, MultiValueMap<String, String> body) {
@@ -134,12 +130,20 @@ public class StripeClient {
         }
     }
 
-    // Deliberately never propagate e.getMessage() — Spring's exception messages commonly embed
-    // the full request URI, and the secret key is sent as a Bearer header rather than a query
-    // param specifically so it can never end up there, but keep this habit regardless.
+    // Deliberately never propagate e.getMessage() to the CLIENT — Spring's exception messages
+    // commonly embed the full request URI, and the secret key is sent as a Bearer header rather
+    // than a query param specifically so it can never end up there, but keep this habit
+    // regardless. The response BODY is different: Stripe's error payload is just
+    // {"error": {"message": ..., "code": ...}} — it never echoes back the key we sent — so it's
+    // safe to log server-side, and it's the only way to actually diagnose a 4xx from Stripe (e.g.
+    // "platform profile not submitted" vs a bad param) instead of guessing.
     private StripeException wrap(RestClientException e) {
         String status = e instanceof HttpStatusCodeException httpEx ? " (HTTP " + httpEx.getStatusCode().value() + ")" : "";
-        log.warn("Stripe request failed{}: {}", status, e.getClass().getSimpleName());
+        if (e instanceof HttpStatusCodeException httpEx) {
+            log.warn("Stripe request failed{}: {}", status, httpEx.getResponseBodyAsString());
+        } else {
+            log.warn("Stripe request failed{}: {}", status, e.getClass().getSimpleName());
+        }
         return new StripeException("Stripe request failed" + status + " — check your Stripe API keys in Platform Settings", e);
     }
 }

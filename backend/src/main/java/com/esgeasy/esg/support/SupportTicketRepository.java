@@ -7,4 +7,6 @@ import java.util.UUID;
 
 public interface SupportTicketRepository extends JpaRepository<SupportTicket, UUID> {
     List<SupportTicket> findByCompanyId(UUID companyId);
+    /** Backs the partner console's Feedback & Support tab — every company linked to one partner. */
+    List<SupportTicket> findByCompanyIdIn(List<UUID> companyIds);
 }

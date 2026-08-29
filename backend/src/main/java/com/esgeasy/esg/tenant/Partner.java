@@ -68,4 +68,13 @@ public class Partner extends BaseEntity {
      */
     @Column(name = "revenue_share_percent", precision = 5, scale = 2)
     private BigDecimal revenueSharePercent;
+
+    /**
+     * Partner-console "Security" setting — separate from {@code PlatformSettings.require2fa}
+     * (platform-wide, applies to every role, platform-admin-only). A partner-admin can require
+     * MFA for just their own team without needing a platform admin to flip the global toggle.
+     * Checked alongside the platform toggle in AuthService.requiresMfa.
+     */
+    @Column(name = "mfa_required_for_team", nullable = false)
+    private Boolean mfaRequiredForTeam = false;
 }

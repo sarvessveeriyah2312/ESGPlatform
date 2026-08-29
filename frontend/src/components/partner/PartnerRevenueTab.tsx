@@ -15,7 +15,6 @@ export default function PartnerRevenueTab() {
   const [summary, setSummary] = useState<PartnerRevenueSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
-  const [openingDashboard, setOpeningDashboard] = useState(false);
 
   const refresh = () => {
     setLoading(true);
@@ -41,16 +40,16 @@ export default function PartnerRevenueTab() {
       .finally(() => setConnecting(false));
   };
 
+  // Connected accounts here are Standard-shaped (controller[stripe_dashboard][type]=full — see
+  // PartnerService.startStripeConnectOnboarding's doc comment for why), so there's no login-link
+  // single-sign-on the way there is for Express accounts — the partner logs into
+  // dashboard.stripe.com directly with the credentials they set during onboarding.
   const openDashboard = () => {
-    setOpeningDashboard(true);
-    partnerConsoleApi.getStripeDashboardLink()
-      .then((res) => window.open(res.url, '_blank', 'noopener,noreferrer'))
-      .catch((err) => showToast(err?.message || 'Failed to open Stripe dashboard.', 'warning'))
-      .finally(() => setOpeningDashboard(false));
+    window.open('https://dashboard.stripe.com', '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Revenue</h1>
         <p className="text-sm text-gray-500 mt-1">Your revenue share and Stripe Connect payout account.</p>
@@ -93,7 +92,7 @@ export default function PartnerRevenueTab() {
                 </div>
                 <div className="flex items-center gap-3 pt-2">
                   {summary.chargesEnabled && summary.payoutsEnabled ? (
-                    <Button variant="secondary" size="sm" loading={openingDashboard} onClick={openDashboard} icon={<ExternalLink className="w-3.5 h-3.5" />}>
+                    <Button variant="secondary" size="sm" onClick={openDashboard} icon={<ExternalLink className="w-3.5 h-3.5" />}>
                       Open Stripe Dashboard
                     </Button>
                   ) : (

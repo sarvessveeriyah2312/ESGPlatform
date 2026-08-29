@@ -24,7 +24,7 @@ export interface SupportTicketResponse {
   note: string | null;
 }
 
-export type TicketSenderRole = 'COMPANY_ADMIN' | 'COMPANY_CONTRIBUTOR' | 'CONSULTANT' | 'PLATFORM_ADMIN' | 'SUPERADMIN';
+export type TicketSenderRole = 'COMPANY_ADMIN' | 'COMPANY_CONTRIBUTOR' | 'CONSULTANT' | 'PLATFORM_ADMIN' | 'SUPERADMIN' | 'PARTNER_ADMIN';
 
 export interface TicketMessageResponse {
   id: string;

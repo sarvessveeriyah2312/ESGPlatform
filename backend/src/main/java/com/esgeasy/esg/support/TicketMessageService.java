@@ -4,6 +4,8 @@ import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.security.CurrentUserProvider;
 import com.esgeasy.esg.support.dto.CreateTicketMessageRequest;
 import com.esgeasy.esg.support.dto.TicketMessageResponse;
+import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import com.esgeasy.esg.user.AppUser;
 import com.esgeasy.esg.user.AppUserRepository;
 import org.springframework.stereotype.Service;
@@ -18,15 +20,18 @@ public class TicketMessageService {
     private final TicketMessageRepository ticketMessageRepository;
     private final SupportTicketRepository supportTicketRepository;
     private final AppUserRepository appUserRepository;
+    private final CompanyRepository companyRepository;
     private final CurrentUserProvider currentUserProvider;
 
     public TicketMessageService(TicketMessageRepository ticketMessageRepository,
                                  SupportTicketRepository supportTicketRepository,
                                  AppUserRepository appUserRepository,
+                                 CompanyRepository companyRepository,
                                  CurrentUserProvider currentUserProvider) {
         this.ticketMessageRepository = ticketMessageRepository;
         this.supportTicketRepository = supportTicketRepository;
         this.appUserRepository = appUserRepository;
+        this.companyRepository = companyRepository;
         this.currentUserProvider = currentUserProvider;
     }
 
@@ -42,6 +47,20 @@ public class TicketMessageService {
     public List<TicketMessageResponse> listMessagesForCurrentCompany(UUID ticketId) {
         requireOwnedTicket(ticketId);
         return fetchMessages(ticketId);
+    }
+
+    /** Partner console use — the ticket's company must be one of the caller's own partner's companies. */
+    @Transactional(readOnly = true)
+    public List<TicketMessageResponse> listMessagesForPartner(UUID ticketId) {
+        requireOwnedTicketForPartner(ticketId);
+        return fetchMessages(ticketId);
+    }
+
+    /** Partner console use — a partner replying as first-line support for its own client's ticket. See {@link #listMessagesForPartner}. */
+    @Transactional
+    public TicketMessageResponse postMessageForPartner(UUID ticketId, CreateTicketMessageRequest request) {
+        SupportTicket ticket = requireOwnedTicketForPartner(ticketId);
+        return saveMessage(ticket, request);
     }
 
     /** Platform-admin use only — see {@link #listMessages}. */
@@ -88,6 +107,17 @@ public class TicketMessageService {
         SupportTicket ticket = requireTicket(ticketId);
         UUID companyId = currentUserProvider.requireCompanyId();
         if (!companyId.equals(ticket.getCompanyId())) {
+            throw new NotFoundException("Ticket not found");
+        }
+        return ticket;
+    }
+
+    /** Same lookup as {@link #requireTicket}, plus a same-partner check — the partner-console entry point into this service. */
+    private SupportTicket requireOwnedTicketForPartner(UUID ticketId) {
+        SupportTicket ticket = requireTicket(ticketId);
+        UUID partnerId = currentUserProvider.requirePartnerId();
+        List<UUID> companyIds = companyRepository.findByPartnerIdOrderByNameAsc(partnerId).stream().map(Company::getId).toList();
+        if (!companyIds.contains(ticket.getCompanyId())) {
             throw new NotFoundException("Ticket not found");
         }
         return ticket;

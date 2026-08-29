@@ -47,6 +47,17 @@ public class InvoiceService {
         return invoiceRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    /** Partner console's Billing & Invoices tab — every company linked to the caller's own partner, read-only (no backfill, unlike {@link #listForCurrentCompany}). */
+    @Transactional(readOnly = true)
+    public List<InvoiceResponse> listForPartner() {
+        UUID partnerId = currentUserProvider.requirePartnerId();
+        List<UUID> companyIds = companyRepository.findByPartnerIdOrderByNameAsc(partnerId).stream().map(Company::getId).toList();
+        if (companyIds.isEmpty()) {
+            return List.of();
+        }
+        return invoiceRepository.findByCompanyIdInOrderByDueDateDesc(companyIds).stream().map(this::toResponse).toList();
+    }
+
     private static final int MAX_PAGE_SIZE = 100;
 
     /**

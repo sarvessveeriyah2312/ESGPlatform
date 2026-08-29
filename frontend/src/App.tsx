@@ -484,10 +484,14 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/partners': 'Platform Admin — Partners',
   '/admin/audit-log': 'Platform Admin — Audit Log',
   '/admin/settings': 'Platform Admin — Settings',
-  '/partner': 'Partner Console — Companies',
-  '/partner/branding': 'Partner Console — Branding',
+  '/partner': 'Partner Console — Dashboard',
+  '/partner/companies': 'Partner Console — Tenant Companies',
+  '/partner/billing': 'Partner Console — Billing & Invoices',
+  '/partner/support': 'Partner Console — Feedback & Support',
   '/partner/revenue': 'Partner Console — Revenue',
   '/partner/users': 'Partner Console — Users',
+  '/partner/audit-log': 'Partner Console — Audit Log',
+  '/partner/settings': 'Partner Console — Settings',
 };
 
 function usePageTitle() {
@@ -528,9 +532,13 @@ function AppContent() {
           component rather than reusing AuthenticatedLayout). PartnerConsole reads the URL to pick
           which section to render, same pattern as AdminPanel. */}
       <Route path="/partner" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
-      <Route path="/partner/branding" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
+      <Route path="/partner/companies" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
+      <Route path="/partner/billing" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
+      <Route path="/partner/support" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
       <Route path="/partner/revenue" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
       <Route path="/partner/users" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
+      <Route path="/partner/audit-log" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
+      <Route path="/partner/settings" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
       <Route
         path="/admin/overview"
         element={

@@ -33,6 +33,7 @@ import StatusPill from './ui/StatusPill';
 import ProgressBar from './ui/ProgressBar';
 import AvatarStack from './ui/AvatarStack';
 import { AvatarUser, Status } from '../types';
+import { useSubdomainBrand } from '../hooks/useSubdomainBrand';
 
 interface LandingPageProps {
   onNavigateToDashboard: () => void;
@@ -51,6 +52,16 @@ export default function LandingPage({
   onNavigateToLogin,
   onNavigateToRegister
 }: LandingPageProps) {
+  // Site chrome (header/footer logo + wordmark) reflects the partner's brand when visited on
+  // their subdomain (WHITELABEL_PLAN.md Phase 3) — this page previously never called this hook at
+  // all, so a partner's own client visiting e.g. nusantara.esgeasy.my still saw plain "EsgEasy" in
+  // the nav and footer even though LoginPage/RegisterPage already resolved it correctly. Deliberately
+  // scoped to just the logo/wordmark, not the marketing copy, testimonials, or the footer's legal
+  // entity name/copyright line below — those describe this platform itself (and its actual
+  // corporate ownership), not something that becomes true or false depending on whose subdomain
+  // it's viewed from.
+  const brand = useSubdomainBrand();
+
   // Mock data for the interactive dashboard mockup below the Hero
   const mockUsers: AvatarUser[] = [
     { id: '1', name: 'Sarvesh Veeri', initials: 'SV', bgColor: 'bg-emerald-500 text-white' },
@@ -145,11 +156,18 @@ export default function LandingPage({
           
           {/* Logo segment */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="p-2 bg-primary-100 text-primary-600 rounded-xl">
-              <Trees className="w-5 h-5" />
-            </div>
+            {brand.logoUrl ? (
+              <img src={brand.logoUrl} alt="" className="w-9 h-9 rounded-xl object-cover shadow-sm" />
+            ) : (
+              <div
+                className={`p-2 rounded-xl ${brand.primaryColor ? '' : 'bg-primary-100 text-primary-600'}`}
+                style={brand.primaryColor ? { backgroundColor: `${brand.primaryColor}1a`, color: brand.primaryColor } : undefined}
+              >
+                <Trees className="w-5 h-5" />
+              </div>
+            )}
             <div>
-              <span className="text-lg font-bold tracking-tight text-navy-950 block">EsgEasy</span>
+              <span className="text-lg font-bold tracking-tight text-navy-950 block">{brand.brandName}</span>
               <span className="text-[9px] font-semibold text-navy-400 uppercase tracking-widest block leading-none">MALAYSIA</span>
             </div>
           </div>
@@ -719,10 +737,17 @@ export default function LandingPage({
           {/* Column 1 - Brand info */}
           <div className="col-span-2 space-y-4">
             <div className="flex items-center space-x-3 text-white">
-              <div className="p-1.5 bg-primary-500 rounded-lg text-white">
-                <Trees className="w-5 h-5" />
-              </div>
-              <span className="text-base font-bold tracking-tight">EsgEasy</span>
+              {brand.logoUrl ? (
+                <img src={brand.logoUrl} alt="" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+              ) : (
+                <div
+                  className={`p-1.5 rounded-lg text-white ${brand.primaryColor ? '' : 'bg-primary-500'}`}
+                  style={brand.primaryColor ? { backgroundColor: brand.primaryColor } : undefined}
+                >
+                  <Trees className="w-5 h-5" />
+                </div>
+              )}
+              <span className="text-base font-bold tracking-tight">{brand.brandName}</span>
             </div>
             <p className="text-xs text-navy-400 max-w-sm leading-relaxed">
               Leading Malaysian ESG compliance and sustainability disclosures automation framework. Assisting small enterprises and listed issuers meet modern regulatory compliance.

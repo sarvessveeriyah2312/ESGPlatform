@@ -94,6 +94,52 @@ public class SupportTicketService {
         return supportTicketRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    /** Partner console's Feedback & Support tab — every company linked to the caller's own partner. A partner can also update status/note and reply — see {@link #updateStatusForPartner}, {@link #updateNoteForPartner}, and TicketMessageService.postMessageForPartner. */
+    @Transactional(readOnly = true)
+    public List<SupportTicketResponse> listTicketsForPartner() {
+        List<UUID> companyIds = partnerCompanyIds();
+        if (companyIds.isEmpty()) {
+            return List.of();
+        }
+        return supportTicketRepository.findByCompanyIdIn(companyIds).stream().map(this::toResponse).toList();
+    }
+
+    private List<UUID> partnerCompanyIds() {
+        UUID partnerId = currentUserProvider.requirePartnerId();
+        return companyRepository.findByPartnerIdOrderByNameAsc(partnerId).stream().map(Company::getId).toList();
+    }
+
+    /**
+     * Partner console — a partner acts as first-line support for its own client companies' tickets:
+     * claim/resolve status changes, same as platform admin's {@link #updateStatus}. Deliberately a
+     * full write, not a narrower "OPEN→PENDING only" guard — a partner should be able to reopen a
+     * ticket too if a client company follows up after it was marked resolved.
+     */
+    @Transactional
+    public SupportTicketResponse updateStatusForPartner(UUID id, UpdateTicketStatusRequest request) {
+        SupportTicket ticket = requireOwnedTicketForPartner(id);
+        ticket.setStatus(request.status());
+        return toResponse(supportTicketRepository.save(ticket));
+    }
+
+    /** Partner console — same shared note the tenant company and platform admin can already edit. */
+    @Transactional
+    public SupportTicketResponse updateNoteForPartner(UUID id, UpdateTicketNoteRequest request) {
+        SupportTicket ticket = requireOwnedTicketForPartner(id);
+        ticket.setNote(request.note());
+        return toResponse(supportTicketRepository.save(ticket));
+    }
+
+    /** Same lookup as {@link #requireOwnedTicket}, but checks partner-company-set membership instead of a single companyId — the partner-console entry point into this service. */
+    private SupportTicket requireOwnedTicketForPartner(UUID id) {
+        SupportTicket ticket = supportTicketRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Ticket not found"));
+        if (!partnerCompanyIds().contains(ticket.getCompanyId())) {
+            throw new NotFoundException("Ticket not found");
+        }
+        return ticket;
+    }
+
     @Transactional
     public SupportTicketResponse updateStatus(UUID id, UpdateTicketStatusRequest request) {
         SupportTicket ticket = supportTicketRepository.findById(id)

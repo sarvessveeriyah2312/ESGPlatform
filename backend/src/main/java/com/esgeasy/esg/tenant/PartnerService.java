@@ -1,22 +1,36 @@
 package com.esgeasy.esg.tenant;
 
+import com.esgeasy.esg.activitylog.ActivityLogResponse;
+import com.esgeasy.esg.activitylog.PlatformActivityLogService;
+import com.esgeasy.esg.billing.InvoiceService;
 import com.esgeasy.esg.billing.PlatformStripeSecretProvider;
 import com.esgeasy.esg.billing.StripeClient;
+import com.esgeasy.esg.billing.dto.InvoiceResponse;
 import com.esgeasy.esg.common.exceptions.ConflictException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.platform.PlatformSettingsService;
 import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.support.SupportTicketService;
+import com.esgeasy.esg.support.TicketMessageService;
+import com.esgeasy.esg.support.TicketStatus;
+import com.esgeasy.esg.support.dto.CreateTicketMessageRequest;
+import com.esgeasy.esg.support.dto.SupportTicketResponse;
+import com.esgeasy.esg.support.dto.TicketMessageResponse;
+import com.esgeasy.esg.support.dto.UpdateTicketNoteRequest;
+import com.esgeasy.esg.support.dto.UpdateTicketStatusRequest;
 import com.esgeasy.esg.tenant.dto.CreatePartnerAdminUserRequest;
 import com.esgeasy.esg.tenant.dto.CreatePartnerAdminUserResponse;
 import com.esgeasy.esg.tenant.dto.PartnerBrandingResponse;
 import com.esgeasy.esg.tenant.dto.PartnerCompanySummaryResponse;
 import com.esgeasy.esg.tenant.dto.PartnerResponse;
 import com.esgeasy.esg.tenant.dto.PartnerRevenueSummaryResponse;
+import com.esgeasy.esg.tenant.dto.PartnerSecuritySettingsResponse;
 import com.esgeasy.esg.tenant.dto.PartnerUserResponse;
 import com.esgeasy.esg.tenant.dto.SavePartnerRequest;
 import com.esgeasy.esg.tenant.dto.StripeConnectLinkResponse;
 import com.esgeasy.esg.tenant.dto.StripeConnectStatusResponse;
 import com.esgeasy.esg.tenant.dto.UpdatePartnerBrandingRequest;
+import com.esgeasy.esg.tenant.dto.UpdatePartnerSecuritySettingsRequest;
 import com.esgeasy.esg.user.AppUser;
 import com.esgeasy.esg.user.AppUserRepository;
 import com.esgeasy.esg.user.Role;
@@ -45,12 +59,18 @@ public class PartnerService {
     private final PlatformStripeSecretProvider stripeSecretProvider;
     private final StripeClient stripeClient;
     private final PlatformSettingsService platformSettingsService;
+    private final InvoiceService invoiceService;
+    private final SupportTicketService supportTicketService;
+    private final TicketMessageService ticketMessageService;
+    private final PlatformActivityLogService activityLogService;
     private final SecureRandom random = new SecureRandom();
 
     public PartnerService(PartnerRepository partnerRepository, CompanyRepository companyRepository,
                            AppUserRepository appUserRepository, PasswordEncoder passwordEncoder,
                            CurrentUserProvider currentUserProvider, PlatformStripeSecretProvider stripeSecretProvider,
-                           StripeClient stripeClient, PlatformSettingsService platformSettingsService) {
+                           StripeClient stripeClient, PlatformSettingsService platformSettingsService,
+                           InvoiceService invoiceService, SupportTicketService supportTicketService,
+                           TicketMessageService ticketMessageService, PlatformActivityLogService activityLogService) {
         this.partnerRepository = partnerRepository;
         this.companyRepository = companyRepository;
         this.appUserRepository = appUserRepository;
@@ -59,6 +79,10 @@ public class PartnerService {
         this.stripeSecretProvider = stripeSecretProvider;
         this.stripeClient = stripeClient;
         this.platformSettingsService = platformSettingsService;
+        this.invoiceService = invoiceService;
+        this.supportTicketService = supportTicketService;
+        this.ticketMessageService = ticketMessageService;
+        this.activityLogService = activityLogService;
     }
 
     @Transactional(readOnly = true)
@@ -177,8 +201,20 @@ public class PartnerService {
      * Creates the partner's Stripe Express connected account on first call (reused on every
      * subsequent call, since Stripe account links are single-use/short-lived but the account
      * itself is permanent), then returns a fresh onboarding link. WHITELABEL_PLAN.md Phase 5 —
-     * scaffolded but never exercised against a real onboarding flow; country is hardcoded to "MY"
-     * since every partner in this ESG-for-Bursa-Malaysia platform is expected to be Malaysia-based.
+     * country is hardcoded to "MY" since every partner in this ESG-for-Bursa-Malaysia platform is
+     * expected to be Malaysia-based.
+     *
+     * Verified live against this platform's own Stripe test account: the plain {@code type=express}
+     * shape (which makes the PLATFORM liable for the connected account's losses/fees by default)
+     * was rejected with "Platforms in MY cannot create accounts where the platform is loss-liable,
+     * due to risk control measures" — Stripe restricts platform-liable Connect accounts for
+     * Malaysia-domiciled platforms. Fixed by using the modern {@code controller} params instead of
+     * the legacy {@code type} param — {@code controller[losses][payments]=stripe} and
+     * {@code controller[fees][payer]=account} explicitly make the connected account (the partner)
+     * liable for its own losses and fees rather than this platform, which is the workaround
+     * Stripe's own error message links to. This also matches the actual business shape here: the
+     * partner receives the revenue share, so it's the partner's account that should bear the
+     * Stripe processing risk.
      */
     @Transactional
     public StripeConnectLinkResponse startStripeConnectOnboarding(UUID partnerId) {
@@ -197,8 +233,15 @@ public class PartnerService {
 
         if (partner.getStripeAccountId() == null) {
             MultiValueMap<String, String> accountParams = new LinkedMultiValueMap<>();
-            accountParams.add("type", "express");
             accountParams.add("country", "MY");
+            // controller[*] replaces the legacy type=express param (can't mix both in one request).
+            // losses[payments]=stripe and fees[payer]=account make the connected account (the
+            // partner) liable for its own losses/fees, not this platform — required for a
+            // MY-domiciled platform, see this method's doc comment. stripe_dashboard[type]=express
+            // keeps the same lightweight partner-facing dashboard type=express used to provide.
+            accountParams.add("controller[losses][payments]", "stripe");
+            accountParams.add("controller[fees][payer]", "account");
+            accountParams.add("controller[stripe_dashboard][type]", "full");
             if (partner.getSupportEmail() != null) {
                 accountParams.add("email", partner.getSupportEmail());
             }
@@ -267,20 +310,66 @@ public class PartnerService {
         return PartnerRevenueSummaryResponse.of(partner.getRevenueSharePercent(), getStripeConnectStatus(partnerId));
     }
 
-    /** A single-use link straight into the partner's own Stripe Express dashboard — the only way this platform lets a partner see their actual payouts/balance, since we never mirror that data ourselves. */
+    /** Partner console's Billing & Invoices tab — read-only, every company under the caller's own partner. */
     @Transactional(readOnly = true)
-    public StripeConnectLinkResponse createMyStripeDashboardLink() {
+    public List<InvoiceResponse> listMyInvoices() {
+        return invoiceService.listForPartner();
+    }
+
+    /** Partner console's Feedback & Support tab — a partner acts as first-line support for its own client companies' tickets (reply, note, claim/resolve — see the write methods below). */
+    @Transactional(readOnly = true)
+    public List<SupportTicketResponse> listMyTickets() {
+        return supportTicketService.listTicketsForPartner();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TicketMessageResponse> listMyTicketMessages(UUID ticketId) {
+        return ticketMessageService.listMessagesForPartner(ticketId);
+    }
+
+    @Transactional
+    public TicketMessageResponse postMyTicketMessage(UUID ticketId, String message) {
+        return ticketMessageService.postMessageForPartner(ticketId, new CreateTicketMessageRequest(message));
+    }
+
+    @Transactional
+    public SupportTicketResponse updateMyTicketStatus(UUID ticketId, TicketStatus status) {
+        return supportTicketService.updateStatusForPartner(ticketId, new UpdateTicketStatusRequest(status));
+    }
+
+    @Transactional
+    public SupportTicketResponse updateMyTicketNote(UUID ticketId, String note) {
+        return supportTicketService.updateNoteForPartner(ticketId, new UpdateTicketNoteRequest(note));
+    }
+
+    /** Partner console's Audit Log tab — every company under the caller's own partner. */
+    @Transactional(readOnly = true)
+    public List<ActivityLogResponse> listMyActivityLog(Integer limit) {
+        return activityLogService.listRecentForCompanies(myCompanyIds(), limit);
+    }
+
+    @Transactional(readOnly = true)
+    public ActivityLogResponse getMyActivityLogEntry(UUID id) {
+        return activityLogService.getByIdForCompanies(myCompanyIds(), id);
+    }
+
+    @Transactional(readOnly = true)
+    public PartnerSecuritySettingsResponse getMySecuritySettings() {
         Partner partner = findPartner(currentUserProvider.requirePartnerId());
-        if (partner.getStripeAccountId() == null) {
-            throw new ConflictException("Complete Stripe Connect onboarding first");
-        }
-        String secretKey = stripeSecretProvider.requireSecretKey();
-        Map<String, Object> link = stripeClient.createLoginLink(secretKey, partner.getStripeAccountId());
-        Object url = link.get("url");
-        if (url == null) {
-            throw new ConflictException("Stripe didn't return a dashboard link");
-        }
-        return new StripeConnectLinkResponse(url.toString());
+        return new PartnerSecuritySettingsResponse(Boolean.TRUE.equals(partner.getMfaRequiredForTeam()));
+    }
+
+    @Transactional
+    public PartnerSecuritySettingsResponse updateMySecuritySettings(UpdatePartnerSecuritySettingsRequest request) {
+        Partner partner = findPartner(currentUserProvider.requirePartnerId());
+        partner.setMfaRequiredForTeam(request.mfaRequiredForTeam());
+        partnerRepository.save(partner);
+        return new PartnerSecuritySettingsResponse(Boolean.TRUE.equals(partner.getMfaRequiredForTeam()));
+    }
+
+    private List<UUID> myCompanyIds() {
+        UUID partnerId = currentUserProvider.requirePartnerId();
+        return companyRepository.findByPartnerIdOrderByNameAsc(partnerId).stream().map(Company::getId).toList();
     }
 
     private String generateTemporaryPassword() {

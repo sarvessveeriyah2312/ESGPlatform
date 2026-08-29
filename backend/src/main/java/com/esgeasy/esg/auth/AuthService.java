@@ -15,6 +15,7 @@ import com.esgeasy.esg.auth.dto.VerifyMfaRequest;
 import com.esgeasy.esg.activitylog.ActivityEventType;
 import com.esgeasy.esg.activitylog.PlatformActivityLogService;
 import com.esgeasy.esg.common.exceptions.ConflictException;
+import com.esgeasy.esg.common.exceptions.ForbiddenException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.emailverification.EmailVerificationService;
 import com.esgeasy.esg.mfa.MfaService;
@@ -28,6 +29,7 @@ import com.esgeasy.esg.tenant.Company;
 import com.esgeasy.esg.tenant.CompanyRepository;
 import com.esgeasy.esg.tenant.MarketClassification;
 import com.esgeasy.esg.tenant.Partner;
+import com.esgeasy.esg.tenant.PartnerRepository;
 import com.esgeasy.esg.tenant.Sector;
 import com.esgeasy.esg.tenant.SectorRepository;
 import com.esgeasy.esg.tenant.SubscriptionPlan;
@@ -52,6 +54,7 @@ public class AuthService {
 
     private final AppUserRepository appUserRepository;
     private final CompanyRepository companyRepository;
+    private final PartnerRepository partnerRepository;
     private final SectorRepository sectorRepository;
     private final TeamInviteRepository teamInviteRepository;
     private final PasswordEncoder passwordEncoder;
@@ -67,6 +70,7 @@ public class AuthService {
 
     public AuthService(AppUserRepository appUserRepository,
                         CompanyRepository companyRepository,
+                        PartnerRepository partnerRepository,
                         SectorRepository sectorRepository,
                         TeamInviteRepository teamInviteRepository,
                         PasswordEncoder passwordEncoder,
@@ -81,6 +85,7 @@ public class AuthService {
                         JwtProperties jwtProperties) {
         this.appUserRepository = appUserRepository;
         this.companyRepository = companyRepository;
+        this.partnerRepository = partnerRepository;
         this.sectorRepository = sectorRepository;
         this.teamInviteRepository = teamInviteRepository;
         this.passwordEncoder = passwordEncoder;
@@ -134,6 +139,8 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
+        requireDomainMatch(user, request.partnerSlug());
+
         if (!Boolean.TRUE.equals(user.getEmailVerified())) {
             return new LoginResponse(false, null, true, null);
         }
@@ -183,6 +190,42 @@ public class AuthService {
         }
 
         return issueSession(user, meta, expirationMinutesFor(challenge.rememberMe()));
+    }
+
+    /**
+     * A partner's subdomain is a login boundary, not just a branding skin: only accounts that
+     * actually belong to that partner may sign in there — a platform admin, a different partner's
+     * admin, or a company linked to no partner (or a different one) all get rejected, even with
+     * the correct password. Checked after password validation (not before) so a wrong-domain
+     * attempt doesn't help enumerate which emails exist — it reads identically to "wrong password"
+     * timing-wise, just with a clearer message once credentials are actually confirmed correct.
+     * A slug that doesn't resolve to any known partner is treated the same as no slug at all (no
+     * restriction) — an unrecognized subdomain isn't a real login boundary, same posture as brand
+     * resolution's own graceful fallback (useSubdomainBrand).
+     */
+    private void requireDomainMatch(AppUser user, String partnerSlug) {
+        if (partnerSlug == null || partnerSlug.isBlank()) {
+            return;
+        }
+        Partner partner = partnerRepository.findBySubdomainSlug(partnerSlug).orElse(null);
+        if (partner == null) {
+            return;
+        }
+        UUID userPartnerId = effectivePartnerId(user);
+        if (userPartnerId == null || !userPartnerId.equals(partner.getId())) {
+            throw new ForbiddenException("This account isn't available on " + partner.getBrandName() + "'s login page");
+        }
+    }
+
+    /** A PARTNER_ADMIN belongs directly; a tenant user belongs via their company's own partner link; platform-level roles (no company, no partner) always return null. */
+    private UUID effectivePartnerId(AppUser user) {
+        if (user.getPartner() != null) {
+            return user.getPartner().getId();
+        }
+        if (user.getCompany() != null && user.getCompany().getPartner() != null) {
+            return user.getCompany().getPartner().getId();
+        }
+        return null;
     }
 
     private long expirationMinutesFor(boolean rememberMe) {
@@ -301,6 +344,11 @@ public class AuthService {
         return toMeResponse(user);
     }
 
+    /** Platform-wide toggle OR this user's own partner requiring it for their team (partner console Security settings) — either is sufficient. */
+    private boolean requiresMfa(Partner partner) {
+        return platformSettingsService.isMfaRequired() || (partner != null && Boolean.TRUE.equals(partner.getMfaRequiredForTeam()));
+    }
+
     private SubscriptionPlan planForMarket(MarketClassification market) {
         return switch (market) {
             case SME -> SubscriptionPlan.STARTER;
@@ -311,12 +359,12 @@ public class AuthService {
 
     MeResponse toMeResponse(AppUser user) {
         Company company = user.getCompany();
-        boolean mfaSetupRequired = platformSettingsService.isMfaRequired() && !mfaService.isEnabled(user.getId());
         // Brand resolution order: the user's own partner first (a PARTNER_ADMIN sees their own
         // brand, not EsgEasy's — see Role.PARTNER_ADMIN), else their company's effective brand
         // (WHITELABEL_PLAN.md Phase 2), else EsgEasy's own default. A user is never linked to both
         // a company and a partner at once (see AppUser.partner's own doc comment).
         Partner partner = user.getPartner();
+        boolean mfaSetupRequired = requiresMfa(partner) && !mfaService.isEnabled(user.getId());
         String brandName = partner != null ? partner.getBrandName()
                 : company != null ? company.getEffectiveBrandName() : "EsgEasy";
         String logoUrl = partner != null ? partner.getLogoAsset()

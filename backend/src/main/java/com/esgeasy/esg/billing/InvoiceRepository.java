@@ -12,4 +12,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     List<Invoice> findByCompanyId(UUID companyId);
     Page<Invoice> findByCompanyIdOrderByDueDateDesc(UUID companyId, Pageable pageable);
     Optional<Invoice> findByStripeInvoiceId(String stripeInvoiceId);
+    /** Backs the partner console's Billing & Invoices tab — every company linked to one partner, not just one. */
+    List<Invoice> findByCompanyIdInOrderByDueDateDesc(List<UUID> companyIds);
 }

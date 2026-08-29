@@ -69,8 +69,9 @@ export const authApi = {
   register: (name: string, email: string, password: string, companyName: string) =>
     apiClient.post<RegisterResponse>('/api/v1/auth/register', { name, email, password, companyName }),
 
-  login: (email: string, password: string, rememberMe: boolean) =>
-    apiClient.post<LoginResponse>('/api/v1/auth/login', { email, password, rememberMe }),
+  /** partnerSlug: the subdomain slug resolved from window.location.hostname, if any — lets the backend reject an account that doesn't belong to that partner. See AuthService.requireDomainMatch. */
+  login: (email: string, password: string, rememberMe: boolean, partnerSlug: string | null) =>
+    apiClient.post<LoginResponse>('/api/v1/auth/login', { email, password, rememberMe, partnerSlug }),
 
   verifyMfa: (mfaToken: string, code: string) =>
     apiClient.post<AuthResponse>('/api/v1/auth/login/verify-mfa', { mfaToken, code }),
