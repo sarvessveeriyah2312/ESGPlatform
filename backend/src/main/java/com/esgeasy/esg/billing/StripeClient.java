@@ -75,6 +75,31 @@ public class StripeClient {
         return post(secretKey, "/subscriptions/" + subscriptionId, params);
     }
 
+    // --- Stripe Connect (WHITELABEL_PLAN.md Phase 5) — a partner's own connected account, used to
+    // route a share of their referred companies' payments to them via destination charges. See
+    // PartnerService for the orchestration; none of this has been exercised against a real
+    // onboarded account (scaffolded, not verified — see WHITELABEL_PLAN.md's own caveat on this).
+
+    /** type=express — Stripe hosts the onboarding UI (identity, bank details); this platform never sees that data. */
+    public Map<String, Object> createConnectedAccount(String secretKey, MultiValueMap<String, String> params) {
+        return post(secretKey, "/accounts", params);
+    }
+
+    /** A single-use, short-lived URL for the partner to complete (or resume) their own onboarding on Stripe's site. */
+    public Map<String, Object> createAccountLink(String secretKey, MultiValueMap<String, String> params) {
+        return post(secretKey, "/account_links", params);
+    }
+
+    /** Live status check (charges_enabled/payouts_enabled/details_submitted) rather than caching via account.updated webhooks — fewer moving parts for a feature with no real connected account to exercise it against yet. */
+    public Map<String, Object> retrieveAccount(String secretKey, String accountId) {
+        return get(secretKey, "/accounts/" + accountId);
+    }
+
+    /** A single-use link straight into the partner's own Express dashboard (their payouts, balance, bank details) — Stripe hosts it, this platform never sees or stores that data. */
+    public Map<String, Object> createLoginLink(String secretKey, String accountId) {
+        return post(secretKey, "/accounts/" + accountId + "/login_links", new LinkedMultiValueMap<>());
+    }
+
     private Map<String, Object> post(String secretKey, String path, MultiValueMap<String, String> body) {
         try {
             Map<String, Object> response = restClient.post()

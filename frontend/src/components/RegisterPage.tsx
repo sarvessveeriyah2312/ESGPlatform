@@ -25,12 +25,15 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useSubdomainBrand } from '../hooks/useSubdomainBrand';
 import Button from './ui/Button';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register, resendVerification } = useAuth();
   const { showToast } = useToast();
+  // See LoginPage — same subdomain-based pre-login brand resolution (WHITELABEL_PLAN.md Phase 3).
+  const brand = useSubdomainBrand();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [registeredEmail, setRegisteredEmail] = useState('');
@@ -140,10 +143,17 @@ export default function RegisterPage() {
 
           <div className="relative z-10">
             <div className="flex items-center space-x-2.5 mb-16">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 font-black text-xl shadow-lg">
-                <Trees className="w-6 h-6" />
-              </div>
-              <span className="text-2xl font-black text-white tracking-tight">EsgEasy</span>
+              {brand.logoUrl ? (
+                <img src={brand.logoUrl} alt="" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-black text-xl shadow-lg"
+                  style={{ color: brand.primaryColor || undefined }}
+                >
+                  <Trees className={`w-6 h-6 ${brand.primaryColor ? '' : 'text-emerald-600'}`} />
+                </div>
+              )}
+              <span className="text-2xl font-black text-white tracking-tight">{brand.brandName}</span>
             </div>
 
             <div className="space-y-6 max-w-lg">
@@ -173,10 +183,17 @@ export default function RegisterPage() {
 
           {/* Mobile Header */}
           <div className="lg:hidden absolute top-8 left-6 sm:left-12 flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-black text-sm shadow-sm">
-              <Trees className="w-5 h-5" />
-            </div>
-            <span className="text-lg font-black text-gray-900 tracking-tight">EsgEasy</span>
+            {brand.logoUrl ? (
+              <img src={brand.logoUrl} alt="" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+            ) : (
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm shadow-sm ${brand.primaryColor ? '' : 'bg-emerald-500'}`}
+                style={{ backgroundColor: brand.primaryColor || undefined }}
+              >
+                <Trees className="w-5 h-5" />
+              </div>
+            )}
+            <span className="text-lg font-black text-gray-900 tracking-tight">{brand.brandName}</span>
           </div>
 
           <div className="max-w-md w-full mx-auto space-y-8 py-12">
@@ -247,10 +264,17 @@ export default function RegisterPage() {
 
         <div className="relative z-10">
           <div className="flex items-center space-x-2.5 mb-16">
-            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 font-black text-xl shadow-lg">
-              <Trees className="w-6 h-6" />
-            </div>
-            <span className="text-2xl font-black text-white tracking-tight">EsgEasy</span>
+            {brand.logoUrl ? (
+              <img src={brand.logoUrl} alt="" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+            ) : (
+              <div
+                className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-black text-xl shadow-lg"
+                style={{ color: brand.primaryColor || undefined }}
+              >
+                <Trees className={`w-6 h-6 ${brand.primaryColor ? '' : 'text-emerald-600'}`} />
+              </div>
+            )}
+            <span className="text-2xl font-black text-white tracking-tight">{brand.brandName}</span>
           </div>
 
           <div className="space-y-6 max-w-lg">
@@ -280,10 +304,17 @@ export default function RegisterPage() {
         
         {/* Mobile Header */}
         <div className="lg:hidden absolute top-8 left-6 sm:left-12 flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-black text-sm shadow-sm">
-            <Trees className="w-5 h-5" />
-          </div>
-          <span className="text-lg font-black text-gray-900 tracking-tight">EsgEasy</span>
+          {brand.logoUrl ? (
+            <img src={brand.logoUrl} alt="" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+          ) : (
+            <div
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm shadow-sm ${brand.primaryColor ? '' : 'bg-emerald-500'}`}
+              style={{ backgroundColor: brand.primaryColor || undefined }}
+            >
+              <Trees className="w-5 h-5" />
+            </div>
+          )}
+          <span className="text-lg font-black text-gray-900 tracking-tight">{brand.brandName}</span>
         </div>
 
         {/* Top login link */}

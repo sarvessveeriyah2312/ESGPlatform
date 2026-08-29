@@ -16,6 +16,8 @@ import java.util.UUID;
 public record EsgEasyPrincipal(
         UUID userId,
         UUID companyId,
+        /** Set only for a PARTNER_ADMIN principal — see AppUser.partner, WHITELABEL_PLAN.md Phase 4. */
+        UUID partnerId,
         Role role,
         String email,
         Set<String> scopes,

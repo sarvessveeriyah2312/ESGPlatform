@@ -4,6 +4,7 @@ import com.esgeasy.esg.email.dto.TestEmailResponse;
 import com.esgeasy.esg.platform.PlatformSettings;
 import com.esgeasy.esg.platform.PlatformSettingsRepository;
 import com.esgeasy.esg.security.SecretCryptoService;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ public class EmailService {
     private final PlatformSettingsRepository platformSettingsRepository;
     private final SecretCryptoService cryptoService;
     private final SmtpHostValidator smtpHostValidator;
+    private final CompanyRepository companyRepository;
 
     public EmailService(JavaMailSender platformMailSender,
                          @Value("${esgeasy.mail.from}") String platformFromAddress,
@@ -42,7 +44,8 @@ public class EmailService {
                          CompanyEmailSettingsRepository companyEmailSettingsRepository,
                          PlatformSettingsRepository platformSettingsRepository,
                          SecretCryptoService cryptoService,
-                         SmtpHostValidator smtpHostValidator) {
+                         SmtpHostValidator smtpHostValidator,
+                         CompanyRepository companyRepository) {
         this.platformMailSender = platformMailSender;
         this.platformFromAddress = platformFromAddress;
         this.platformConfigured = platformMailHost != null && !platformMailHost.isBlank();
@@ -50,6 +53,12 @@ public class EmailService {
         this.platformSettingsRepository = platformSettingsRepository;
         this.cryptoService = cryptoService;
         this.smtpHostValidator = smtpHostValidator;
+        this.companyRepository = companyRepository;
+    }
+
+    /** Falls back to "EsgEasy" for a companyId that doesn't resolve (shouldn't happen in practice, but a transactional email is not the place to throw) — see Company.getEffectiveBrandName. */
+    private String resolveBrandName(UUID companyId) {
+        return companyRepository.findById(companyId).map(c -> c.getEffectiveBrandName()).orElse("EsgEasy");
     }
 
     public void sendInviteEmail(UUID companyId, String toEmail, String toName, String companyName, String inviterName, Object role, String inviteUrl) {
@@ -65,16 +74,17 @@ public class EmailService {
             return;
         }
         try {
+            String brandName = resolveBrandName(companyId);
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(sender.fromAddress());
             message.setTo(toEmail);
-            message.setSubject(inviterName + " invited you to join " + companyName + " on EsgEasy");
+            message.setSubject(inviterName + " invited you to join " + companyName + " on " + brandName);
             message.setText(
                     "Hi " + toName + ",\n\n" +
-                    inviterName + " has invited you to join " + companyName + " on EsgEasy as a " + role + ".\n\n" +
+                    inviterName + " has invited you to join " + companyName + " on " + brandName + " as a " + role + ".\n\n" +
                     "Accept your invite here:\n" + inviteUrl + "\n\n" +
                     "This link expires in 7 days and can only be used once.\n\n" +
-                    "— EsgEasy Reporting Platform"
+                    "— " + brandName + " Reporting Platform"
             );
             sender.mailSender().send(message);
         } catch (Exception e) {
@@ -95,15 +105,16 @@ public class EmailService {
             return;
         }
         try {
+            String brandName = resolveBrandName(companyId);
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(sender.fromAddress());
             message.setTo(toEmail);
-            message.setSubject("Verify your email for EsgEasy");
+            message.setSubject("Verify your email for " + brandName);
             message.setText(
                     "Hi " + toName + ",\n\n" +
-                    "Please verify your email address to activate your EsgEasy account:\n\n" + verifyUrl + "\n\n" +
+                    "Please verify your email address to activate your " + brandName + " account:\n\n" + verifyUrl + "\n\n" +
                     "This link expires in 24 hours.\n\n" +
-                    "— EsgEasy Reporting Platform"
+                    "— " + brandName + " Reporting Platform"
             );
             sender.mailSender().send(message);
         } catch (Exception e) {
@@ -124,15 +135,16 @@ public class EmailService {
             return;
         }
         try {
+            String brandName = resolveBrandName(companyId);
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(sender.fromAddress());
             message.setTo(toEmail);
-            message.setSubject("Reset your EsgEasy password");
+            message.setSubject("Reset your " + brandName + " password");
             message.setText(
                     "Hi " + toName + ",\n\n" +
-                    "We received a request to reset your EsgEasy password. Click the link below to choose a new one:\n\n" + resetUrl + "\n\n" +
+                    "We received a request to reset your " + brandName + " password. Click the link below to choose a new one:\n\n" + resetUrl + "\n\n" +
                     "This link expires in 1 hour and can only be used once. If you didn't request this, you can safely ignore this email.\n\n" +
-                    "— EsgEasy Reporting Platform"
+                    "— " + brandName + " Reporting Platform"
             );
             sender.mailSender().send(message);
         } catch (Exception e) {

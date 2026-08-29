@@ -281,7 +281,7 @@ export default function AdminTenantsTab({ tenants, tenantsLoading, onSelectTenan
 
                   {/* Monthly rate */}
                   <td className="px-6 py-4 font-mono font-bold text-gray-700">
-                    ${PLAN_PRICING[t.plan]}
+                    {t.plan === 'on-prem' ? 'Contract' : `$${PLAN_PRICING[t.plan]}`}
                   </td>
 
                   {/* Date created */}
@@ -414,6 +414,28 @@ export default function AdminTenantsTab({ tenants, tenantsLoading, onSelectTenan
                     </div>
                   </div>
                   {targetPlanSelection === 'issuer-ready' && <Check className="w-4 h-4 text-emerald-600" />}
+                </label>
+
+                {/* On-Premise */}
+                <label className={`p-3 rounded-xl border-2 cursor-pointer flex items-center justify-between transition-all ${
+                  targetPlanSelection === 'on-prem'
+                    ? 'bg-emerald-50 border-emerald-500'
+                    : 'bg-white border-gray-100 hover:border-gray-200'
+                }`}>
+                  <div className="flex items-center space-x-2.5">
+                    <input
+                      type="radio"
+                      name="planSelect"
+                      checked={targetPlanSelection === 'on-prem'}
+                      onChange={() => setTargetPlanSelection('on-prem')}
+                      className="text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block">On-Premise Plan</span>
+                      <span className="text-[10px] text-gray-500">Enterprise contract • no self-serve billing</span>
+                    </div>
+                  </div>
+                  {targetPlanSelection === 'on-prem' && <Check className="w-4 h-4 text-emerald-600" />}
                 </label>
               </div>
             </div>

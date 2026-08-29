@@ -10,11 +10,8 @@ import com.esgeasy.esg.billing.dto.NextBillingResponse;
 import com.esgeasy.esg.common.exceptions.ConflictException;
 import com.esgeasy.esg.common.exceptions.ForbiddenException;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
-import com.esgeasy.esg.platform.PlatformSettings;
-import com.esgeasy.esg.platform.PlatformSettingsRepository;
 import com.esgeasy.esg.platform.PlatformSettingsService;
 import com.esgeasy.esg.security.CurrentUserProvider;
-import com.esgeasy.esg.security.SecretCryptoService;
 import com.esgeasy.esg.tenant.Company;
 import com.esgeasy.esg.tenant.CompanyRepository;
 import com.esgeasy.esg.tenant.MarketClassification;
@@ -57,26 +54,23 @@ public class CompanyBillingService {
 
     private final CompanyRepository companyRepository;
     private final PlanPricingRepository planPricingRepository;
-    private final PlatformSettingsRepository platformSettingsRepository;
     private final PlatformSettingsService platformSettingsService;
-    private final SecretCryptoService cryptoService;
+    private final PlatformStripeSecretProvider stripeSecretProvider;
     private final StripeClient stripeClient;
     private final CurrentUserProvider currentUserProvider;
     private final PlatformActivityLogService activityLogService;
 
     public CompanyBillingService(CompanyRepository companyRepository,
                                   PlanPricingRepository planPricingRepository,
-                                  PlatformSettingsRepository platformSettingsRepository,
                                   PlatformSettingsService platformSettingsService,
-                                  SecretCryptoService cryptoService,
+                                  PlatformStripeSecretProvider stripeSecretProvider,
                                   StripeClient stripeClient,
                                   CurrentUserProvider currentUserProvider,
                                   PlatformActivityLogService activityLogService) {
         this.companyRepository = companyRepository;
         this.planPricingRepository = planPricingRepository;
-        this.platformSettingsRepository = platformSettingsRepository;
         this.platformSettingsService = platformSettingsService;
-        this.cryptoService = cryptoService;
+        this.stripeSecretProvider = stripeSecretProvider;
         this.stripeClient = stripeClient;
         this.currentUserProvider = currentUserProvider;
         this.activityLogService = activityLogService;
@@ -86,6 +80,8 @@ public class CompanyBillingService {
     public CheckoutSessionResponse createCheckoutSession(SubscriptionPlan targetPlan, CreateCheckoutSessionRequest.ReturnDestination returnTo) {
         UUID companyId = currentUserProvider.requireCompanyId();
         String secretKey = requireStripeSecretKey();
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("Company not found"));
 
         PlanPricing pricing = planPricingRepository.findById(targetPlan)
                 .orElseThrow(() -> new NotFoundException("No pricing configured for plan: " + targetPlan));
@@ -96,6 +92,14 @@ public class CompanyBillingService {
         String joiner = returnPath.contains("?") ? "&" : "?";
         String successUrl = baseUrl + returnPath + joiner + "checkout=success&session_id={CHECKOUT_SESSION_ID}";
         String cancelUrl = baseUrl + returnPath + joiner + "checkout=cancelled";
+
+        // ON_PREM bills annually rather than monthly — still a normal recurring Stripe
+        // subscription (mode 'subscription'), just interval 'year' instead of 'month'. Stripe
+        // handles renewal billing on its own from here; StripeWebhookService's
+        // customer.subscription.deleted / invoice.payment_succeeded handlers are plan-agnostic
+        // (matched by Stripe customer ID), so cancellation and each year's invoice are already
+        // handled with no ON_PREM-specific code needed there.
+        boolean annual = targetPlan == SubscriptionPlan.ON_PREM;
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("mode", "subscription");
@@ -110,8 +114,9 @@ public class CompanyBillingService {
         params.add("line_items[0][quantity]", "1");
         params.add("line_items[0][price_data][currency]", "myr");
         params.add("line_items[0][price_data][unit_amount]", toCents(pricing.getMonthlyPrice()));
-        params.add("line_items[0][price_data][recurring][interval]", "month");
+        params.add("line_items[0][price_data][recurring][interval]", annual ? "year" : "month");
         params.add("line_items[0][price_data][product_data][name]", targetPlan.name() + " Plan — EsgEasy");
+        applyPartnerRevenueShare(params, company);
 
         Map<String, Object> session = stripeClient.createCheckoutSession(secretKey, params);
         Object url = session.get("url");
@@ -187,6 +192,16 @@ public class CompanyBillingService {
      */
     @Transactional
     public ChangePlanResponse changeSubscriptionPlan(SubscriptionPlan targetPlan) {
+        // On-prem bills yearly while every other plan bills monthly — re-pricing a subscription
+        // item in place (this endpoint) keeps the subscription's existing interval, so switching
+        // to on-prem needs a fresh Checkout session (which sets interval 'year' from the start)
+        // rather than an in-place item update. Known gap: this doesn't cancel the old monthly
+        // subscription, so someone with an active Growth/Issuer-Ready subscription who then buys
+        // on-prem via Checkout keeps being charged monthly for the old plan too, unless a platform
+        // admin cancels it manually in Stripe — not handled automatically yet.
+        if (targetPlan == SubscriptionPlan.ON_PREM) {
+            throw new ConflictException("The on-premise plan bills annually — buy it via Checkout instead of changing your existing subscription");
+        }
         UUID companyId = currentUserProvider.requireCompanyId();
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("Company not found"));
@@ -230,6 +245,25 @@ public class CompanyBillingService {
                 "Subscription plan changed from " + previousPlan + " to " + targetPlan + " via self-service checkout");
 
         return new ChangePlanResponse(targetPlan, "Plan changed to " + targetPlan + ".");
+    }
+
+    /**
+     * WHITELABEL_PLAN.md Phase 5: if this company was referred by a partner with both a connected
+     * Stripe account and an explicit revenue share % set, route that share to the partner as a
+     * destination charge on the resulting subscription — Stripe collects the full amount from the
+     * customer and automatically transfers the fee-minus share to the partner's connected account.
+     * Silently skipped (no destination charge) if either field is unset — see Partner.revenueSharePercent's
+     * own doc comment for why there's no default percentage to fall back to. Nested under
+     * subscription_data since this is a `mode=subscription` Checkout Session, not a one-off payment —
+     * application_fee_percent/transfer_data at the top level only apply to `mode=payment`.
+     */
+    private void applyPartnerRevenueShare(MultiValueMap<String, String> params, Company company) {
+        var partner = company.getPartner();
+        if (partner == null || partner.getStripeAccountId() == null || partner.getRevenueSharePercent() == null) {
+            return;
+        }
+        params.add("subscription_data[application_fee_percent]", partner.getRevenueSharePercent().toPlainString());
+        params.add("subscription_data[transfer_data][destination]", partner.getStripeAccountId());
     }
 
     @SuppressWarnings("unchecked")
@@ -314,17 +348,18 @@ public class CompanyBillingService {
         return switch (plan) {
             case STARTER -> MarketClassification.SME;
             case GROWTH -> MarketClassification.ACE_MARKET;
-            case ISSUER_READY -> MarketClassification.MAIN_MARKET;
+            // On-prem's real target customer (bank, GLC, Main Market issuer — see ONPREM_PLAN.md)
+            // is the same profile as ISSUER_READY's; a platform admin can correct this afterward
+            // via the company's profile if a given purchaser doesn't fit that default.
+            case ISSUER_READY, ON_PREM -> MarketClassification.MAIN_MARKET;
         };
     }
 
+    // Extracted to PlatformStripeSecretProvider (shared with PartnerService's Stripe Connect
+    // operations, WHITELABEL_PLAN.md Phase 5) — kept as a thin delegate here so the 4 existing
+    // call sites in this class didn't need touching.
     private String requireStripeSecretKey() {
-        PlatformSettings settings = platformSettingsRepository.findFirstByOrderByCreatedAtAsc()
-                .orElseThrow(() -> new ConflictException("Stripe isn't configured yet — ask a platform admin to set it up in Platform Settings"));
-        if (!Boolean.TRUE.equals(settings.getStripeEnabled()) || settings.getStripeSecretKeyEncrypted() == null) {
-            throw new ConflictException("Stripe payments aren't enabled yet — ask a platform admin to enable them in Platform Settings");
-        }
-        return cryptoService.decrypt(settings.getStripeSecretKeyEncrypted());
+        return stripeSecretProvider.requireSecretKey();
     }
 
     private String toCents(BigDecimal ringgit) {

@@ -35,6 +35,10 @@ export interface UserProfile {
   trialEndsAt: string | null;
   /** Manually set by a PLATFORM_ADMIN once the company has actually paid — see TenantAdminController. */
   trialConverted: boolean;
+  /** Resolved from the company's linked Partner if any, else "EsgEasy" — see Company.getEffectiveBrandName. */
+  brandName: string;
+  logoUrl: string | null;
+  primaryColor: string | null;
 }
 
 /** Single source of truth for "is this account's trial over" — used by AuthenticatedLayout's gate and the Billing page. */
@@ -65,6 +69,9 @@ export function toUserProfile(me: MeResponse): UserProfile {
     permissions: new Set(me.permissions ?? []),
     trialEndsAt: me.trialEndsAt,
     trialConverted: me.trialConverted,
+    brandName: me.brandName,
+    logoUrl: me.logoUrl,
+    primaryColor: me.primaryColor,
   };
 }
 

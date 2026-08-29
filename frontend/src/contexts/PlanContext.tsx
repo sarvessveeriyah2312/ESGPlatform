@@ -7,7 +7,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { referenceApi } from '../api/referenceApi';
 import { planFromBackend } from '../api/mappers';
 
-export type PlanType = 'starter' | 'growth' | 'issuer-ready';
+export type PlanType = 'starter' | 'growth' | 'issuer-ready' | 'on-prem';
 
 interface PlanContextProps {
   plan: PlanType;
@@ -58,7 +58,7 @@ function defaultFlags(): Record<string, FeatureFlagState> {
   return result;
 }
 
-const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-ready': 3 };
+const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-ready': 3, 'on-prem': 4 };
 
 export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Try loading initial plan from local storage to keep state stable, default to 'starter' to showcase locked flows

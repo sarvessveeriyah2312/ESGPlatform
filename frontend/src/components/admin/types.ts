@@ -20,6 +20,8 @@ export interface Tenant {
   contactEmail: string;
   trialEndsAt: string | null;
   trialConverted: boolean;
+  partnerId: string | null;
+  partnerBrandName: string | null;
 }
 
 export function toTenant(t: TenantSummaryResponse): Tenant {
@@ -34,6 +36,8 @@ export function toTenant(t: TenantSummaryResponse): Tenant {
     contactEmail: t.primaryContactEmail ?? '—',
     trialEndsAt: t.trialEndsAt,
     trialConverted: t.trialConverted,
+    partnerId: t.partnerId,
+    partnerBrandName: t.partnerBrandName,
   };
 }
 

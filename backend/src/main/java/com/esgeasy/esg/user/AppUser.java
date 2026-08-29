@@ -3,6 +3,7 @@ package com.esgeasy.esg.user;
 import com.esgeasy.esg.common.BaseEntity;
 import com.esgeasy.esg.permission.CustomRole;
 import com.esgeasy.esg.tenant.Company;
+import com.esgeasy.esg.tenant.Partner;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,6 +33,11 @@ public class AppUser extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     private Company company;
+
+    /** Set only for a PARTNER_ADMIN user (whose company is always null) — see Role.PARTNER_ADMIN, WHITELABEL_PLAN.md Phase 4. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "partner_id")
+    private Partner partner;
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;

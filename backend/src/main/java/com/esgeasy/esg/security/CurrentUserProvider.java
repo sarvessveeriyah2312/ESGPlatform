@@ -24,4 +24,12 @@ public class CurrentUserProvider {
         }
         return companyId;
     }
+
+    public UUID requirePartnerId() {
+        UUID partnerId = getPrincipal().partnerId();
+        if (partnerId == null) {
+            throw new ForbiddenException("Current user is not associated with a partner");
+        }
+        return partnerId;
+    }
 }

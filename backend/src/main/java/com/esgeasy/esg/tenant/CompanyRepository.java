@@ -13,6 +13,9 @@ import java.util.UUID;
 public interface CompanyRepository extends JpaRepository<Company, UUID> {
     List<Company> findByParentCompanyId(UUID parentCompanyId);
     Optional<Company> findByStripeCustomerId(String stripeCustomerId);
+    boolean existsByPartnerId(UUID partnerId);
+    /** Backs the partner console (WHITELABEL_PLAN.md Phase 4) — a partner's own scoped view of its companies. */
+    List<Company> findByPartnerIdOrderByNameAsc(UUID partnerId);
 
     /**
      * Row-locking read for the checkout-confirmation critical section — two browser tabs (or a

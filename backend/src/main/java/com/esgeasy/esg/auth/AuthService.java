@@ -27,6 +27,7 @@ import com.esgeasy.esg.session.UserSessionService;
 import com.esgeasy.esg.tenant.Company;
 import com.esgeasy.esg.tenant.CompanyRepository;
 import com.esgeasy.esg.tenant.MarketClassification;
+import com.esgeasy.esg.tenant.Partner;
 import com.esgeasy.esg.tenant.Sector;
 import com.esgeasy.esg.tenant.SectorRepository;
 import com.esgeasy.esg.tenant.SubscriptionPlan;
@@ -311,6 +312,17 @@ public class AuthService {
     MeResponse toMeResponse(AppUser user) {
         Company company = user.getCompany();
         boolean mfaSetupRequired = platformSettingsService.isMfaRequired() && !mfaService.isEnabled(user.getId());
+        // Brand resolution order: the user's own partner first (a PARTNER_ADMIN sees their own
+        // brand, not EsgEasy's — see Role.PARTNER_ADMIN), else their company's effective brand
+        // (WHITELABEL_PLAN.md Phase 2), else EsgEasy's own default. A user is never linked to both
+        // a company and a partner at once (see AppUser.partner's own doc comment).
+        Partner partner = user.getPartner();
+        String brandName = partner != null ? partner.getBrandName()
+                : company != null ? company.getEffectiveBrandName() : "EsgEasy";
+        String logoUrl = partner != null ? partner.getLogoAsset()
+                : company != null ? company.getEffectiveLogoUrl() : null;
+        String primaryColor = partner != null ? partner.getPrimaryColor()
+                : company != null ? company.getEffectivePrimaryColor() : null;
         return new MeResponse(
                 user.getId(),
                 user.getName(),
@@ -332,7 +344,10 @@ public class AuthService {
                 mfaSetupRequired,
                 user.getCustomRole() != null ? user.getCustomRole().getPermissionKeys() : java.util.List.of(),
                 company != null ? company.getTrialEndsAt() : null,
-                company != null && Boolean.TRUE.equals(company.getTrialConverted())
+                company != null && Boolean.TRUE.equals(company.getTrialConverted()),
+                brandName,
+                logoUrl,
+                primaryColor
         );
     }
 }

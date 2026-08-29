@@ -10,7 +10,7 @@ export interface MeResponse {
   userId: string;
   name: string;
   email: string;
-  role: 'COMPANY_ADMIN' | 'COMPANY_CONTRIBUTOR' | 'CONSULTANT' | 'PLATFORM_ADMIN' | 'SUPERADMIN';
+  role: 'COMPANY_ADMIN' | 'COMPANY_CONTRIBUTOR' | 'CONSULTANT' | 'PLATFORM_ADMIN' | 'SUPERADMIN' | 'PARTNER_ADMIN';
   companyId: string | null;
   companyName: string | null;
   sectorCode: string | null;
@@ -28,6 +28,9 @@ export interface MeResponse {
   permissions: string[];
   trialEndsAt: string | null;
   trialConverted: boolean;
+  brandName: string;
+  logoUrl: string | null;
+  primaryColor: string | null;
 }
 
 export interface AuthResponse {

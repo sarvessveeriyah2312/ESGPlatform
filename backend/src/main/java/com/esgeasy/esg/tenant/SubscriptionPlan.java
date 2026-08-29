@@ -3,7 +3,10 @@ package com.esgeasy.esg.tenant;
 public enum SubscriptionPlan {
     STARTER(1),
     GROWTH(2),
-    ISSUER_READY(3);
+    ISSUER_READY(3),
+    /** On-premise / enterprise contract tier — provisioned directly by a platform admin
+     *  (CompanyService.adminUpdatePlan), never via self-serve Stripe checkout. See ONPREM_PLAN.md. */
+    ON_PREM(4);
 
     private final int level;
 

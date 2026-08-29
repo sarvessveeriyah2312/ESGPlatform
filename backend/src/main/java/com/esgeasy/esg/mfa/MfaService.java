@@ -8,6 +8,7 @@ import com.esgeasy.esg.mfa.dto.TotpEnrollResponse;
 import com.esgeasy.esg.mfa.dto.TotpStatusResponse;
 import com.esgeasy.esg.security.CurrentUserProvider;
 import com.esgeasy.esg.security.SecretCryptoService;
+import com.esgeasy.esg.tenant.CompanyRepository;
 import com.esgeasy.esg.user.AppUser;
 import com.esgeasy.esg.user.AppUserRepository;
 import dev.samstevens.totp.code.CodeVerifier;
@@ -37,7 +38,7 @@ import java.util.UUID;
 @Service
 public class MfaService {
 
-    private static final String ISSUER = "EsgEasy";
+    private static final String DEFAULT_ISSUER = "EsgEasy";
     private static final int BACKUP_CODE_COUNT = 10;
     private static final String BACKUP_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -52,19 +53,31 @@ public class MfaService {
     private final SecretCryptoService secretCryptoService;
     private final PasswordEncoder passwordEncoder;
     private final CurrentUserProvider currentUserProvider;
+    private final CompanyRepository companyRepository;
 
     public MfaService(TotpSecretRepository totpSecretRepository,
                        BackupCodeRepository backupCodeRepository,
                        AppUserRepository appUserRepository,
                        SecretCryptoService secretCryptoService,
                        PasswordEncoder passwordEncoder,
-                       CurrentUserProvider currentUserProvider) {
+                       CurrentUserProvider currentUserProvider,
+                       CompanyRepository companyRepository) {
         this.totpSecretRepository = totpSecretRepository;
         this.backupCodeRepository = backupCodeRepository;
         this.appUserRepository = appUserRepository;
         this.secretCryptoService = secretCryptoService;
         this.passwordEncoder = passwordEncoder;
         this.currentUserProvider = currentUserProvider;
+        this.companyRepository = companyRepository;
+    }
+
+    /** A platform-role user (no companyId) has no partner to resolve — falls back to the default. */
+    private String resolveIssuer() {
+        UUID companyId = currentUserProvider.getPrincipal().companyId();
+        if (companyId == null) {
+            return DEFAULT_ISSUER;
+        }
+        return companyRepository.findById(companyId).map(c -> c.getEffectiveBrandName()).orElse(DEFAULT_ISSUER);
     }
 
     @Transactional
@@ -92,7 +105,7 @@ public class MfaService {
         QrData data = new QrData.Builder()
                 .label(email)
                 .secret(secret)
-                .issuer(ISSUER)
+                .issuer(resolveIssuer())
                 .build();
 
         String qrCodeDataUri;

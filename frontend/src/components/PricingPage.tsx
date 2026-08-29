@@ -36,7 +36,7 @@ function formatRM(amount: number): string {
   return `RM ${Math.round(amount).toLocaleString('en-MY')}`;
 }
 
-const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-ready': 3 };
+const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-ready': 3, 'on-prem': 4 };
 
 // Onboarding (OnboardingPage.tsx) derives the plan tier from a market classification the user
 // picks in Step 1, defaulting to 'SME' with no memory of which pricing card was clicked — so a

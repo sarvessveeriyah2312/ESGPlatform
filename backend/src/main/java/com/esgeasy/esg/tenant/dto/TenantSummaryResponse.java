@@ -17,6 +17,8 @@ public record TenantSummaryResponse(
         String primaryContactName,
         String primaryContactEmail,
         Instant trialEndsAt,
-        boolean trialConverted
+        boolean trialConverted,
+        UUID partnerId,
+        String partnerBrandName
 ) {
 }

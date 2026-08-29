@@ -41,13 +41,15 @@ import {
   Database,
   Ticket,
   Package,
-  ScrollText
+  ScrollText,
+  Handshake
 } from 'lucide-react';
 
 import { PlanProvider, usePlan, PlanType } from './contexts/PlanContext';
 import { AuthProvider, useAuth, isTrialExpired } from './contexts/AuthContext';
+import { useSubdomainBrand } from './hooks/useSubdomainBrand';
 import { ToastProvider, useToast } from './contexts/ToastContext';
-import { Role, canAccess, hasPermission, MANAGEMENT_ROLES, PLATFORM_ROLES, TENANT_ROLES } from './permissions';
+import { Role, canAccess, hasPermission, MANAGEMENT_ROLES, PLATFORM_ROLES, PARTNER_ROLES, TENANT_ROLES } from './permissions';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import AcceptInvitePage from './components/AcceptInvitePage';
@@ -73,6 +75,8 @@ import AssuranceWorkspaceView from './components/AssuranceWorkspaceView';
 import ApiAccessView from './components/ApiAccessView';
 import ReportsExportView from './components/ReportsExportView';
 import AdminPanel from './components/AdminPanel';
+import PartnerConsole from './components/PartnerConsole';
+import PartnerConsoleLayout from './components/partner/PartnerConsoleLayout';
 import TargetsView from './components/TargetsView';
 import SupportTicketsView from './components/SupportTicketsView';
 import ProfileView from './components/ProfileView';
@@ -112,16 +116,19 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
     return <Navigate to="/login" replace />;
   }
 
-  // Platform-level roles have no company, so the onboarding flow (which sets up a tenant's
-  // market/sector) doesn't apply to them.
-  const requiresOnboarding = user && !user.onboardingCompleted && !canAccess(user.role, PLATFORM_ROLES);
+  // Platform-level and partner roles have no company, so the onboarding flow (which sets up a
+  // tenant's market/sector) doesn't apply to them. In practice a PARTNER_ADMIN never reaches
+  // AuthenticatedLayout at all (see PartnerConsole's own standalone guard) — this only matters if
+  // one somehow navigates to a tenant/platform route directly (e.g. a stale bookmark).
+  const requiresOnboarding = user && !user.onboardingCompleted && !canAccess(user.role, PLATFORM_ROLES) && !canAccess(user.role, PARTNER_ROLES);
   if (requiresOnboarding && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
   // Free trial ended and nobody's flipped trialConverted for this company yet (Platform Admin >
-  // Tenants) — platform-level roles aren't tied to a single company's trial, so they're exempt.
-  const trialExpired = isTrialExpired(user) && !canAccess(user?.role, PLATFORM_ROLES);
+  // Tenants) — platform-level and partner roles aren't tied to a single company's trial, so
+  // they're exempt.
+  const trialExpired = isTrialExpired(user) && !canAccess(user?.role, PLATFORM_ROLES) && !canAccess(user?.role, PARTNER_ROLES);
   if (trialExpired && location.pathname !== '/trial-expired') {
     return <Navigate to="/trial-expired" replace />;
   }
@@ -166,6 +173,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
       'admin/billing': 'Platform Admin — Subscriptions & Invoices',
       'admin/support': 'Platform Admin — Feedback & Support',
       'admin/plans': 'Platform Admin — Plan Management',
+      'admin/partners': 'Platform Admin — Partners',
       'admin/audit-log': 'Platform Admin — Audit Log',
       'admin/settings': 'Platform Admin — Settings'
     };
@@ -203,6 +211,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
     { key: 'admin-billing', label: 'Subscriptions & Invoices', icon: <CreditCard className="w-4 h-4" />, path: '/admin/billing' },
     { key: 'admin-support', label: 'Feedback & Support', icon: <Ticket className="w-4 h-4" />, path: '/admin/support' },
     { key: 'admin-plans', label: 'Plan Management', icon: <Package className="w-4 h-4" />, path: '/admin/plans' },
+    { key: 'admin-partners', label: 'Partners', icon: <Handshake className="w-4 h-4" />, path: '/admin/partners' },
     { key: 'admin-audit-log', label: 'Audit Log', icon: <ScrollText className="w-4 h-4" />, path: '/admin/audit-log' },
     { key: 'admin-settings', label: 'Platform Settings', icon: <Settings className="w-4 h-4" />, path: '/admin/settings' },
   ];
@@ -227,14 +236,22 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
           {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
         </button>
 
-        {/* Sidebar Header */}
+        {/* Sidebar Header — reflects the linked white-label partner's brand if any, else EsgEasy's
+            own (see Company.getEffectiveBrandName / user.brandName, WHITELABEL_PLAN.md Phase 2). */}
         <div className="h-[72px] flex items-center px-6 border-b border-transparent shrink-0">
           <div className="flex items-center space-x-3 w-full">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-sm font-black text-sm shrink-0">
-              <Hash className="w-5 h-5" />
-            </div>
+            {user?.logoUrl ? (
+              <img src={user.logoUrl} alt="" className="w-8 h-8 rounded-xl object-cover shadow-sm shrink-0" />
+            ) : (
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm font-black text-sm shrink-0 ${user?.primaryColor ? '' : 'bg-emerald-500'}`}
+                style={user?.primaryColor ? { backgroundColor: user.primaryColor } : undefined}
+              >
+                <Hash className="w-5 h-5" />
+              </div>
+            )}
             {!sidebarCollapsed && (
-              <span className="font-bold text-gray-900 text-lg truncate">EsgEasy</span>
+              <span className="font-bold text-gray-900 text-lg truncate">{user?.brandName ?? 'EsgEasy'}</span>
             )}
           </div>
         </div>
@@ -318,7 +335,12 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
                     if (item.gated && !isFeatureVisible(item.key)) return null;
                     if (item.requiresManagement && !canManageWorkspace) return null;
                     if (item.requiresAnyPermission && !item.requiresAnyPermission.some((key) => hasPermission(user?.role, user?.permissions, key))) return null;
-                    if (item.premiumOnly && plan !== 'issuer-ready') return null;
+                    // Visibility is already decided by isFeatureVisible() above (level-based,
+                    // matches every other plan-gated item) — `premiumOnly` below is cosmetic only
+                    // (the "New" badge). A second, hardcoded `plan !== 'issuer-ready'` gate here
+                    // used to also hide these items for 'on-prem' (level 4, strictly higher),
+                    // which was a real bug: an on-prem company couldn't find IFRS S1/S2 or
+                    // Assurance Workspace in the sidebar despite having access via direct URL.
                     const isActive = location.pathname === item.path;
                     return (
                       <button
@@ -459,19 +481,34 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/billing': 'Platform Admin — Subscriptions & Invoices',
   '/admin/support': 'Platform Admin — Feedback & Support',
   '/admin/plans': 'Platform Admin — Plan Management',
+  '/admin/partners': 'Platform Admin — Partners',
   '/admin/audit-log': 'Platform Admin — Audit Log',
   '/admin/settings': 'Platform Admin — Settings',
+  '/partner': 'Partner Console — Companies',
+  '/partner/branding': 'Partner Console — Branding',
+  '/partner/revenue': 'Partner Console — Revenue',
+  '/partner/users': 'Partner Console — Users',
 };
 
 function usePageTitle() {
   const location = useLocation();
+  const { user } = useAuth();
+  // Post-login: the logged-in user's own company brand (WHITELABEL_PLAN.md Phase 2). Pre-login on
+  // a partner's subdomain (nusantara.esgeasy.my): resolved from the hostname instead (Phase 3) —
+  // LoginPage/RegisterPage already call this hook themselves for their own logo/name, so this is
+  // a second, independent call just for the tab title. Note this means the browser tab *title*
+  // (only — no visible page content changes) reflects the partner's brand even on the general
+  // marketing site if visited on their subdomain; Phase 2's "marketing site isn't branded" scope
+  // decision was about the page itself, which this doesn't touch.
+  const subdomainBrand = useSubdomainBrand();
+  const brandName = user?.brandName ?? subdomainBrand.brandName;
 
   useEffect(() => {
     const path = location.pathname;
     const label = PAGE_TITLES[path] ?? (path.startsWith('/settings/companies/') ? 'Company Details' : undefined);
 
-    document.title = label ? `EsgEasy - ${label}` : 'EsgEasy';
-  }, [location.pathname]);
+    document.title = label ? `${brandName} - ${label}` : brandName;
+  }, [location.pathname, brandName]);
 }
 
 /**
@@ -485,6 +522,15 @@ function AppContent() {
     <Routes>
       {/* Superadmin Panel — sections are separate routes so the sidebar can navigate/highlight them */}
       <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
+      {/* Partner console (WHITELABEL_PLAN.md Phase 4) — standalone, not AuthenticatedLayout-wrapped;
+          PartnerConsoleLayout guards auth/role and renders its own sidebar+topbar shell (mirrors
+          the platform admin's own layout, see its own doc comment for why it's a separate
+          component rather than reusing AuthenticatedLayout). PartnerConsole reads the URL to pick
+          which section to render, same pattern as AdminPanel. */}
+      <Route path="/partner" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
+      <Route path="/partner/branding" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
+      <Route path="/partner/revenue" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
+      <Route path="/partner/users" element={<PartnerConsoleLayout><PartnerConsole /></PartnerConsoleLayout>} />
       <Route
         path="/admin/overview"
         element={
@@ -527,6 +573,14 @@ function AppContent() {
       />
       <Route
         path="/admin/plans"
+        element={
+          <AuthenticatedLayout allowedRoles={PLATFORM_ROLES}>
+            <AdminPanel />
+          </AuthenticatedLayout>
+        }
+      />
+      <Route
+        path="/admin/partners"
         element={
           <AuthenticatedLayout allowedRoles={PLATFORM_ROLES}>
             <AdminPanel />

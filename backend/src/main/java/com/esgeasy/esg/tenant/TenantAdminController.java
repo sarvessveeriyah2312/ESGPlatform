@@ -3,6 +3,7 @@ package com.esgeasy.esg.tenant;
 import com.esgeasy.esg.tenant.dto.TenantSummaryResponse;
 import com.esgeasy.esg.tenant.dto.TenantUserResponse;
 import com.esgeasy.esg.tenant.dto.UpdatePlanRequest;
+import com.esgeasy.esg.tenant.dto.UpdateTenantPartnerRequest;
 import com.esgeasy.esg.tenant.dto.UpdateTenantStatusRequest;
 import com.esgeasy.esg.tenant.dto.UpdateTenantTrialRequest;
 import jakarta.validation.Valid;
@@ -45,6 +46,11 @@ public class TenantAdminController {
     @PatchMapping("/{id}/status")
     public TenantSummaryResponse updateStatus(@PathVariable UUID id, @Valid @RequestBody UpdateTenantStatusRequest request) {
         return companyService.adminUpdateStatus(id, request);
+    }
+
+    @PatchMapping("/{id}/partner")
+    public TenantSummaryResponse updatePartner(@PathVariable UUID id, @Valid @RequestBody UpdateTenantPartnerRequest request) {
+        return companyService.adminUpdatePartner(id, request);
     }
 
     @GetMapping("/{id}/users")

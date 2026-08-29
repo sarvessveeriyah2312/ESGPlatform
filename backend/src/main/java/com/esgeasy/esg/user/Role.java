@@ -5,5 +5,7 @@ public enum Role {
     COMPANY_CONTRIBUTOR,
     CONSULTANT,
     PLATFORM_ADMIN,
-    SUPERADMIN
+    SUPERADMIN,
+    /** A white-label partner's own login — see Partner, AppUser.partner, WHITELABEL_PLAN.md Phase 4. */
+    PARTNER_ADMIN
 }

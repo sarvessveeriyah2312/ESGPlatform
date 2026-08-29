@@ -7,7 +7,8 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Download } from 'lucide-react';
 import { tenantAdminApi, TenantUserResponse } from '../../api/tenantAdminApi';
 import { InvoiceResponse } from '../../api/invoiceAdminApi';
-import { Tenant, ShowToast } from './types';
+import { partnerAdminApi, PartnerResponse } from '../../api/partnerAdminApi';
+import { Tenant, ShowToast, toTenant } from './types';
 import { PLAN_PRICING, ROLE_LABELS } from './constants';
 import { useAdminPagination } from './useAdminPagination';
 import AdminPagination from './AdminPagination';
@@ -21,10 +22,11 @@ interface AdminTenantDetailViewProps {
   invoices: InvoiceResponse[];
   invoicesLoading: boolean;
   onBack: () => void;
+  onTenantUpdated: (updated: Tenant) => void;
   showToast: ShowToast;
 }
 
-export default function AdminTenantDetailView({ tenantId, tenants, invoices, invoicesLoading, onBack, showToast }: AdminTenantDetailViewProps) {
+export default function AdminTenantDetailView({ tenantId, tenants, invoices, invoicesLoading, onBack, onTenantUpdated, showToast }: AdminTenantDetailViewProps) {
   const activeTenantDetails = tenants.find(t => t.id === tenantId);
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -40,6 +42,25 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
       .finally(() => setTenantUsersLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
+
+  // Partner list for the reassignment dropdown — independent of the tenant itself, fetched once.
+  const [partners, setPartners] = useState<PartnerResponse[]>([]);
+  const [partnerSaving, setPartnerSaving] = useState(false);
+
+  useEffect(() => {
+    partnerAdminApi.list().then(setPartners).catch(() => {});
+  }, []);
+
+  const changePartner = (partnerId: string) => {
+    setPartnerSaving(true);
+    tenantAdminApi.updatePartner(tenantId, partnerId || null)
+      .then((updated) => {
+        onTenantUpdated(toTenant(updated));
+        showToast(partnerId ? 'Partner assigned.' : 'Partner unlinked — this is now a direct customer.', 'success');
+      })
+      .catch((err) => showToast(err?.message || 'Failed to update partner.', 'warning'))
+      .finally(() => setPartnerSaving(false));
+  };
 
   const activeUserDetails = selectedUserId ? tenantUsers.find(u => u.id === selectedUserId) : null;
 
@@ -111,7 +132,9 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
             </div>
             <div>
               <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block">Monthly MRR</span>
-              <span className="text-xs font-bold text-gray-700 mt-0.5 block font-mono">${PLAN_PRICING[activeTenantDetails.plan]}</span>
+              <span className="text-xs font-bold text-gray-700 mt-0.5 block font-mono">
+                {activeTenantDetails.plan === 'on-prem' ? 'Contract' : `$${PLAN_PRICING[activeTenantDetails.plan]}`}
+              </span>
             </div>
             <div>
               <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block">Joined Date</span>
@@ -128,6 +151,23 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
               <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block">Authorized Email</span>
               <span className="text-xs font-bold text-emerald-600 mt-0.5 block font-mono">{activeTenantDetails.contactEmail}</span>
             </div>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100">
+            <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1.5">
+              White-Label Partner — independent of plan tier, see WHITELABEL_PLAN.md
+            </span>
+            <select
+              value={activeTenantDetails.partnerId ?? ''}
+              onChange={(e) => changePartner(e.target.value)}
+              disabled={partnerSaving}
+              className="w-full max-w-xs bg-white border border-gray-200 text-gray-900 font-semibold text-xs rounded-full px-3 py-1.5 outline-none cursor-pointer focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 disabled:opacity-50"
+            >
+              <option value="">— No partner (direct EsgEasy customer) —</option>
+              {partners.map((p) => (
+                <option key={p.id} value={p.id}>{p.brandName}</option>
+              ))}
+            </select>
           </div>
         </div>
 

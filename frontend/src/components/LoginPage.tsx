@@ -23,11 +23,16 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { postLoginPath } from '../permissions';
+import { useSubdomainBrand } from '../hooks/useSubdomainBrand';
 import Button from './ui/Button';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, completeMfaLogin, resendVerification, sessionExpired, clearSessionExpired } = useAuth();
+  // Resolves a partner's brand from the subdomain this page is visited on (e.g.
+  // nusantara.esgeasy.my) — distinct from post-login branding (App.tsx), which comes from the
+  // logged-in user's own company instead. See WHITELABEL_PLAN.md Phase 3.
+  const brand = useSubdomainBrand();
   const { showToast } = useToast();
 
   const [email, setEmail] = useState('');
@@ -148,10 +153,17 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <div className="flex items-center space-x-2.5 mb-16">
-            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 font-black text-xl shadow-lg">
-              <Trees className="w-6 h-6" />
-            </div>
-            <span className="text-2xl font-black text-white tracking-tight">EsgEasy</span>
+            {brand.logoUrl ? (
+              <img src={brand.logoUrl} alt="" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+            ) : (
+              <div
+                className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-black text-xl shadow-lg"
+                style={{ color: brand.primaryColor || undefined }}
+              >
+                <Trees className={`w-6 h-6 ${brand.primaryColor ? '' : 'text-emerald-600'}`} />
+              </div>
+            )}
+            <span className="text-2xl font-black text-white tracking-tight">{brand.brandName}</span>
           </div>
 
           <div className="space-y-6 max-w-lg">
@@ -181,10 +193,17 @@ export default function LoginPage() {
         
         {/* Mobile Header */}
         <div className="lg:hidden absolute top-8 left-6 sm:left-12 flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-black text-sm shadow-sm">
-            <Trees className="w-5 h-5" />
-          </div>
-          <span className="text-lg font-black text-gray-900 tracking-tight">EsgEasy</span>
+          {brand.logoUrl ? (
+            <img src={brand.logoUrl} alt="" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+          ) : (
+            <div
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm shadow-sm ${brand.primaryColor ? '' : 'bg-emerald-500'}`}
+              style={{ backgroundColor: brand.primaryColor || undefined }}
+            >
+              <Trees className="w-5 h-5" />
+            </div>
+          )}
+          <span className="text-lg font-black text-gray-900 tracking-tight">{brand.brandName}</span>
         </div>
 
         {/* Back Link */}

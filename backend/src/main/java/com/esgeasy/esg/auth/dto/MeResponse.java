@@ -30,6 +30,9 @@ public record MeResponse(
         boolean mfaSetupRequired,
         List<String> permissions,
         Instant trialEndsAt,
-        boolean trialConverted
+        boolean trialConverted,
+        String brandName,
+        String logoUrl,
+        String primaryColor
 ) {
 }

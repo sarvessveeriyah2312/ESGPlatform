@@ -69,7 +69,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     if (versionMatches && Boolean.TRUE.equals(user.getActive()) && sessionValid(d)) {
                         var companyId = user.getCompany() != null ? user.getCompany().getId() : null;
-                        var principal = new EsgEasyPrincipal(user.getId(), companyId, user.getRole(), user.getEmail(), java.util.Set.of(), d.jti());
+                        var partnerId = user.getPartner() != null ? user.getPartner().getId() : null;
+                        var principal = new EsgEasyPrincipal(user.getId(), companyId, partnerId, user.getRole(), user.getEmail(), java.util.Set.of(), d.jti());
 
                         var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
                         var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);

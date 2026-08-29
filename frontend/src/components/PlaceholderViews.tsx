@@ -79,10 +79,25 @@ const PLAN_COPY: Record<PlanType, { title: string; subtitle: string; description
     accent: 'border-purple-500',
     ring: 'ring-purple-500/30',
     badge: 'text-purple-700 bg-purple-50 border-purple-200'
+  },
+  'on-prem': {
+    title: 'On-Premise',
+    subtitle: 'Enterprise / Dedicated',
+    description: 'Dedicated instance in your own infrastructure. Billed annually, renews automatically.',
+    accent: 'border-slate-500',
+    ring: 'ring-slate-500/30',
+    badge: 'text-slate-700 bg-slate-50 border-slate-200'
   }
 };
 
-const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-ready': 3 };
+const PLAN_LEVELS: Record<PlanType, number> = { starter: 1, growth: 2, 'issuer-ready': 3, 'on-prem': 4 };
+
+// All 4 tiers are self-serve purchasable — on-prem is a real Stripe subscription like the others,
+// just billed yearly instead of monthly (mode 'subscription', interval 'year' — see
+// createCheckoutSession's `annual` branch). Stripe renews and charges it automatically each year.
+// It can still be granted directly by a platform admin instead (comped/negotiated deals), which is
+// what the Tenant Directory's "Change Plan" modal does — both paths set the same subscriptionPlan value.
+const ALL_TIERS: PlanType[] = ['starter', 'growth', 'issuer-ready', 'on-prem'];
 
 export function BillingView() {
   const { plan } = usePlan();
@@ -136,6 +151,7 @@ export function BillingView() {
           if (r.plan === 'STARTER') byPlan['starter'] = r.monthlyPrice;
           if (r.plan === 'GROWTH') byPlan['growth'] = r.monthlyPrice;
           if (r.plan === 'ISSUER_READY') byPlan['issuer-ready'] = r.monthlyPrice;
+          if (r.plan === 'ON_PREM') byPlan['on-prem'] = r.monthlyPrice;
         });
         setPricing(byPlan);
       })
@@ -230,6 +246,7 @@ export function BillingView() {
               {plan === 'starter' && '🟢 Starter Plan (SME)'}
               {plan === 'growth' && '🔵 Growth Plan (Mid-Market)'}
               {plan === 'issuer-ready' && '✨ Issuer-Ready Plan (Listed Enterprise)'}
+              {plan === 'on-prem' && '🏢 On-Premise Plan (Enterprise Contract)'}
             </span>
           </div>
 
@@ -255,10 +272,11 @@ export function BillingView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-        {(Object.keys(PLAN_COPY) as PlanType[]).map((tier) => {
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-4">
+        {(ALL_TIERS).map((tier) => {
           const copy = PLAN_COPY[tier];
           const isActive = plan === tier;
+          const isOnPrem = tier === 'on-prem';
           return (
             <Card
               key={tier}
@@ -279,7 +297,7 @@ export function BillingView() {
                   <span className="text-2xl font-black text-gray-900 font-mono">
                     {pricing ? `RM ${pricing[tier].toFixed(0)}` : '—'}
                   </span>
-                  <span className="text-xs text-gray-400">/ month</span>
+                  <span className="text-xs text-gray-400">{isOnPrem ? '/ year' : '/ month'}</span>
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed">{copy.description}</p>
               </div>
@@ -306,9 +324,13 @@ export function BillingView() {
                     size="sm"
                     className="w-full"
                     loading={checkingOut === tier || changingPlan === tier}
-                    onClick={() => (user?.trialConverted ? handleChangePlan(tier) : handleUpgrade(tier))}
+                    // On-prem always starts a fresh Checkout (which sets interval 'year' from the
+                    // start), never an in-place item update via changeSubscriptionPlan — that
+                    // endpoint rejects it (see CompanyBillingService), so this must not route
+                    // through handleChangePlan even for an already-converted, paying customer.
+                    onClick={() => (isOnPrem || !user?.trialConverted ? handleUpgrade(tier) : handleChangePlan(tier))}
                   >
-                    {PLAN_LEVELS[tier] > PLAN_LEVELS[plan] ? `Upgrade to ${copy.title}` : `Downgrade to ${copy.title}`}
+                    {isOnPrem ? `Subscribe to ${copy.title} (Annual)` : PLAN_LEVELS[tier] > PLAN_LEVELS[plan] ? `Upgrade to ${copy.title}` : `Downgrade to ${copy.title}`}
                   </Button>
                 )}
               </div>

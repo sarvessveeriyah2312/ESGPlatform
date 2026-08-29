@@ -17,7 +17,7 @@ export function categoryFromBackend(category: MatterCategory): FrontendMatterCat
   }
 }
 
-export type BackendSubscriptionPlan = 'STARTER' | 'GROWTH' | 'ISSUER_READY';
+export type BackendSubscriptionPlan = 'STARTER' | 'GROWTH' | 'ISSUER_READY' | 'ON_PREM';
 export type BackendMarketClassification = 'SME' | 'MAIN_MARKET' | 'ACE_MARKET';
 export type FrontendMarket = 'SME' | 'ACE Market' | 'Main Market';
 
@@ -26,6 +26,7 @@ export function planToBackend(plan: PlanType): BackendSubscriptionPlan {
     case 'starter': return 'STARTER';
     case 'growth': return 'GROWTH';
     case 'issuer-ready': return 'ISSUER_READY';
+    case 'on-prem': return 'ON_PREM';
   }
 }
 
@@ -34,6 +35,7 @@ export function planFromBackend(plan: BackendSubscriptionPlan): PlanType {
     case 'STARTER': return 'starter';
     case 'GROWTH': return 'growth';
     case 'ISSUER_READY': return 'issuer-ready';
+    case 'ON_PREM': return 'on-prem';
   }
 }
 

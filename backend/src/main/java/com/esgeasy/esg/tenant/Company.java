@@ -37,6 +37,13 @@ public class Company extends BaseEntity {
     @JoinColumn(name = "parent_company_id")
     private Company parentCompany;
 
+    /** Null means a direct EsgEasy customer (every company today) — a non-null value means this
+     *  company was provisioned under that partner's brand. See Partner, WHITELABEL_PLAN.md Phase 1.
+     *  Independent of subscriptionPlan — a white-labeled company still has its own plan tier. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "partner_id")
+    private Partner partner;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "size_band", length = 30)
     private CompanySizeBand sizeBand;
@@ -146,4 +153,23 @@ public class Company extends BaseEntity {
 
     @Column(name = "tax_identification_number", length = 100)
     private String taxIdentificationNumber;
+
+    // --- Effective branding — resolves the white-label partner's brand if one is linked,
+    // otherwise EsgEasy's own defaults. Single source of truth reused by MeResponse, transactional
+    // emails, MFA TOTP issuer, and PDF export templates (all read these rather than re-deriving the
+    // same partner-or-default fallback independently). See WHITELABEL_PLAN.md Phase 2.
+
+    public String getEffectiveBrandName() {
+        return partner != null ? partner.getBrandName() : "EsgEasy";
+    }
+
+    /** Null means "no partner logo — use EsgEasy's own", same convention MeResponse already uses for other optional fields. */
+    public String getEffectiveLogoUrl() {
+        return partner != null ? partner.getLogoAsset() : null;
+    }
+
+    /** Null means "no partner color override — use EsgEasy's own default styling". */
+    public String getEffectivePrimaryColor() {
+        return partner != null ? partner.getPrimaryColor() : null;
+    }
 }

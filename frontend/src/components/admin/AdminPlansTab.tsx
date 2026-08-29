@@ -9,7 +9,7 @@ import { planAdminApi, PlanPricingResponse } from '../../api/planAdminApi';
 import { FeatureFlagResponse } from '../../api/referenceApi';
 import { BackendSubscriptionPlan } from '../../api/mappers';
 import { ShowToast } from './types';
-import { PLAN_ORDER, PLAN_LABELS, PLAN_BADGE_CLASSES, FEATURE_LABELS } from './constants';
+import { PLAN_ORDER, PRICING_PLAN_ORDER, PLAN_LABELS, PLAN_BADGE_CLASSES, FEATURE_LABELS } from './constants';
 
 interface AdminPlansTabProps {
   showToast: ShowToast;
@@ -44,9 +44,12 @@ export default function AdminPlansTab({ showToast }: AdminPlansTabProps) {
     setAnnualPriceDraft(String(currentAnnual));
   };
 
-  const savePrice = (plan: BackendSubscriptionPlan) => {
+  const savePrice = (plan: BackendSubscriptionPlan, keepAnnualEqual = false) => {
     const monthly = parseFloat(priceDraft);
-    const annual = parseFloat(annualPriceDraft);
+    // ON_PREM's edit form hides the separate "billed annually" field — it only ever bills
+    // annually, so there's nothing to discount for prepaying yearly. Keep the two DB columns
+    // equal rather than saving a stale annualPriceDraft value from a hidden field.
+    const annual = keepAnnualEqual ? monthly : parseFloat(annualPriceDraft);
     if (Number.isNaN(monthly) || monthly < 0 || Number.isNaN(annual) || annual < 0) {
       showToast('Enter valid prices.', 'warning');
       return;
@@ -55,7 +58,9 @@ export default function AdminPlansTab({ showToast }: AdminPlansTabProps) {
       .then((updated) => {
         setPlanPricing(prev => prev.map(p => p.plan === updated.plan ? updated : p));
         setEditingPricePlan(null);
-        showToast(`Updated ${PLAN_LABELS[plan]} pricing — $${monthly}/mo monthly, $${annual}/mo billed annually.`, 'success');
+        showToast(keepAnnualEqual
+          ? `Updated ${PLAN_LABELS[plan]} pricing — $${monthly}/year.`
+          : `Updated ${PLAN_LABELS[plan]} pricing — $${monthly}/mo monthly, $${annual}/mo billed annually.`, 'success');
       })
       .catch(() => showToast('Failed to update pricing.', 'warning'));
   };
@@ -92,23 +97,25 @@ export default function AdminPlansTab({ showToast }: AdminPlansTabProps) {
       </div>
 
       {/* Pricing cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {planPricingLoading && (
-          <div className="col-span-3 text-center py-8 text-gray-400 text-xs font-medium bg-white rounded-[20px] border border-gray-100">Loading pricing…</div>
+          <div className="col-span-4 text-center py-8 text-gray-400 text-xs font-medium bg-white rounded-[20px] border border-gray-100">Loading pricing…</div>
         )}
-        {!planPricingLoading && PLAN_ORDER.map((plan) => {
+        {!planPricingLoading && PRICING_PLAN_ORDER.map((plan) => {
           const pricing = planPricing.find(p => p.plan === plan);
           const isEditing = editingPricePlan === plan;
+          const isOnPrem = plan === 'ON_PREM';
           return (
             <div key={plan} className="bg-white rounded-[20px] p-5 border border-gray-100 shadow-sm">
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${PLAN_BADGE_CLASSES[plan]}`}>
                 {PLAN_LABELS[plan]}
               </span>
+              {isOnPrem && <div className="text-[9px] text-gray-400 mt-1">Billed annually, auto-renews</div>}
 
               {isEditing ? (
                 <div className="mt-3 space-y-2">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Monthly</label>
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{isOnPrem ? 'Annual Price' : 'Monthly'}</label>
                     <div className="flex items-center space-x-2">
                       <span className="text-lg font-bold text-gray-400">$</span>
                       <input
@@ -122,23 +129,27 @@ export default function AdminPlansTab({ showToast }: AdminPlansTabProps) {
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Billed annually (per mo)</label>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-gray-400">$</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={annualPriceDraft}
-                        onChange={(e) => setAnnualPriceDraft(e.target.value)}
-                        className="w-24 px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-lg font-bold text-gray-900 font-mono outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                      />
+                  {!isOnPrem && (
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Billed annually (per mo)</label>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg font-bold text-gray-400">$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={annualPriceDraft}
+                          onChange={(e) => setAnnualPriceDraft(e.target.value)}
+                          className="w-24 px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-lg font-bold text-gray-900 font-mono outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className="flex items-center space-x-2 pt-1">
                     <button
-                      onClick={() => savePrice(plan)}
+                      // On-prem has no meaningful "annual" price — keep the two DB columns equal
+                      // rather than adding a schema field for a single annual-price figure.
+                      onClick={() => (isOnPrem ? savePrice(plan, true) : savePrice(plan))}
                       className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg cursor-pointer transition-colors"
                       title="Save"
                     >
@@ -158,9 +169,9 @@ export default function AdminPlansTab({ showToast }: AdminPlansTabProps) {
                   <div className="space-y-0.5">
                     <div className="flex items-baseline space-x-1">
                       <span className="text-2xl font-bold text-gray-900 font-mono">${pricing?.monthlyPrice ?? '—'}</span>
-                      <span className="text-xs text-gray-400">/mo</span>
+                      <span className="text-xs text-gray-400">{isOnPrem ? '/year' : '/mo'}</span>
                     </div>
-                    <div className="text-[10px] text-gray-400">${pricing?.annualMonthlyPrice ?? '—'}/mo billed annually</div>
+                    {!isOnPrem && <div className="text-[10px] text-gray-400">${pricing?.annualMonthlyPrice ?? '—'}/mo billed annually</div>}
                   </div>
                   <button
                     onClick={() => startEditPrice(plan, pricing?.monthlyPrice ?? 0, pricing?.annualMonthlyPrice ?? 0)}

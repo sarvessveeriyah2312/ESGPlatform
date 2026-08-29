@@ -67,7 +67,8 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
                     if (userOpt.isPresent() && Boolean.TRUE.equals(userOpt.get().getActive())) {
                         AppUser user = userOpt.get();
                         Set<String> scopes = new HashSet<>(token.getScopes());
-                        var principal = new EsgEasyPrincipal(user.getId(), token.getCompanyId(), user.getRole(), user.getEmail(), scopes, null);
+                        // API tokens are always company-scoped (ApiToken.companyId), never partner-scoped.
+                        var principal = new EsgEasyPrincipal(user.getId(), token.getCompanyId(), null, user.getRole(), user.getEmail(), scopes, null);
 
                         var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
                         var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);

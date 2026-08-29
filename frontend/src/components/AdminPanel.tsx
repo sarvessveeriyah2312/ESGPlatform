@@ -20,6 +20,7 @@ import AdminReferenceTab from './admin/AdminReferenceTab';
 import AdminBillingTab from './admin/AdminBillingTab';
 import AdminSupportTab from './admin/AdminSupportTab';
 import AdminPlansTab from './admin/AdminPlansTab';
+import AdminPartnersTab from './admin/AdminPartnersTab';
 import AdminAuditLogTab from './admin/AdminAuditLogTab';
 import AdminAuditLogDetailView from './admin/AdminAuditLogDetailView';
 import AdminSettingsTab from './admin/AdminSettingsTab';
@@ -90,6 +91,7 @@ export default function AdminPanel() {
           invoices={invoices}
           invoicesLoading={invoicesLoading}
           onBack={() => setSelectedTenantId(null)}
+          onTenantUpdated={handleTenantUpdated}
           showToast={showToast}
         />
       ) : selectedLogId ? (
@@ -124,6 +126,8 @@ export default function AdminPanel() {
           )}
 
           {activeTab === 'plans' && <AdminPlansTab showToast={showToast} />}
+
+          {activeTab === 'partners' && <AdminPartnersTab showToast={showToast} />}
 
           {activeTab === 'audit-log' && <AdminAuditLogTab onSelectLog={setSelectedLogId} showToast={showToast} />}
 

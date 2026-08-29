@@ -8,12 +8,23 @@ import { BackendRole } from '../../api/tenantAdminApi';
 import { BackendSubscriptionPlan } from '../../api/mappers';
 import { MatterCategory, MatterSet } from '../../api/referenceApi';
 
+// Feature-gating "Minimum Plan" dropdown only — ON_PREM deliberately excluded, since it's the
+// highest tier by level and nothing should ever require it as a floor (that would lock a feature
+// away from every paying Issuer-Ready customer for no reason). See PRICING_PLAN_ORDER below for
+// the pricing cards, which DO include it — it has a real, editable, self-serve-purchasable price.
 export const PLAN_ORDER: BackendSubscriptionPlan[] = ['STARTER', 'GROWTH', 'ISSUER_READY'];
-export const PLAN_LABELS: Record<BackendSubscriptionPlan, string> = { STARTER: 'Starter', GROWTH: 'Growth', ISSUER_READY: 'Issuer-Ready' };
+
+// Pricing cards at the top of Plan Management — includes ON_PREM since it's a real, self-serve
+// Stripe subscription like the others, just billed yearly instead of monthly
+// (CompanyBillingService.createCheckoutSession's `annual` branch sets interval 'year'). Its price
+// is editable here via the same planAdminApi.updatePricing call the recurring tiers use.
+export const PRICING_PLAN_ORDER: BackendSubscriptionPlan[] = ['STARTER', 'GROWTH', 'ISSUER_READY', 'ON_PREM'];
+export const PLAN_LABELS: Record<BackendSubscriptionPlan, string> = { STARTER: 'Starter', GROWTH: 'Growth', ISSUER_READY: 'Issuer-Ready', ON_PREM: 'On-Premise' };
 export const PLAN_BADGE_CLASSES: Record<BackendSubscriptionPlan, string> = {
   STARTER: 'bg-gray-100 text-gray-600',
   GROWTH: 'bg-indigo-50 text-indigo-700',
   ISSUER_READY: 'bg-purple-50 text-purple-700',
+  ON_PREM: 'bg-slate-800 text-slate-100',
 };
 
 // Display copy for feature keys — the backend's feature_flag table only stores the gating rule
@@ -37,10 +48,12 @@ export const FEATURE_LABELS: Record<string, { name: string; description: string 
 
 // Client-computed monthly price per plan tier — there's no billing/invoice table backing this,
 // so it's derived rather than stored (see backend/.../tenant/TenantAdminController.java).
-export const PLAN_PRICING: Record<PlanType, number> = { starter: 299, growth: 699, 'issuer-ready': 1499 };
+// on-prem bills annually, not monthly — 0 here is a placeholder never actually rendered, since
+// every call site special-cases plan === 'on-prem' to show "Contract" instead of a $/mo figure.
+export const PLAN_PRICING: Record<PlanType, number> = { starter: 299, growth: 699, 'issuer-ready': 1499, 'on-prem': 0 };
 
-export type AdminTab = 'overview' | 'tenants' | 'reference' | 'billing' | 'support' | 'plans' | 'audit-log' | 'settings';
-export const ADMIN_TABS: AdminTab[] = ['overview', 'tenants', 'reference', 'billing', 'support', 'plans', 'audit-log', 'settings'];
+export type AdminTab = 'overview' | 'tenants' | 'reference' | 'billing' | 'support' | 'plans' | 'partners' | 'audit-log' | 'settings';
+export const ADMIN_TABS: AdminTab[] = ['overview', 'tenants', 'reference', 'billing', 'support', 'plans', 'partners', 'audit-log', 'settings'];
 
 export const ROLE_LABELS: Record<BackendRole, string> = {
   COMPANY_ADMIN: 'Company Admin',

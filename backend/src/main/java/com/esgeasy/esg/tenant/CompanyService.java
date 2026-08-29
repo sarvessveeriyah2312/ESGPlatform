@@ -20,6 +20,7 @@ import com.esgeasy.esg.tenant.dto.TenantUserResponse;
 import com.esgeasy.esg.tenant.dto.UpdateCompanyProfileRequest;
 import com.esgeasy.esg.tenant.dto.UpdatePlanRequest;
 import com.esgeasy.esg.tenant.dto.UpdateTenantStatusRequest;
+import com.esgeasy.esg.tenant.dto.UpdateTenantPartnerRequest;
 import com.esgeasy.esg.tenant.dto.UpdateTenantTrialRequest;
 import com.esgeasy.esg.tenant.dto.UpdateUserRoleRequest;
 import com.esgeasy.esg.user.AppUser;
@@ -53,13 +54,15 @@ public class CompanyService {
     private final PlatformSettingsService platformSettingsService;
     private final CustomRoleService customRoleService;
     private final PlatformActivityLogService activityLogService;
+    private final PartnerRepository partnerRepository;
     private final SecureRandom random = new SecureRandom();
 
     public CompanyService(CompanyRepository companyRepository, SectorRepository sectorRepository,
                            AppUserRepository appUserRepository, TeamInviteRepository teamInviteRepository,
                            CurrentUserProvider currentUserProvider, PasswordEncoder passwordEncoder,
                            EmailService emailService, PlatformSettingsService platformSettingsService,
-                           CustomRoleService customRoleService, PlatformActivityLogService activityLogService) {
+                           CustomRoleService customRoleService, PlatformActivityLogService activityLogService,
+                           PartnerRepository partnerRepository) {
         this.companyRepository = companyRepository;
         this.sectorRepository = sectorRepository;
         this.appUserRepository = appUserRepository;
@@ -70,6 +73,7 @@ public class CompanyService {
         this.platformSettingsService = platformSettingsService;
         this.customRoleService = customRoleService;
         this.activityLogService = activityLogService;
+        this.partnerRepository = partnerRepository;
     }
 
     /**
@@ -108,6 +112,9 @@ public class CompanyService {
 
     @Transactional
     public CompanyResponse updatePlan(UpdatePlanRequest request) {
+        if (request.plan() == SubscriptionPlan.ON_PREM) {
+            throw new ConflictException("The on-premise plan can only be assigned by a platform admin — contact support");
+        }
         Company company = currentCompany();
         SubscriptionPlan previousPlan = company.getSubscriptionPlan();
         company.setSubscriptionPlan(request.plan());
@@ -454,6 +461,19 @@ public class CompanyService {
         return toSummary(company);
     }
 
+    /** Links (or unlinks, when request.partnerId() is null) a company to a partner — see Partner, WHITELABEL_PLAN.md Phase 1. */
+    @Transactional
+    public TenantSummaryResponse adminUpdatePartner(UUID companyId, UpdateTenantPartnerRequest request) {
+        Company company = findCompany(companyId);
+        Partner partner = null;
+        if (request.partnerId() != null) {
+            partner = partnerRepository.findById(request.partnerId())
+                    .orElseThrow(() -> new NotFoundException("Partner not found"));
+        }
+        company.setPartner(partner);
+        return toSummary(companyRepository.save(company));
+    }
+
     @Transactional(readOnly = true)
     public List<TenantUserResponse> listTenantUsers(UUID companyId) {
         findCompany(companyId);
@@ -486,7 +506,9 @@ public class CompanyService {
                 primaryContact != null ? primaryContact.getName() : null,
                 primaryContact != null ? primaryContact.getEmail() : null,
                 company.getTrialEndsAt(),
-                Boolean.TRUE.equals(company.getTrialConverted())
+                Boolean.TRUE.equals(company.getTrialConverted()),
+                company.getPartner() != null ? company.getPartner().getId() : null,
+                company.getPartner() != null ? company.getPartner().getBrandName() : null
         );
     }
 }
