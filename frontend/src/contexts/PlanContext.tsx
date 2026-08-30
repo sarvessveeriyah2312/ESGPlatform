@@ -27,6 +27,7 @@ export const FEATURE_REGISTRY: Record<string, { name: string; minPlan: PlanType;
   'dashboard': { name: 'Dashboard', minPlan: 'starter', description: 'Real-time overview of your sustainability reporting progress.' },
   'materiality': { name: 'Materiality Assessment', minPlan: 'starter', description: 'Identify and prioritize ESG issues most relevant to your business.' },
   'indicators': { name: 'Indicators', minPlan: 'starter', description: 'Track key sustainability metrics and qualitative disclosures.' },
+  'ai-forecasting': { name: 'AI Forecasting', minPlan: 'starter', description: 'Project future indicator performance from historical trends and get AI-generated insights against your targets.' },
   'reports': { name: 'Reports & Export', minPlan: 'starter', description: 'Export standardized ESG summaries and reports.' },
   'team': { name: 'Team Management', minPlan: 'starter', description: 'Invite and manage team members inside your workspace.' },
   'billing': { name: 'Billing & Plan', minPlan: 'starter', description: 'Manage subscription and billing preferences.' },

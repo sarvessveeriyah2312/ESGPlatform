@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Sliders,
   Target,
+  TrendingUp,
   FileText,
   Globe,
   Lock,
@@ -78,6 +79,7 @@ import AdminPanel from './components/AdminPanel';
 import PartnerConsole from './components/PartnerConsole';
 import PartnerConsoleLayout from './components/partner/PartnerConsoleLayout';
 import TargetsView from './components/TargetsView';
+import ForecastingView from './components/ForecastingView';
 import SupportTicketsView from './components/SupportTicketsView';
 import ProfileView from './components/ProfileView';
 import TeamView from './components/TeamView';
@@ -158,6 +160,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
       'governance': 'Compliance',
       'indicators': 'ESG Indicators',
       'targets': 'Targets & Decarbonization',
+      'forecasting': 'AI Forecasting',
       'reports': 'Reports & Export',
       'support': 'Feedback & Support',
       'ifrs-s1-s2': 'IFRS S1/S2 Module',
@@ -191,6 +194,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
     { key: 'materiality', label: 'Materiality', icon: <Compass className="w-4 h-4" />, path: '/materiality' },
     { key: 'indicators', label: 'Indicators', icon: <Sliders className="w-4 h-4" />, path: '/indicators' },
     { key: 'targets', label: 'Targets', icon: <Target className="w-4 h-4" />, path: '/targets', gated: true },
+    { key: 'ai-forecasting', label: 'AI Forecasting', icon: <TrendingUp className="w-4 h-4" />, path: '/forecasting' },
     { key: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" />, path: '/reports' },
   ];
 
@@ -766,6 +770,15 @@ function AppContent() {
             <UpgradeGate feature="targets" variant="page" onUpgrade={() => navigate('/settings?tab=billing')}>
               <TargetsView />
             </UpgradeGate>
+          </AuthenticatedLayout>
+        }
+      />
+
+      <Route
+        path="/forecasting"
+        element={
+          <AuthenticatedLayout allowedRoles={TENANT_ROLES}>
+            <ForecastingView />
           </AuthenticatedLayout>
         }
       />
