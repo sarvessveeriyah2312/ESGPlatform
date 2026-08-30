@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -60,6 +61,7 @@ public class ForecastingService {
     private final CompanyRepository companyRepository;
     private final CurrentUserProvider currentUserProvider;
     private final AiDraftService aiDraftService;
+    private final ForecastAiDraftRepository forecastAiDraftRepository;
 
     public ForecastingService(IndicatorDefinitionRepository indicatorDefinitionRepository,
                                TenantIndicatorRepository tenantIndicatorRepository,
@@ -68,7 +70,8 @@ public class ForecastingService {
                                MatterSetResolverService matterSetResolverService,
                                CompanyRepository companyRepository,
                                CurrentUserProvider currentUserProvider,
-                               AiDraftService aiDraftService) {
+                               AiDraftService aiDraftService,
+                               ForecastAiDraftRepository forecastAiDraftRepository) {
         this.indicatorDefinitionRepository = indicatorDefinitionRepository;
         this.tenantIndicatorRepository = tenantIndicatorRepository;
         this.indicatorValueRepository = indicatorValueRepository;
@@ -77,6 +80,7 @@ public class ForecastingService {
         this.companyRepository = companyRepository;
         this.currentUserProvider = currentUserProvider;
         this.aiDraftService = aiDraftService;
+        this.forecastAiDraftRepository = forecastAiDraftRepository;
     }
 
     @Transactional(readOnly = true)
@@ -113,7 +117,13 @@ public class ForecastingService {
         }
         points.sort(Comparator.comparingInt(ForecastPointDto::fiscalYear));
 
-        return new IndicatorForecastResponse(def.getId(), def.getName(), def.getUnit(), points, f.trendDirection, f.targetAlignment);
+        ForecastAiDraft draft = forecastAiDraftRepository
+                .findByCompanyIdAndIndicatorDefinitionId(companyId, def.getId())
+                .orElse(null);
+        String narrative = draft == null ? null : draft.getNarrative();
+        String actionPlan = draft == null ? null : draft.getActionPlan();
+
+        return new IndicatorForecastResponse(def.getId(), def.getName(), def.getUnit(), points, f.trendDirection, f.targetAlignment, narrative, actionPlan);
     }
 
     @Transactional
@@ -146,7 +156,79 @@ public class ForecastingService {
         context.put("targetSummary", targetSummary);
 
         String text = aiDraftService.complete("forecast", "forecast-narrative", context);
+        ForecastAiDraft draft = loadOrCreateDraft(currentUserProvider.requireCompanyId(), indicatorDefinitionId);
+        draft.setNarrative(text);
+        forecastAiDraftRepository.save(draft);
         return new ForecastNarrativeResponse(text);
+    }
+
+    /** Companion to {@link #generateNarrative} — concrete prioritized steps to close the gap to a
+     *  linked target (or sustain/accelerate an on-track trend). Requires a linked target: without
+     *  one there's nothing to be "on target" against. */
+    @Transactional
+    public ForecastNarrativeResponse generateActionPlan(String indicatorDefinitionId) {
+        IndicatorForecastResponse forecast = getForecast(indicatorDefinitionId);
+        TargetAlignmentDto alignment = forecast.targetAlignment();
+        if (alignment == null) {
+            throw new NotFoundException("Link a target to this indicator first — an action plan needs a target to work toward.");
+        }
+
+        String historicalSummary = forecast.points().stream()
+                .filter(p -> !p.projected())
+                .map(p -> "FY" + p.fiscalYear() + ": " + p.value())
+                .collect(Collectors.joining(", "));
+
+        int lastActualYear = forecast.points().stream()
+                .filter(p -> !p.projected())
+                .mapToInt(ForecastPointDto::fiscalYear)
+                .max()
+                .orElseThrow(() -> new NotFoundException("No recorded history available for this indicator"));
+        BigDecimal lastActualValue = forecast.points().stream()
+                .filter(p -> p.fiscalYear() == lastActualYear)
+                .findFirst()
+                .map(ForecastPointDto::value)
+                .orElseThrow(() -> new NotFoundException("No recorded history available for this indicator"));
+
+        var lastProjected = forecast.points().stream()
+                .filter(ForecastPointDto::projected)
+                .max(Comparator.comparingInt(ForecastPointDto::fiscalYear))
+                .orElseThrow(() -> new NotFoundException("No projected point available for this indicator"));
+
+        String targetSummary = "Target: %s %s by %d (currently trending %s)".formatted(
+                alignment.targetValue(), forecast.unit(), alignment.targetYear(), alignment.status());
+
+        int yearsRemaining = Math.max(1, alignment.targetYear() - lastActualYear);
+        BigDecimal gap = alignment.targetValue().subtract(lastActualValue);
+        BigDecimal requiredAnnualChange = gap.divide(BigDecimal.valueOf(yearsRemaining), 4, RoundingMode.HALF_UP);
+
+        Map<String, String> context = new HashMap<>();
+        context.put("indicatorName", forecast.indicatorName());
+        context.put("unit", forecast.unit());
+        context.put("historicalSummary", historicalSummary);
+        context.put("trendDirection", forecast.trendDirection().name());
+        context.put("projectionYear", String.valueOf(lastProjected.fiscalYear()));
+        context.put("projectedValue", String.valueOf(lastProjected.value()));
+        context.put("targetSummary", targetSummary);
+        context.put("status", alignment.status().name());
+        context.put("gapToTarget", gap.toPlainString() + " " + forecast.unit());
+        context.put("requiredAnnualChange", requiredAnnualChange.toPlainString() + " " + forecast.unit() + " per year");
+        context.put("yearsRemaining", String.valueOf(yearsRemaining));
+
+        String text = aiDraftService.complete("forecast", "forecast-action-plan", context);
+        ForecastAiDraft draft = loadOrCreateDraft(currentUserProvider.requireCompanyId(), indicatorDefinitionId);
+        draft.setActionPlan(text);
+        forecastAiDraftRepository.save(draft);
+        return new ForecastNarrativeResponse(text);
+    }
+
+    private ForecastAiDraft loadOrCreateDraft(UUID companyId, String indicatorDefinitionId) {
+        return forecastAiDraftRepository.findByCompanyIdAndIndicatorDefinitionId(companyId, indicatorDefinitionId)
+                .orElseGet(() -> {
+                    ForecastAiDraft draft = new ForecastAiDraft();
+                    draft.setCompanyId(companyId);
+                    draft.setIndicatorDefinitionId(indicatorDefinitionId);
+                    return draft;
+                });
     }
 
     private List<IndicatorDefinition> forecastableDefinitions(UUID companyId) {

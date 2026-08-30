@@ -16,10 +16,11 @@ import {
   Lock,
   CheckCircle2,
   X, 
-  FileArchive, 
-  Eye, 
-  Check, 
-  UserCheck 
+  FileArchive,
+  Eye,
+  Check,
+  UserCheck,
+  Loader2
 } from 'lucide-react';
 import { usePlan } from '../contexts/PlanContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -144,6 +145,9 @@ export default function AssuranceWorkspaceView() {
   // Interactive Flows
   const [isSignOffModalOpen, setIsSignOffModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<LibraryDoc | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   
   // Signoff form inputs — default to the real logged-in user, not a fabricated identity
   const [signerName, setSignerName] = useState('');
@@ -262,6 +266,29 @@ export default function AssuranceWorkspaceView() {
       a.remove();
       URL.revokeObjectURL(url);
     });
+  };
+
+  // Only PDFs and common image formats can render inline in the browser — everything else
+  // (spreadsheets, Word docs) falls back to a "download to view" message in the modal.
+  const isPreviewableFile = (docName: string): boolean =>
+    /\.(pdf|png|jpe?g)$/i.test(docName);
+
+  const handlePreviewDocument = (doc: LibraryDoc) => {
+    setPreviewDoc(doc);
+    setPreviewUrl(null);
+    if (!isPreviewableFile(doc.docName)) return;
+
+    setPreviewLoading(true);
+    indicatorsApi.downloadEvidence(doc.auditEntryId)
+      .then((blob) => setPreviewUrl(URL.createObjectURL(blob)))
+      .catch(() => showToast('Failed to load document preview.', 'error'))
+      .finally(() => setPreviewLoading(false));
+  };
+
+  const handleClosePreviewDocument = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewDoc(null);
   };
 
   // Export assembly animation trigger
@@ -619,16 +646,26 @@ export default function AssuranceWorkspaceView() {
                         {doc.date}
                       </td>
 
-                      {/* Download trigger */}
+                      {/* Preview & Download triggers */}
                       <td className="px-6 py-4 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadDocument(doc)}
-                          className="p-1.5 text-navy-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg cursor-pointer transition-colors"
-                          title="Download audited proof document"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => handlePreviewDocument(doc)}
+                            className="p-1.5 text-navy-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg cursor-pointer transition-colors"
+                            title="Preview document"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadDocument(doc)}
+                            className="p-1.5 text-navy-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg cursor-pointer transition-colors"
+                            title="Download audited proof document"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -858,6 +895,81 @@ export default function AssuranceWorkspaceView() {
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* 7. MODAL: DOCUMENT PREVIEW */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-navy-100 bg-navy-50/50">
+              <div className="flex items-center space-x-2 min-w-0">
+                <FileText className="w-5 h-5 text-primary-600 shrink-0" />
+                <h3 className="text-sm font-bold text-navy-900 truncate font-mono">{previewDoc.docName}</h3>
+              </div>
+              <button
+                onClick={handleClosePreviewDocument}
+                className="p-1.5 text-navy-400 hover:text-navy-700 hover:bg-navy-100 rounded-lg transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 bg-navy-100/30 p-4 overflow-auto flex items-center justify-center">
+              {!isPreviewableFile(previewDoc.docName) ? (
+                <div className="text-center space-y-3 max-w-sm">
+                  <FileText className="w-10 h-10 text-navy-300 mx-auto" />
+                  <h5 className="text-xs font-bold text-navy-950">Preview not available for this file type</h5>
+                  <p className="text-[11px] text-navy-400">
+                    Spreadsheets and Word documents can't be previewed in the browser — download it to view the contents.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleDownloadDocument(previewDoc)}
+                    icon={<Download className="w-4 h-4" />}
+                  >
+                    Download File
+                  </Button>
+                </div>
+              ) : previewLoading ? (
+                <div className="flex flex-col items-center space-y-2 text-navy-400">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="text-xs font-semibold">Loading preview...</span>
+                </div>
+              ) : previewUrl && previewDoc.docName.match(/\.pdf$/i) ? (
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full rounded shadow-sm border border-navy-200 bg-white"
+                  title="Document preview"
+                />
+              ) : previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt={previewDoc.docName}
+                  className="max-w-full max-h-full rounded shadow-sm border border-navy-200 bg-white object-contain"
+                />
+              ) : null}
+            </div>
+            <div className="p-4 border-t border-navy-100 bg-white flex items-center justify-between">
+              <div className="text-[11px] text-navy-400 font-semibold">
+                Linked to <span className="text-navy-700 font-bold">{previewDoc.indicatorName}</span> &middot; uploaded by{' '}
+                <span className="text-navy-700 font-bold">{previewDoc.uploadedBy}</span>
+              </div>
+              <div className="flex space-x-3">
+                <Button variant="secondary" onClick={handleClosePreviewDocument} className="font-bold">
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => handleDownloadDocument(previewDoc)}
+                  className="font-bold"
+                  icon={<Download className="w-4 h-4" />}
+                >
+                  Download
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

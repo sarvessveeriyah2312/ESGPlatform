@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Minus, X, Sparkles, Loader2, Target as TargetIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Sparkles, Loader2, Target as TargetIcon, ListChecks } from 'lucide-react';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { useAuth } from '../contexts/AuthContext';
@@ -36,9 +36,9 @@ function formatValue(value: number): string {
  * charting dependency — same hand-rolled-SVG approach as TargetsView's glide-path chart.
  */
 function ForecastChart({ points, targetValue, targetYear }: { points: ForecastPoint[]; targetValue?: number; targetYear?: number }) {
-  const width = 460;
-  const height = 160;
-  const padding = 24;
+  const width = 640;
+  const height = 220;
+  const padding = 28;
 
   const years = points.map((p) => p.fiscalYear);
   const values = points.map((p) => p.value);
@@ -73,24 +73,24 @@ function ForecastChart({ points, targetValue, targetYear }: { points: ForecastPo
         <path d={pathFor(projectedPath)} fill="none" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 4" />
       )}
       {actualPoints.map((p) => (
-        <circle key={`a-${p.fiscalYear}`} cx={toX(p.fiscalYear)} cy={toY(p.value)} r={3} fill="#10b981" />
+        <circle key={`a-${p.fiscalYear}`} cx={toX(p.fiscalYear)} cy={toY(p.value)} r={3.5} fill="#10b981" />
       ))}
       {projectedPoints.map((p) => (
-        <circle key={`p-${p.fiscalYear}`} cx={toX(p.fiscalYear)} cy={toY(p.value)} r={3} fill="#6366f1" />
+        <circle key={`p-${p.fiscalYear}`} cx={toX(p.fiscalYear)} cy={toY(p.value)} r={3.5} fill="#6366f1" />
       ))}
       {targetValue !== undefined && targetYear !== undefined && (
         <>
           <line
-            x1={toX(targetYear)} y1={toY(targetValue) - 5} x2={toX(targetYear)} y2={toY(targetValue) + 5}
+            x1={toX(targetYear)} y1={toY(targetValue) - 6} x2={toX(targetYear)} y2={toY(targetValue) + 6}
             stroke="#f59e0b" strokeWidth={2}
           />
-          <circle cx={toX(targetYear)} cy={toY(targetValue)} r={4} fill="none" stroke="#f59e0b" strokeWidth={2} />
+          <circle cx={toX(targetYear)} cy={toY(targetValue)} r={5} fill="none" stroke="#f59e0b" strokeWidth={2} />
         </>
       )}
       {points.map((p) => (
         <text
           key={`label-${p.fiscalYear}`}
-          x={toX(p.fiscalYear)} y={height - 6} fontSize="8" textAnchor="middle" fill="#94a3b8" fontFamily="monospace"
+          x={toX(p.fiscalYear)} y={height - 8} fontSize="9" textAnchor="middle" fill="#94a3b8" fontFamily="monospace"
         >
           FY{p.fiscalYear}
         </text>
@@ -99,129 +99,154 @@ function ForecastChart({ points, targetValue, targetYear }: { points: ForecastPo
   );
 }
 
-interface DetailPanelProps {
+interface ForecastDetailProps {
   indicatorId: string;
-  onClose: () => void;
 }
 
-function DetailPanel({ indicatorId, onClose }: DetailPanelProps) {
+/** Inline forecast detail for the selected tab — renders in the page flow, no modal. */
+function ForecastDetail({ indicatorId }: ForecastDetailProps) {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [detail, setDetail] = useState<IndicatorForecastResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [narrative, setNarrative] = useState<string | null>(null);
-  const [narrativeLoading, setNarrativeLoading] = useState(false);
+  const [actionPlan, setActionPlan] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     setDetail(null);
     setNarrative(null);
+    setActionPlan(null);
     forecastingApi.get(indicatorId)
-      .then(setDetail)
+      .then((d) => {
+        setDetail(d);
+        setNarrative(d.narrative);
+        setActionPlan(d.actionPlan);
+      })
       .catch((err: ApiError) => showToast(err?.message || 'Failed to load forecast.', 'error'))
       .finally(() => setLoading(false));
   }, [indicatorId]);
 
-  const handleGenerateNarrative = () => {
-    setNarrativeLoading(true);
-    forecastingApi.generateNarrative(indicatorId)
-      .then((res) => setNarrative(res.text))
-      .catch((err: ApiError) => {
-        if (err?.status === 409) {
-          showToast('AI isn’t set up yet — ask a company admin to configure it in Settings > AI Assistant.', 'error');
-        } else {
-          showToast(err?.message || 'Failed to generate an insight.', 'error');
-        }
-      })
-      .finally(() => setNarrativeLoading(false));
+  // One button drafts both the plain-language insight and — when a target is linked — the action
+  // plan, in parallel. Each call fails independently so one provider hiccup doesn't hide the other.
+  const handleGenerate = (hasTarget: boolean) => {
+    setGenerating(true);
+    const aiUnavailableMsg = (fallback: string) => (err: ApiError) =>
+      showToast(
+        err?.status === 409
+          ? 'AI isn’t set up yet — ask a company admin to configure it in Settings > AI Assistant.'
+          : err?.message || fallback,
+        'error'
+      );
+
+    Promise.allSettled([
+      forecastingApi.generateNarrative(indicatorId)
+        .then((res) => setNarrative(res.text))
+        .catch(aiUnavailableMsg('Failed to generate an insight.')),
+      hasTarget
+        ? forecastingApi.generateActionPlan(indicatorId)
+            .then((res) => setActionPlan(res.text))
+            .catch(aiUnavailableMsg('Failed to generate an action plan.'))
+        : Promise.resolve(),
+    ]).finally(() => setGenerating(false));
   };
 
   const canUseAi = hasPermission(user?.role, user?.permissions, 'ai.use');
 
+  if (loading) {
+    return <Card padded="lg" className="text-center text-xs font-semibold text-navy-400">Loading forecast…</Card>;
+  }
+  if (!detail) {
+    return null;
+  }
+
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-navy-950/40 backdrop-blur-xs transition-opacity" onClick={onClose} />
-
-      <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-navy-100 relative z-10 overflow-hidden animate-fade-in max-h-[90vh] overflow-y-auto">
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary-500 to-indigo-500" />
-
-        <div className="flex items-start justify-between pb-4 border-b border-navy-50">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-primary-50 text-primary-600 rounded-xl border border-primary-100">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-black text-navy-950 uppercase tracking-wider">
-                {detail?.indicatorName || 'Forecast'}
-              </h4>
-              <p className="text-[10px] text-navy-400 font-semibold">Trend-projected forecast</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-navy-400 hover:text-navy-600 p-1 rounded-lg cursor-pointer">
-            <X className="w-4 h-4" />
-          </button>
+    <Card padded="lg" className="space-y-5">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h3 className="text-sm font-black text-navy-950 uppercase tracking-wider">{detail.indicatorName}</h3>
+          <p className="text-[10px] text-navy-400 font-semibold mt-0.5">Trend-projected forecast</p>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy-50 text-navy-600 border border-navy-100 text-xs font-semibold">
+            {TREND_ICON[detail.trendDirection]}
+            {TREND_DIRECTION_LABEL[detail.trendDirection]} trend
+          </span>
+          {detail.targetAlignment && (
+            <span className={`px-2.5 py-1 rounded-lg border font-bold text-[10px] uppercase tracking-wider ${FORECAST_STATUS_STYLES[detail.targetAlignment.status].className}`}>
+              {FORECAST_STATUS_STYLES[detail.targetAlignment.status].label}
+            </span>
+          )}
+        </div>
+      </div>
 
-        {loading && <div className="py-12 text-center text-xs font-semibold text-navy-400">Loading forecast…</div>}
+      <ForecastChart
+        points={detail.points}
+        targetValue={detail.targetAlignment?.targetValue}
+        targetYear={detail.targetAlignment?.targetYear}
+      />
 
-        {!loading && detail && (
-          <div className="pt-4 space-y-5">
-            <div className="flex items-center gap-3 text-xs font-semibold">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy-50 text-navy-600 border border-navy-100">
-                {TREND_ICON[detail.trendDirection]}
-                {TREND_DIRECTION_LABEL[detail.trendDirection]} trend
-              </span>
-              {detail.targetAlignment && (
-                <span className={`px-2.5 py-1 rounded-lg border font-bold text-[10px] uppercase tracking-wider ${FORECAST_STATUS_STYLES[detail.targetAlignment.status].className}`}>
-                  {FORECAST_STATUS_STYLES[detail.targetAlignment.status].label}
-                </span>
-              )}
-            </div>
-
-            <ForecastChart
-              points={detail.points}
-              targetValue={detail.targetAlignment?.targetValue}
-              targetYear={detail.targetAlignment?.targetYear}
-            />
-
-            <div className="flex items-center gap-4 text-[10px] font-semibold text-navy-400">
-              <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-emerald-500 inline-block" /> Actual</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-indigo-500 inline-block border-b border-dashed" /> Projected</span>
-              {detail.targetAlignment && (
-                <span className="flex items-center gap-1.5"><TargetIcon className="w-3 h-3 text-amber-500" /> Target</span>
-              )}
-            </div>
-
-            {detail.targetAlignment && (
-              <div className="p-3.5 rounded-2xl bg-navy-50 border border-navy-100 text-xs font-semibold text-navy-600">
-                Linked to <span className="font-bold text-navy-950">{detail.targetAlignment.targetTitle}</span> —
-                projected to reach <span className="font-bold text-navy-950">{formatValue(detail.targetAlignment.projectedValueAtTargetYear)} {detail.unit}</span> by
-                FY{detail.targetAlignment.targetYear}, against a target of {formatValue(detail.targetAlignment.targetValue)} {detail.unit}.
-              </div>
-            )}
-
-            {canUseAi && (
-              <div className="pt-2 border-t border-navy-50 space-y-3">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleGenerateNarrative}
-                  disabled={narrativeLoading}
-                  icon={narrativeLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                >
-                  {narrativeLoading ? 'Generating…' : narrative ? 'Regenerate AI Insight' : 'Generate AI Insight'}
-                </Button>
-                {narrative && (
-                  <div className="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-100 text-xs leading-relaxed text-navy-700">
-                    {narrative}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+      <div className="flex items-center gap-4 text-[10px] font-semibold text-navy-400">
+        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-emerald-500 inline-block" /> Actual</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-indigo-500 inline-block border-b border-dashed" /> Projected</span>
+        {detail.targetAlignment && (
+          <span className="flex items-center gap-1.5"><TargetIcon className="w-3 h-3 text-amber-500" /> Target</span>
         )}
       </div>
-    </div>
+
+      {detail.targetAlignment && (
+        <div className="p-3.5 rounded-2xl bg-navy-50 border border-navy-100 text-xs font-semibold text-navy-600">
+          Linked to <span className="font-bold text-navy-950">{detail.targetAlignment.targetTitle}</span> —
+          projected to reach <span className="font-bold text-navy-950">{formatValue(detail.targetAlignment.projectedValueAtTargetYear)} {detail.unit}</span> by
+          FY{detail.targetAlignment.targetYear}, against a target of {formatValue(detail.targetAlignment.targetValue)} {detail.unit}.
+        </div>
+      )}
+
+      {canUseAi && (
+        <div className="pt-4 border-t border-navy-50 space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleGenerate(!!detail.targetAlignment)}
+              disabled={generating}
+              icon={generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            >
+              {generating
+                ? 'Generating…'
+                : narrative || actionPlan
+                  ? 'Regenerate AI Insight'
+                  : detail.targetAlignment
+                    ? 'Generate AI Insight & Action Plan'
+                    : 'Generate AI Insight'}
+            </Button>
+          </div>
+          {narrative && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-100 text-xs leading-relaxed text-navy-700">
+              {narrative}
+            </div>
+          )}
+          {actionPlan && (
+            <div className="p-3.5 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-xs leading-relaxed text-navy-700 space-y-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-indigo-600">
+                <ListChecks className="w-3.5 h-3.5" />
+                Steps to reach target
+              </div>
+              <ol className="space-y-2.5 list-decimal list-inside marker:font-bold marker:text-indigo-500">
+                {actionPlan
+                  .split('\n')
+                  .map((line) => line.replace(/^\s*\d+[.)]\s*/, '').trim())
+                  .filter(Boolean)
+                  .map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -233,13 +258,16 @@ export default function ForecastingView() {
 
   useEffect(() => {
     forecastingApi.list()
-      .then(setSummaries)
+      .then((data) => {
+        setSummaries(data);
+        setSelectedId((prev) => prev ?? data[0]?.indicatorId ?? null);
+      })
       .catch((err: ApiError) => showToast(err?.message || 'Failed to load forecasts.', 'error'))
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="space-y-8 w-full pb-16 font-sans">
+    <div className="space-y-6 w-full pb-16 font-sans">
 
       {/* HEADER BAR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-navy-100/40">
@@ -269,43 +297,39 @@ export default function ForecastingView() {
       )}
 
       {!loading && summaries.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {summaries.map((s) => (
-            <div key={s.indicatorId} onClick={() => setSelectedId(s.indicatorId)} className="cursor-pointer">
-            <Card
-              padded="sm"
-              hoverEffect
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-bold text-navy-950 leading-snug">{s.indicatorName}</h3>
-                <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-navy-500 bg-navy-50 border border-navy-100 rounded-md px-1.5 py-0.5">
-                  {TREND_ICON[s.trendDirection]}
-                </span>
-              </div>
+        <>
+          {/* TAB BAR — one tab per forecastable indicator */}
+          <div className="flex overflow-x-auto -mb-px border-b border-navy-100">
+            {summaries.map((s) => {
+              const active = s.indicatorId === selectedId;
+              return (
+                <button
+                  key={s.indicatorId}
+                  onClick={() => setSelectedId(s.indicatorId)}
+                  className={`px-5 py-3 text-xs font-extrabold border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+                    active
+                      ? 'border-primary-500 text-primary-600 font-black'
+                      : 'border-transparent text-navy-500 hover:text-navy-900 hover:border-navy-200'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    {TREND_ICON[s.trendDirection]}
+                    <span>{s.indicatorName}</span>
+                    {s.targetAlignment && (
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        s.targetAlignment.status === 'ON_TRACK' ? 'bg-emerald-500'
+                          : s.targetAlignment.status === 'AT_RISK' ? 'bg-amber-500' : 'bg-rose-500'
+                      }`} />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
-              <div className="mt-3 flex items-end justify-between">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider font-bold text-navy-400">FY{s.lastActualYear} Actual</div>
-                  <div className="text-lg font-bold text-navy-950">{formatValue(s.lastActualValue)} <span className="text-[10px] font-semibold text-navy-400">{s.unit}</span></div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] uppercase tracking-wider font-bold text-navy-400">FY{s.projectionYear} Projected</div>
-                  <div className="text-lg font-bold text-indigo-600">{formatValue(s.projectedValue)} <span className="text-[10px] font-semibold text-navy-400">{s.unit}</span></div>
-                </div>
-              </div>
-
-              {s.targetAlignment && (
-                <div className={`mt-3 text-[10px] font-bold uppercase tracking-wider border rounded-lg px-2 py-1 inline-block ${FORECAST_STATUS_STYLES[s.targetAlignment.status].className}`}>
-                  {FORECAST_STATUS_STYLES[s.targetAlignment.status].label} for {s.targetAlignment.targetTitle}
-                </div>
-              )}
-            </Card>
-            </div>
-          ))}
-        </div>
+          {selectedId && <ForecastDetail indicatorId={selectedId} />}
+        </>
       )}
-
-      {selectedId && <DetailPanel indicatorId={selectedId} onClose={() => setSelectedId(null)} />}
     </div>
   );
 }

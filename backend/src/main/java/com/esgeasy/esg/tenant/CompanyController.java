@@ -8,6 +8,7 @@ import com.esgeasy.esg.tenant.dto.CreateTenantUserRequest;
 import com.esgeasy.esg.tenant.dto.CreateTenantUserResponse;
 import com.esgeasy.esg.tenant.dto.TeamInviteResponse;
 import com.esgeasy.esg.tenant.dto.TenantUserResponse;
+import com.esgeasy.esg.tenant.dto.UpdateCompanyDetailsRequest;
 import com.esgeasy.esg.tenant.dto.UpdateCompanyProfileRequest;
 import com.esgeasy.esg.tenant.dto.UpdatePlanRequest;
 import com.esgeasy.esg.tenant.dto.UpdateUserRoleRequest;
@@ -71,6 +72,14 @@ public class CompanyController {
     @PreAuthorize("@perm.check('settings.manage')")
     public CompanyGroupMemberResponse createSubsidiary(@Valid @RequestBody CreateSubsidiaryRequest request) {
         return companyService.createSubsidiary(request);
+    }
+
+    /** Edits the identity/classification/contact fields for the current company or any subsidiary
+     *  in its group — Settings &gt; Company &gt; Company Details. */
+    @PatchMapping("/group/{companyId}")
+    @PreAuthorize("@perm.check('settings.manage')")
+    public CompanyGroupMemberResponse updateCompanyDetails(@PathVariable UUID companyId, @Valid @RequestBody UpdateCompanyDetailsRequest request) {
+        return companyService.updateCompanyDetails(companyId, request);
     }
 
     @PostMapping("/switch/{companyId}")

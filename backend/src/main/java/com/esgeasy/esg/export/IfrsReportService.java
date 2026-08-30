@@ -68,7 +68,7 @@ public class IfrsReportService {
 
         byte[] pdf = pdfRenderer.render("ifrs-s1-report", ctx);
         exportService.logClientGeneratedExport(new LogExportRequest("IFRS S1 Report", ExportFormat.PDF, fiscalYear));
-        return new GeneratedReport(pdf, "EsgEasy_IFRS_S1_Report_FY" + fiscalYear + ".pdf");
+        return new GeneratedReport(pdf, "EsgEasy_" + ReportSupport.filenameSlug(company.getName()) + "_IFRS_S1_Report_FY" + fiscalYear + ".pdf");
     }
 
     @Transactional
@@ -91,7 +91,7 @@ public class IfrsReportService {
 
         byte[] pdf = pdfRenderer.render("ifrs-s2-report", ctx);
         exportService.logClientGeneratedExport(new LogExportRequest("IFRS S2 Report", ExportFormat.PDF, fiscalYear));
-        return new GeneratedReport(pdf, "EsgEasy_IFRS_S2_Report_FY" + fiscalYear + ".pdf");
+        return new GeneratedReport(pdf, "EsgEasy_" + ReportSupport.filenameSlug(company.getName()) + "_IFRS_S2_Report_FY" + fiscalYear + ".pdf");
     }
 
     private Company requireCompany() {

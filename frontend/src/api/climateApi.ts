@@ -7,6 +7,8 @@ import { apiClient } from './client';
 
 export type RiskOpportunityType = 'RISK' | 'OPPORTUNITY';
 export type TimeHorizon = 'SHORT' | 'MEDIUM' | 'LONG';
+export type RiskLikelihood = 'LOW' | 'MEDIUM' | 'HIGH';
+export type ImpactSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
 export type Currency = 'MYR' | 'USD' | 'EUR';
 export type ReviewFrequency = 'MONTHLY' | 'QUARTERLY' | 'BI_ANNUALLY' | 'ANNUALLY';
 export type IntegrationLevel = 'FULLY_INTEGRATED' | 'PARTIALLY_INTEGRATED' | 'STANDALONE_PROCESS';
@@ -19,6 +21,10 @@ export interface S1ItemResponse {
   horizon: TimeHorizon;
   financialImpact: number | null;
   currency: Currency;
+  category: string | null;
+  likelihood: RiskLikelihood | null;
+  impactSeverity: ImpactSeverity | null;
+  mitigationApproach: string | null;
 }
 
 export interface BusinessSegmentResponse {
@@ -34,6 +40,10 @@ export interface UpsertS1ItemRequest {
   horizon: TimeHorizon;
   financialImpact?: number;
   currency: Currency;
+  category?: string;
+  likelihood?: RiskLikelihood;
+  impactSeverity?: ImpactSeverity;
+  mitigationApproach?: string;
 }
 
 export interface IfrsS1DisclosureResponse {

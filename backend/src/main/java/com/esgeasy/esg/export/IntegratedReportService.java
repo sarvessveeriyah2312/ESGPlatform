@@ -10,6 +10,8 @@ import com.esgeasy.esg.climate.dto.IfrsS1DisclosureResponse;
 import com.esgeasy.esg.climate.dto.IfrsS2Response;
 import com.esgeasy.esg.common.exceptions.NotFoundException;
 import com.esgeasy.esg.export.dto.LogExportRequest;
+import com.esgeasy.esg.forecasting.ForecastingService;
+import com.esgeasy.esg.forecasting.dto.ForecastSummaryResponse;
 import com.esgeasy.esg.governance.CompliancePolicyService;
 import com.esgeasy.esg.governance.GovernanceService;
 import com.esgeasy.esg.governance.dto.CompliancePolicyResponse;
@@ -23,7 +25,12 @@ import com.esgeasy.esg.materiality.MaterialityService;
 import com.esgeasy.esg.materiality.dto.AssessmentSummaryResponse;
 import com.esgeasy.esg.materiality.dto.ScoreResponse;
 import com.esgeasy.esg.pdf.PdfRenderer;
+import com.esgeasy.esg.reference.SustainabilityMatterCategory;
+import com.esgeasy.esg.report.ReportNarrativeService;
+import com.esgeasy.esg.report.dto.ReportNarrativeResponse;
 import com.esgeasy.esg.security.CurrentUserProvider;
+import com.esgeasy.esg.targets.PerformanceTargetService;
+import com.esgeasy.esg.targets.dto.PerformanceTargetResponse;
 import com.esgeasy.esg.tenant.Company;
 import com.esgeasy.esg.tenant.CompanyRepository;
 import com.esgeasy.esg.tenant.SubscriptionPlan;
@@ -54,6 +61,9 @@ public class IntegratedReportService {
     private final IfrsService ifrsService;
     private final EmissionsService emissionsService;
     private final AssuranceService assuranceService;
+    private final ForecastingService forecastingService;
+    private final ReportNarrativeService reportNarrativeService;
+    private final PerformanceTargetService performanceTargetService;
     private final ExportService exportService;
     private final PdfRenderer pdfRenderer;
 
@@ -67,6 +77,9 @@ public class IntegratedReportService {
                                     IfrsService ifrsService,
                                     EmissionsService emissionsService,
                                     AssuranceService assuranceService,
+                                    ForecastingService forecastingService,
+                                    ReportNarrativeService reportNarrativeService,
+                                    PerformanceTargetService performanceTargetService,
                                     ExportService exportService,
                                     PdfRenderer pdfRenderer) {
         this.companyRepository = companyRepository;
@@ -79,6 +92,9 @@ public class IntegratedReportService {
         this.ifrsService = ifrsService;
         this.emissionsService = emissionsService;
         this.assuranceService = assuranceService;
+        this.forecastingService = forecastingService;
+        this.reportNarrativeService = reportNarrativeService;
+        this.performanceTargetService = performanceTargetService;
         this.exportService = exportService;
         this.pdfRenderer = pdfRenderer;
     }
@@ -134,15 +150,39 @@ public class IntegratedReportService {
         java.math.BigDecimal scope2Value = ReportSupport.valueForYear(emissions != null ? emissions.scope2() : List.of(), fiscalYear);
         java.math.BigDecimal scope3Total = ReportSupport.scope3TotalForYear(emissions, fiscalYear);
         int climatePercentage = climatePercentage(climateUnlocked, segments, s2, scope1Value, scope2Value, scope3Total);
+        boolean hasRiskItems = segments.stream().anyMatch(s -> !s.items().isEmpty());
 
         SignOffResponse signOff = assuranceService.list().stream()
                 .filter(r -> r.fiscalYear() == fiscalYear)
                 .findFirst()
                 .orElse(null);
 
+        List<ForecastSummaryResponse> forecasts = forecastingService.list();
+
+        ReportNarrativeResponse narrative = reportNarrativeService.get();
+        List<PerformanceTargetResponse> targets = performanceTargetService.list();
+        List<IndicatorResponse> environmentalIndicators = indicators.stream()
+                .filter(ind -> ind.category() == SustainabilityMatterCategory.ENVIRONMENTAL)
+                .toList();
+        List<IndicatorResponse> socialIndicators = indicators.stream()
+                .filter(ind -> ind.category() == SustainabilityMatterCategory.SOCIAL)
+                .toList();
+        List<Integer> recentYears = ReportSupport.recentYears(fiscalYear, 3);
+        java.util.Map<String, java.util.Map<Integer, java.math.BigDecimal>> indicatorYearValues = ReportSupport.indicatorYearValues(indicators);
+        java.util.Map<Integer, java.math.BigDecimal> scope1ByYear = new java.util.HashMap<>();
+        java.util.Map<Integer, java.math.BigDecimal> scope2ByYear = new java.util.HashMap<>();
+        java.util.Map<Integer, java.math.BigDecimal> scope3TotalByYear = new java.util.HashMap<>();
+        for (Integer y : recentYears) {
+            scope1ByYear.put(y, ReportSupport.valueForYear(emissions != null ? emissions.scope1() : List.of(), y));
+            scope2ByYear.put(y, ReportSupport.valueForYear(emissions != null ? emissions.scope2() : List.of(), y));
+            scope3TotalByYear.put(y, ReportSupport.scope3TotalForYear(emissions, y));
+        }
+        List<ReportSupport.GhgChartPoint> ghgChart = ReportSupport.buildGhgChart(recentYears, scope1ByYear, scope2ByYear, scope3TotalByYear, 90);
+        boolean hasGhgChartData = ReportSupport.hasPositiveGhgValue(scope1ByYear, scope2ByYear, scope3TotalByYear);
+
         Instant generatedAt = Instant.now();
         String checksum = ReportSupport.computeChecksum(buildSummaryText(company, fiscalYear, materialityScores, structure, ownership, policies, indicators,
-                climateUnlocked, segments, s2, scope1Value, scope2Value, scope3Total));
+                climateUnlocked, segments, s2, scope1Value, scope2Value, scope3Total, forecasts, narrative, targets));
 
         Context ctx = new Context(Locale.ENGLISH);
         ctx.setVariable("company", company);
@@ -174,12 +214,25 @@ public class IntegratedReportService {
         ctx.setVariable("scope3Total", scope3Total);
         ctx.setVariable("scope3ValueByCategoryId", ReportSupport.scope3ValueByCategoryId(emissions, fiscalYear));
         ctx.setVariable("signOff", signOff);
+        ctx.setVariable("forecasts", forecasts);
+        ctx.setVariable("narrative", narrative);
+        ctx.setVariable("targets", targets);
+        ctx.setVariable("environmentalIndicators", environmentalIndicators);
+        ctx.setVariable("socialIndicators", socialIndicators);
+        ctx.setVariable("recentYears", recentYears);
+        ctx.setVariable("indicatorYearValues", indicatorYearValues);
+        ctx.setVariable("scope1ByYear", scope1ByYear);
+        ctx.setVariable("scope2ByYear", scope2ByYear);
+        ctx.setVariable("scope3TotalByYear", scope3TotalByYear);
+        ctx.setVariable("hasRiskItems", hasRiskItems);
+        ctx.setVariable("ghgChart", ghgChart);
+        ctx.setVariable("hasGhgChartData", hasGhgChartData);
 
         byte[] pdf = pdfRenderer.render("integrated-esg-report", ctx);
 
         exportService.logClientGeneratedExport(new LogExportRequest("Integrated ESG Report", ExportFormat.PDF, fiscalYear));
 
-        String filename = "EsgEasy_ESG_Integrated_Report_FY" + fiscalYear + ".pdf";
+        String filename = "EsgEasy_" + ReportSupport.filenameSlug(company.getName()) + "_ESG_Integrated_Report_FY" + fiscalYear + ".pdf";
         return new GeneratedReport(pdf, filename);
     }
 
@@ -219,9 +272,15 @@ public class IntegratedReportService {
                                      List<GovernanceLevelResponse> structure, List<MatterOwnershipResponse> ownership,
                                      List<CompliancePolicyResponse> policies, List<IndicatorResponse> indicators,
                                      boolean climateUnlocked, List<BusinessSegmentResponse> segments, IfrsS2Response s2,
-                                     java.math.BigDecimal scope1Value, java.math.BigDecimal scope2Value, java.math.BigDecimal scope3Total) {
+                                     java.math.BigDecimal scope1Value, java.math.BigDecimal scope2Value, java.math.BigDecimal scope3Total,
+                                     List<ForecastSummaryResponse> forecasts, ReportNarrativeResponse narrative,
+                                     List<PerformanceTargetResponse> targets) {
         List<String> lines = new ArrayList<>();
         lines.add("Entity: " + company.getName());
+        lines.add("CEO Statement: " + (narrative.ceoStatement() != null ? narrative.ceoStatement() : "Not yet provided"));
+        lines.add("Company Overview: " + (narrative.companyOverview() != null ? narrative.companyOverview() : "Not yet provided"));
+        targets.forEach(t -> lines.add("Target [" + t.title() + "]: baseline FY" + t.baselineYear() + " -> target " + t.targetValue().toPlainString()
+                + " by FY" + t.targetYear() + " (" + t.currentProgress() + "% progress)"));
         lines.add("Sector: " + (company.getSector() != null ? company.getSector().getName() : "Not set")
                 + " | Market: " + company.getMarketClassification());
         lines.add("Period: FY" + fiscalYear);
@@ -252,6 +311,19 @@ public class IntegratedReportService {
             lines.add("Scope 1 GHG (FY" + fiscalYear + "): " + (scope1Value != null ? scope1Value.toPlainString() : "N/A") + " tCO2e");
             lines.add("Scope 2 GHG (FY" + fiscalYear + "): " + (scope2Value != null ? scope2Value.toPlainString() : "N/A") + " tCO2e");
             lines.add("Scope 3 GHG (FY" + fiscalYear + "): " + (scope3Total != null ? scope3Total.toPlainString() : "N/A") + " tCO2e");
+        }
+        if (forecasts.isEmpty()) {
+            lines.add("No AI forecasts available yet (indicators need at least two fiscal years of recorded history).");
+        } else {
+            forecasts.forEach(f -> {
+                String line = "Forecast [" + f.indicatorName() + "]: " + f.trendDirection() + " trend, projected "
+                        + f.projectedValue().toPlainString() + " " + f.unit() + " by FY" + f.projectionYear();
+                if (f.targetAlignment() != null) {
+                    line += " (" + f.targetAlignment().status() + " vs. target " + f.targetAlignment().targetValue().toPlainString()
+                            + " " + f.unit() + " for \"" + f.targetAlignment().targetTitle() + "\")";
+                }
+                lines.add(line);
+            });
         }
         return String.join("\n", lines);
     }

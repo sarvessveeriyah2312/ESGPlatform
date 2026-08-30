@@ -38,4 +38,10 @@ public class ForecastingController {
     public ForecastNarrativeResponse generateNarrative(@PathVariable String indicatorId) {
         return service.generateNarrative(indicatorId);
     }
+
+    @PostMapping("/{indicatorId}/action-plan")
+    @PreAuthorize("@perm.check('ai.use')")
+    public ForecastNarrativeResponse generateActionPlan(@PathVariable String indicatorId) {
+        return service.generateActionPlan(indicatorId);
+    }
 }

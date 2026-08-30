@@ -24,6 +24,8 @@ import {
   climateApi,
   RiskOpportunityType,
   TimeHorizon,
+  RiskLikelihood,
+  ImpactSeverity,
   Currency,
   ReviewFrequency,
   IntegrationLevel,
@@ -47,6 +49,8 @@ const CURRENT_FISCAL_YEAR = 2026;
 // TYPES FOR IFRS S1
 type FrontendRiskType = 'Risk' | 'Opportunity';
 type FrontendHorizon = 'Short' | 'Medium' | 'Long';
+type FrontendLikelihood = '' | 'Low' | 'Medium' | 'High';
+type FrontendSeverity = '' | 'Low' | 'Medium' | 'High';
 
 interface S1RiskOpportunity {
   id: string;
@@ -56,6 +60,10 @@ interface S1RiskOpportunity {
   horizon: FrontendHorizon;
   financialImpact: string;
   currency: Currency;
+  category: string;
+  likelihood: FrontendLikelihood;
+  impactSeverity: FrontendSeverity;
+  mitigationApproach: string;
 }
 
 interface Segment {
@@ -138,6 +146,28 @@ const HORIZON_FROM_BACKEND: Record<TimeHorizon, FrontendHorizon> = {
   LONG: 'Long'
 };
 
+const LIKELIHOOD_TO_BACKEND: Record<Exclude<FrontendLikelihood, ''>, RiskLikelihood> = {
+  Low: 'LOW',
+  Medium: 'MEDIUM',
+  High: 'HIGH'
+};
+const LIKELIHOOD_FROM_BACKEND: Record<RiskLikelihood, FrontendLikelihood> = {
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High'
+};
+
+const SEVERITY_TO_BACKEND: Record<Exclude<FrontendSeverity, ''>, ImpactSeverity> = {
+  Low: 'LOW',
+  Medium: 'MEDIUM',
+  High: 'HIGH'
+};
+const SEVERITY_FROM_BACKEND: Record<ImpactSeverity, FrontendSeverity> = {
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High'
+};
+
 const REVIEW_FREQ_TO_BACKEND: Record<FrontendReviewFrequency, ReviewFrequency> = {
   Monthly: 'MONTHLY',
   Quarterly: 'QUARTERLY',
@@ -170,7 +200,11 @@ function fromS1Item(item: S1ItemResponse): S1RiskOpportunity {
     description: item.description ?? '',
     horizon: HORIZON_FROM_BACKEND[item.horizon],
     financialImpact: item.financialImpact != null ? String(item.financialImpact) : '',
-    currency: item.currency
+    currency: item.currency,
+    category: item.category ?? '',
+    likelihood: item.likelihood ? LIKELIHOOD_FROM_BACKEND[item.likelihood] : '',
+    impactSeverity: item.impactSeverity ? SEVERITY_FROM_BACKEND[item.impactSeverity] : '',
+    mitigationApproach: item.mitigationApproach ?? ''
   };
 }
 
@@ -182,7 +216,11 @@ function toUpsertRequest(card: S1RiskOpportunity): UpsertS1ItemRequest {
     description: card.description || undefined,
     horizon: HORIZON_TO_BACKEND[card.horizon],
     financialImpact: trimmedImpact === '' ? undefined : Number(trimmedImpact),
-    currency: card.currency
+    currency: card.currency,
+    category: card.category || undefined,
+    likelihood: card.likelihood ? LIKELIHOOD_TO_BACKEND[card.likelihood] : undefined,
+    impactSeverity: card.impactSeverity ? SEVERITY_TO_BACKEND[card.impactSeverity] : undefined,
+    mitigationApproach: card.mitigationApproach || undefined
   };
 }
 
@@ -443,7 +481,11 @@ export function IfrsS1Form() {
       description: undefined,
       horizon: 'MEDIUM',
       financialImpact: undefined,
-      currency: 'MYR'
+      currency: 'MYR',
+      category: undefined,
+      likelihood: undefined,
+      impactSeverity: undefined,
+      mitigationApproach: undefined
     };
 
     climateApi.addItem(activeSegmentId, requestData).then((created) => {
@@ -839,6 +881,67 @@ export function IfrsS1Form() {
                       </div>
                     </div>
 
+                  </div>
+
+                  {/* Risk Matrix Fields — Category / Likelihood / Impact Severity / Mitigation Approach */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs font-semibold mt-5 pt-5 border-t border-navy-50">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">
+                        Risk Category
+                      </label>
+                      <input
+                        type="text"
+                        value={card.category}
+                        onChange={(e) => updateCardField(card.id, 'category', e.target.value)}
+                        placeholder="e.g. Policy / Regulatory"
+                        className="w-full px-3 py-2 border border-navy-200 rounded-xl text-xs font-medium text-navy-950 outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white bg-navy-50/10"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">
+                        Likelihood
+                      </label>
+                      <select
+                        value={card.likelihood}
+                        onChange={(e) => updateCardField(card.id, 'likelihood', e.target.value)}
+                        className="w-full px-2.5 py-2 text-xs text-navy-900 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500 bg-white cursor-pointer"
+                      >
+                        <option value="">Not set</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">
+                        Impact Severity
+                      </label>
+                      <select
+                        value={card.impactSeverity}
+                        onChange={(e) => updateCardField(card.id, 'impactSeverity', e.target.value)}
+                        className="w-full px-2.5 py-2 text-xs text-navy-900 border border-navy-200 rounded-xl outline-none focus:ring-1 focus:ring-primary-500 bg-white cursor-pointer"
+                      >
+                        <option value="">Not set</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-3 space-y-1.5">
+                      <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">
+                        Mitigation Approach
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={card.mitigationApproach}
+                        onChange={(e) => updateCardField(card.id, 'mitigationApproach', e.target.value)}
+                        placeholder="e.g. Portfolio diversification across markets; active engagement in policy processes..."
+                        className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+                      />
+                    </div>
                   </div>
                 </Card>
               ))}

@@ -171,6 +171,10 @@ public class IfrsService {
         item.setHorizon(request.horizon());
         item.setFinancialImpact(request.financialImpact());
         item.setCurrency(request.currency());
+        item.setCategory(request.category());
+        item.setLikelihood(request.likelihood());
+        item.setImpactSeverity(request.impactSeverity());
+        item.setMitigationApproach(request.mitigationApproach());
     }
 
     @Transactional

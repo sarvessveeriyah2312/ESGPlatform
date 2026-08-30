@@ -121,6 +121,9 @@ export const companyApi = {
   createSubsidiary: (data: CreateSubsidiaryRequest) =>
     apiClient.post<CompanyGroupMember>('/api/v1/company/subsidiaries', data),
 
+  updateCompanyDetails: (companyId: string, data: CreateSubsidiaryRequest) =>
+    apiClient.patch<CompanyGroupMember>(`/api/v1/company/group/${companyId}`, data),
+
   switchCompany: (companyId: string) =>
     apiClient.post<CompanyGroupMember>(`/api/v1/company/switch/${companyId}`),
 

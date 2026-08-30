@@ -17,6 +17,7 @@ import com.esgeasy.esg.tenant.dto.CreateTenantUserResponse;
 import com.esgeasy.esg.tenant.dto.TeamInviteResponse;
 import com.esgeasy.esg.tenant.dto.TenantSummaryResponse;
 import com.esgeasy.esg.tenant.dto.TenantUserResponse;
+import com.esgeasy.esg.tenant.dto.UpdateCompanyDetailsRequest;
 import com.esgeasy.esg.tenant.dto.UpdateCompanyProfileRequest;
 import com.esgeasy.esg.tenant.dto.UpdatePlanRequest;
 import com.esgeasy.esg.tenant.dto.UpdateTenantStatusRequest;
@@ -200,6 +201,44 @@ public class CompanyService {
         subsidiary = companyRepository.save(subsidiary);
 
         return CompanyGroupMemberResponse.from(subsidiary, false);
+    }
+
+    /** Full replace of the identity/classification/contact fields for any company in the caller's
+     *  group (the current company itself or one of its subsidiaries) — Settings &gt; Company &gt; Company Details. */
+    @Transactional
+    public CompanyGroupMemberResponse updateCompanyDetails(UUID companyId, UpdateCompanyDetailsRequest request) {
+        Company target = companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("Company not found"));
+        Company root = groupRoot(currentCompany());
+        if (!groupRoot(target).getId().equals(root.getId())) {
+            throw new NotFoundException("Company not found");
+        }
+
+        target.setName(request.name());
+        if (request.sectorCode() != null && !request.sectorCode().isBlank()) {
+            Sector sector = sectorRepository.findById(request.sectorCode())
+                    .orElseThrow(() -> new NotFoundException("Unknown sector code: " + request.sectorCode()));
+            target.setSector(sector);
+        } else {
+            target.setSector(null);
+        }
+
+        target.setRegistrationNumber(request.registrationNumber());
+        target.setTickerCode(request.tickerCode());
+        target.setDateOfIncorporation(request.dateOfIncorporation());
+        target.setCountryOfIncorporation(request.countryOfIncorporation());
+        target.setListingBoard(request.listingBoard());
+        target.setCompanyType(request.companyType());
+        target.setRegisteredOfficeAddress(request.registeredOfficeAddress());
+        target.setBusinessAddress(request.businessAddress());
+        target.setContactPersonName(request.contactPersonName());
+        target.setContactPersonDesignation(request.contactPersonDesignation());
+        target.setContactPersonEmail(request.contactPersonEmail());
+        target.setContactPersonPhone(request.contactPersonPhone());
+        target.setTaxIdentificationNumber(request.taxIdentificationNumber());
+
+        target = companyRepository.save(target);
+        return CompanyGroupMemberResponse.from(target, target.getId().equals(currentUserProvider.requireCompanyId()));
     }
 
     @Transactional

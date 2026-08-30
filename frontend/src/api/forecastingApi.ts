@@ -42,6 +42,8 @@ export interface IndicatorForecastResponse {
   points: ForecastPoint[];
   trendDirection: TrendDirection;
   targetAlignment: TargetAlignment | null;
+  narrative: string | null;
+  actionPlan: string | null;
 }
 
 export interface ForecastNarrativeResponse {
@@ -55,4 +57,7 @@ export const forecastingApi = {
 
   generateNarrative: (indicatorId: string) =>
     apiClient.post<ForecastNarrativeResponse>(`/api/v1/forecasting/${indicatorId}/narrative`),
+
+  generateActionPlan: (indicatorId: string) =>
+    apiClient.post<ForecastNarrativeResponse>(`/api/v1/forecasting/${indicatorId}/action-plan`),
 };

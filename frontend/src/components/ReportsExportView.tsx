@@ -21,7 +21,11 @@ import {
   History,
   Info,
   Eye,
-  X
+  X,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 import { usePlan } from '../contexts/PlanContext';
@@ -39,6 +43,14 @@ import { governanceApi, GovernanceLevelResponse, MatterOwnershipResponse } from 
 import { compliancePolicyApi, CompliancePolicyResponse } from '../api/compliancePolicyApi';
 import { climateApi, BusinessSegmentResponse, IfrsS2Response, EmissionsResponse } from '../api/climateApi';
 import { marketFromBackend } from '../api/mappers';
+import { reportNarrativeApi, ReportNarrativeResponse } from '../api/reportNarrativeApi';
+
+/** Collapses a company name into a filename-safe token — mirrors ReportSupport.filenameSlug on the backend. */
+function companyFilenameSlug(name: string | null | undefined): string {
+  if (!name || !name.trim()) return 'Company';
+  const slug = name.trim().replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  return slug || 'Company';
+}
 
 // Interface for export history
 interface ExportHistoryItem {
@@ -151,6 +163,16 @@ export default function ReportsExportView() {
 
   // Export history — sourced from the real backend history log
   const [history, setHistory] = useState<ExportHistoryItem[]>([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(10);
+
+  // Narrative content (CEO statement, company overview, etc.) that feeds the generated report
+  const [narrative, setNarrative] = useState<ReportNarrativeResponse>({
+    ceoStatement: '', reportScopeDescription: '', companyOverview: '', esgStrategyNarrative: '',
+    sustainabilityEmail: '', investorRelationsEmail: ''
+  });
+  const [savingNarrative, setSavingNarrative] = useState<boolean>(false);
+  const [narrativeExpanded, setNarrativeExpanded] = useState<boolean>(false);
 
   // The component's period state is a string like 'FY2026' — the backend deals in numeric fiscal years
   const fiscalYear = parseInt(period.replace('FY', ''), 10);
@@ -193,7 +215,10 @@ export default function ReportsExportView() {
 
   const refreshHistory = () => {
     exportApi.history()
-      .then((rows) => setHistory(rows.map(mapHistoryItem)))
+      .then((rows) => {
+        setHistory(rows.map(mapHistoryItem));
+        setHistoryPage(1);
+      })
       .catch((e) => console.error(e));
   };
 
@@ -233,8 +258,38 @@ export default function ReportsExportView() {
         materialityApi.getAssessment(latest.id).then((detail) => setMaterialityScores(detail.scores)).catch((e) => console.error(e));
       }
     }).catch((e) => console.error(e));
+    reportNarrativeApi.get().then((n) => setNarrative({
+      ceoStatement: n.ceoStatement ?? '',
+      reportScopeDescription: n.reportScopeDescription ?? '',
+      companyOverview: n.companyOverview ?? '',
+      esgStrategyNarrative: n.esgStrategyNarrative ?? '',
+      sustainabilityEmail: n.sustainabilityEmail ?? '',
+      investorRelationsEmail: n.investorRelationsEmail ?? ''
+    })).catch((e) => console.error(e));
     refreshHistory();
   }, []);
+
+  const updateNarrativeField = (field: keyof ReportNarrativeResponse, value: string) => {
+    setNarrative((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveNarrative = () => {
+    setSavingNarrative(true);
+    reportNarrativeApi.update({
+      ceoStatement: narrative.ceoStatement ?? '',
+      reportScopeDescription: narrative.reportScopeDescription ?? '',
+      companyOverview: narrative.companyOverview ?? '',
+      esgStrategyNarrative: narrative.esgStrategyNarrative ?? '',
+      sustainabilityEmail: narrative.sustainabilityEmail ?? '',
+      investorRelationsEmail: narrative.investorRelationsEmail ?? ''
+    })
+      .then(() => triggerToast('Report narrative saved.', 'success'))
+      .catch((e) => {
+        console.error(e);
+        triggerToast('Failed to save report narrative.', 'error');
+      })
+      .finally(() => setSavingNarrative(false));
+  };
 
   // 1. Calculate overall indicators progress dynamically based on filled metrics
   const totalIndicators = indicators.length > 0 ? indicators.length : 15;
@@ -382,7 +437,7 @@ export default function ReportsExportView() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `EsgEasy_${label.replace(' ', '_')}_Report_${period}.pdf`;
+        a.download = `EsgEasy_${companyFilenameSlug(company?.name)}_${label.replace(' ', '_')}_Report_${period}.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -408,7 +463,7 @@ export default function ReportsExportView() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `EsgEasy_ESG_Integrated_Report_${period}.pdf`;
+          a.download = `EsgEasy_${companyFilenameSlug(company?.name)}_ESG_Integrated_Report_${period}.pdf`;
           document.body.appendChild(a);
           a.click();
           a.remove();
@@ -510,7 +565,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `EsgEasy_ESG_Integrated_Report_${period}.txt`;
+      link.download = `EsgEasy_${companyFilenameSlug(company?.name)}_ESG_Integrated_Report_${period}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -573,7 +628,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `EsgEasy_ESG_Integrated_Report_${item.period}.pdf`;
+          a.download = `EsgEasy_${companyFilenameSlug(company?.name)}_ESG_Integrated_Report_${item.period}.pdf`;
           document.body.appendChild(a);
           a.click();
           a.remove();
@@ -615,6 +670,13 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
       triggerToast(`Archived ${item.type} downloaded.`, 'success');
     }, 800);
   };
+
+  // Export history pagination — clamp the current page whenever the row count or page size shrinks it out of range
+  const historyTotalPages = Math.max(1, Math.ceil(history.length / historyPageSize));
+  const historyPageClamped = Math.min(historyPage, historyTotalPages);
+  const historyStart = history.length === 0 ? 0 : (historyPageClamped - 1) * historyPageSize + 1;
+  const historyEnd = Math.min(historyPageClamped * historyPageSize, history.length);
+  const pagedHistory = history.slice((historyPageClamped - 1) * historyPageSize, historyPageClamped * historyPageSize);
 
   return (
     <div className="space-y-6 w-full px-4 md:px-6 py-4 relative">
@@ -756,6 +818,100 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
         </div>
       </Card>
 
+      {/* Report Narrative — feeds the CEO Statement / About This Report / Company Overview / ESG Strategy / Glossary & Contact sections of the generated PDF */}
+      <Card className="bg-white border-navy-100 p-0 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setNarrativeExpanded((v) => !v)}
+          className="w-full flex items-center justify-between px-6 py-4 hover:bg-navy-50/40 text-left cursor-pointer transition-colors"
+        >
+          <div>
+            <h4 className="text-sm font-extrabold text-navy-950">Report Narrative</h4>
+            <p className="text-xs text-navy-500 mt-0.5">
+              CEO/Chair statement, report scope, company overview and strategy narrative that appear at the front of the generated report.
+            </p>
+          </div>
+          {narrativeExpanded ? <ChevronUp className="w-4 h-4 text-navy-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-navy-400 shrink-0" />}
+        </button>
+
+        {narrativeExpanded && (
+          <div className="px-6 pb-6 space-y-4 border-t border-navy-50 pt-5">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">CEO / Chair Statement</label>
+              <textarea
+                rows={3}
+                value={narrative.ceoStatement ?? ''}
+                onChange={(e) => updateNarrativeField('ceoStatement', e.target.value)}
+                placeholder="A message from leadership introducing this year's ESG performance..."
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">About This Report — Scope</label>
+              <textarea
+                rows={2}
+                value={narrative.reportScopeDescription ?? ''}
+                onChange={(e) => updateNarrativeField('reportScopeDescription', e.target.value)}
+                placeholder="What entities, sites and activities this report covers..."
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">Company Overview</label>
+              <textarea
+                rows={3}
+                value={narrative.companyOverview ?? ''}
+                onChange={(e) => updateNarrativeField('companyOverview', e.target.value)}
+                placeholder="What the company does, its markets, and how it generates revenue..."
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">ESG Strategy Narrative</label>
+              <textarea
+                rows={3}
+                value={narrative.esgStrategyNarrative ?? ''}
+                onChange={(e) => updateNarrativeField('esgStrategyNarrative', e.target.value)}
+                placeholder="The strategic pillars behind your ESG targets..."
+                className="w-full text-xs font-medium text-navy-800 border border-navy-200 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-500 bg-navy-50/10 focus:bg-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">Sustainability Contact Email</label>
+                <input
+                  type="email"
+                  value={narrative.sustainabilityEmail ?? ''}
+                  onChange={(e) => updateNarrativeField('sustainabilityEmail', e.target.value)}
+                  placeholder="sustainability@yourcompany.com"
+                  className="w-full px-3 py-2 border border-navy-200 rounded-xl text-xs font-medium text-navy-950 outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white bg-navy-50/10"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-navy-400 uppercase tracking-wider block">Investor Relations Email</label>
+                <input
+                  type="email"
+                  value={narrative.investorRelationsEmail ?? ''}
+                  onChange={(e) => updateNarrativeField('investorRelationsEmail', e.target.value)}
+                  placeholder="ir@yourcompany.com"
+                  className="w-full px-3 py-2 border border-navy-200 rounded-xl text-xs font-medium text-navy-950 outline-none focus:ring-1 focus:ring-primary-500 focus:bg-white bg-navy-50/10"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button variant="primary" size="sm" onClick={handleSaveNarrative} disabled={savingNarrative}>
+                {savingNarrative ? 'Saving...' : 'Save Narrative'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+
       {/* Primary Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -817,7 +973,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
                     </div>
                     <span className="text-navy-300">|</span>
                     <span className="text-navy-700 truncate">
-                      EsgEasy_Sustainability_Disclosure_Report_{period}.{format === 'PDF' ? 'pdf' : 'txt'}
+                      EsgEasy_{companyFilenameSlug(company?.name)}_Sustainability_Disclosure_Report_{period}.{format === 'PDF' ? 'pdf' : 'txt'}
                     </span>
                   </div>
                   <span className="text-[10px] text-primary-600 bg-primary-50 px-2 py-0.5 rounded font-bold font-sans shrink-0">
@@ -1156,9 +1312,27 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
 
       {/* Export History Table Card */}
       <Card className="bg-white border-navy-100 p-6 space-y-4">
-        <div className="flex items-center space-x-2 border-b border-navy-50 pb-3">
-          <History className="w-4 h-4 text-navy-400" />
-          <h4 className="text-sm font-bold text-navy-950">Export History</h4>
+        <div className="flex items-center justify-between border-b border-navy-50 pb-3">
+          <div className="flex items-center space-x-2">
+            <History className="w-4 h-4 text-navy-400" />
+            <h4 className="text-sm font-bold text-navy-950">Export History</h4>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] font-bold text-navy-400 uppercase tracking-wider">Rows per page</span>
+            <select
+              value={historyPageSize}
+              onChange={(e) => {
+                setHistoryPageSize(Number(e.target.value));
+                setHistoryPage(1);
+              }}
+              className="bg-navy-50 border border-navy-100 text-navy-700 font-bold text-xs rounded-lg px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -1175,7 +1349,7 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
               </tr>
             </thead>
             <tbody className="divide-y divide-navy-50 text-navy-700">
-              {history.map((item) => (
+              {pagedHistory.map((item) => (
                 <tr key={item.id} className="hover:bg-navy-50/40 transition-colors">
                   <td className="py-3 px-4 font-mono font-medium text-navy-600">{item.date}</td>
                   <td className="py-3 px-4 font-semibold text-navy-900">{item.type}</td>
@@ -1222,7 +1396,40 @@ Status: Draft - Ready for Corporate Sign-Off (see Export History for sign-off re
               ))}
             </tbody>
           </table>
+          {history.length === 0 && (
+            <p className="text-center text-xs text-navy-400 py-8">No exports generated yet.</p>
+          )}
         </div>
+
+        {history.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-navy-50">
+            <span className="text-[11px] font-medium text-navy-500">
+              Showing <span className="font-bold text-navy-700">{historyStart}–{historyEnd}</span> of{' '}
+              <span className="font-bold text-navy-700">{history.length}</span> exports
+            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                disabled={historyPageClamped <= 1}
+                className="p-1.5 rounded-lg border border-navy-100 text-navy-500 hover:bg-navy-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[11px] font-bold text-navy-700 font-mono">
+                Page {historyPageClamped} of {historyTotalPages}
+              </span>
+              <button
+                onClick={() => setHistoryPage((p) => Math.min(historyTotalPages, p + 1))}
+                disabled={historyPageClamped >= historyTotalPages}
+                className="p-1.5 rounded-lg border border-navy-100 text-navy-500 hover:bg-navy-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                title="Next page"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* PDF Preview Modal */}

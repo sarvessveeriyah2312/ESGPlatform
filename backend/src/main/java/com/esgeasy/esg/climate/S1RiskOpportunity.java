@@ -46,4 +46,19 @@ public class S1RiskOpportunity extends TenantOwnedEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 5)
     private Currency currency;
+
+    /** Free-text risk category (e.g. "Policy / Regulatory", "Physical / Climate") for the Risks & Opportunities matrix — distinct from {@link #segment}, which groups by business unit. */
+    @Column(length = 60)
+    private String category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "likelihood", length = 10)
+    private RiskLikelihood likelihood;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "impact_severity", length = 10)
+    private ImpactSeverity impactSeverity;
+
+    @Column(name = "mitigation_approach", columnDefinition = "TEXT")
+    private String mitigationApproach;
 }
