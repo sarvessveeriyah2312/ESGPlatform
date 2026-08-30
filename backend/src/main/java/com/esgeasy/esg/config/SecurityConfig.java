@@ -7,6 +7,7 @@ import com.esgeasy.esg.security.JwtService;
 import com.esgeasy.esg.security.TrialAccessFilter;
 import com.esgeasy.esg.session.UserSessionRepository;
 import com.esgeasy.esg.tenant.CompanyRepository;
+import com.esgeasy.esg.tenant.PartnerRepository;
 import com.esgeasy.esg.user.AppUserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
@@ -43,8 +44,9 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, AppUserRepository appUserRepository,
-                                                            UserSessionRepository userSessionRepository, EntityManager entityManager) {
-        return new JwtAuthenticationFilter(jwtService, appUserRepository, userSessionRepository, entityManager);
+                                                            UserSessionRepository userSessionRepository, EntityManager entityManager,
+                                                            PartnerRepository partnerRepository) {
+        return new JwtAuthenticationFilter(jwtService, appUserRepository, userSessionRepository, entityManager, partnerRepository);
     }
 
     @Bean

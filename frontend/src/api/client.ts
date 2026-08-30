@@ -4,8 +4,22 @@
  */
 
 import { tokenStore } from './tokenStore';
+import { resolveSubdomainSlug } from './subdomain';
 
 const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? 'http://localhost:8080';
+
+/**
+ * Tells the backend which partner subdomain (if any) this request was made from, so
+ * JwtAuthenticationFilter can reject a session whose account doesn't belong there — not just at
+ * login (AuthService.requireDomainMatch), but for every request a still-valid token makes. See
+ * WHITELABEL_PLAN.md Phase 3's login-boundary follow-up: that closed the "log in on the wrong
+ * subdomain" hole, but did nothing for a token issued elsewhere (or from before this check
+ * existed) that's simply still sitting in that origin's localStorage.
+ */
+function partnerSlugHeader(): Record<string, string> {
+  const slug = resolveSubdomainSlug(window.location.hostname);
+  return slug ? { 'X-Partner-Slug': slug } : {};
+}
 
 export interface ApiErrorBody {
   timestamp: string;
@@ -52,7 +66,7 @@ function buildUrl(path: string, query?: RequestOptions['query']): string {
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const token = tokenStore.get();
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...partnerSlugHeader() };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const response = await fetch(buildUrl(path, options.query), {
@@ -96,7 +110,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
 function authHeaders(): Record<string, string> {
   const token = tokenStore.get();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const headers: Record<string, string> = { ...partnerSlugHeader() };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
 }
 
 async function parseErrorBody(response: Response, path: string): Promise<ApiErrorBody> {

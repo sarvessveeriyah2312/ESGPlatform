@@ -91,4 +91,21 @@ public class AppUser extends BaseEntity {
 
     @Column(name = "email_verified_at")
     private Instant emailVerifiedAt;
+
+    /**
+     * A PARTNER_ADMIN belongs directly; a tenant user belongs via their company's own partner
+     * link; platform-level roles (no company, no partner) always return null. Single resolution
+     * point reused by both AuthService.requireDomainMatch (login-time) and
+     * JwtAuthenticationFilter (every subsequent request) — see WHITELABEL_PLAN.md Phase 3's
+     * login-boundary follow-up.
+     */
+    public java.util.UUID getEffectivePartnerId() {
+        if (partner != null) {
+            return partner.getId();
+        }
+        if (company != null && company.getPartner() != null) {
+            return company.getPartner().getId();
+        }
+        return null;
+    }
 }

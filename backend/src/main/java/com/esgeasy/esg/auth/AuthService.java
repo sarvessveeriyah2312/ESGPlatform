@@ -211,21 +211,10 @@ public class AuthService {
         if (partner == null) {
             return;
         }
-        UUID userPartnerId = effectivePartnerId(user);
+        UUID userPartnerId = user.getEffectivePartnerId();
         if (userPartnerId == null || !userPartnerId.equals(partner.getId())) {
             throw new ForbiddenException("This account isn't available on " + partner.getBrandName() + "'s login page");
         }
-    }
-
-    /** A PARTNER_ADMIN belongs directly; a tenant user belongs via their company's own partner link; platform-level roles (no company, no partner) always return null. */
-    private UUID effectivePartnerId(AppUser user) {
-        if (user.getPartner() != null) {
-            return user.getPartner().getId();
-        }
-        if (user.getCompany() != null && user.getCompany().getPartner() != null) {
-            return user.getCompany().getPartner().getId();
-        }
-        return null;
     }
 
     private long expirationMinutesFor(boolean rememberMe) {
