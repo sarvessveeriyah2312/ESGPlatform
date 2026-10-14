@@ -126,9 +126,8 @@ npm run dev                    # http://localhost:3000
 | `npm run lint` | TypeScript type-check (`tsc --noEmit`) — there's no separate ESLint config |
 | `npm run clean` | Remove `dist/` |
 
-`VITE_API_BASE_URL` (defaults to `http://localhost:8080`) is the only variable that matters for
-running against the backend above. `GEMINI_API_KEY` is inherited from the project's original
-Google AI Studio scaffold and isn't currently used by any app feature.
+`VITE_API_BASE_URL` (defaults to `http://localhost:8080`) is the only frontend variable; it points
+the app at the backend above.
 
 ### Try it out
 

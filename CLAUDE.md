@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**EsgEasy** — an ESG (Environmental, Social & Governance) reporting SaaS for Bursa Malaysia compliance. Frontend scaffolded from Google AI Studio, backed by a real Spring Boot service in `backend/` (Java, `pom.xml`, Docker) with REST controllers for auth, billing/Stripe, MFA, indicators, materiality, governance, IFRS S1/S2 & emissions, assurance, exports, support tickets, tenant/platform admin, and more.
+**EsgEasy** — an ESG (Environmental, Social & Governance) reporting SaaS for Bursa Malaysia compliance. React frontend backed by a real Spring Boot service in `backend/` (Java, `pom.xml`, Docker) with REST controllers for auth, billing/Stripe, MFA, indicators, materiality, governance, IFRS S1/S2 & emissions, assurance, exports, support tickets, tenant/platform admin, and more.
 
 ## Commands
 
@@ -15,10 +15,10 @@ npm install          # install dependencies
 npm run dev          # dev server at http://localhost:3000
 npm run build        # production build
 npm run lint         # TypeScript type-check (tsc --noEmit) — no separate ESLint config
-npm run clean        # remove dist/ and server.js
+npm run clean        # remove dist/
 ```
 
-Set `GEMINI_API_KEY` in `frontend/.env.local` before running (copy from `.env.example`).
+Copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_API_BASE_URL` if the backend isn't on `http://localhost:8080`.
 
 ## Architecture
 
