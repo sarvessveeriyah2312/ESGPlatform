@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { Plus, Search, Edit2, Trash2, Info, X } from 'lucide-react';
 import { referenceApi, MatterResponse, MatterCategory, MatterSet } from '../../api/referenceApi';

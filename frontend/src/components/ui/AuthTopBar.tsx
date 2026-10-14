@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Search, RefreshCw, ChevronDown, Settings, LogOut, LifeBuoy, Building2, Check, Sparkles } from 'lucide-react';

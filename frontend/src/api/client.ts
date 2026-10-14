@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { tokenStore } from './tokenStore';
 import { resolveSubdomainSlug } from './subdomain';
 

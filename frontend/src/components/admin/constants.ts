@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { PlanType } from '../../contexts/PlanContext';
 import { BackendRole } from '../../api/tenantAdminApi';
 import { BackendSubscriptionPlan } from '../../api/mappers';

@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Filter as FilterIcon, Plus, X, GripVertical } from 'lucide-react';
 

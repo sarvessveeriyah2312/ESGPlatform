@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect } from 'react';
 import { Loader2, BarChart3 } from 'lucide-react';
 import { aiUsageApi, UsageSummaryResponse } from '../../api/aiUsageApi';

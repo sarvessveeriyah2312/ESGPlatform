@@ -1,9 +1,4 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
  * Extracts a partner's subdomain slug from the browser's own hostname, if this page is being
  * visited on one. Recognizes two shapes:
  *   - "{slug}.localhost" (any port) — local dev; the ".localhost" TLD resolves to loopback in

@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, Check, Loader2, Copy } from 'lucide-react';
 import { mfaApi, TotpEnrollResponse } from '../../api/mfaApi';

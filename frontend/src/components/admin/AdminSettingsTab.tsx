@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { Loader2, Sliders, Mail, ShieldCheck, CreditCard } from 'lucide-react';
 import { platformSettingsApi, PlatformSettingsResponse, UpdatePlatformSettingsRequest } from '../../api/platformSettingsApi';

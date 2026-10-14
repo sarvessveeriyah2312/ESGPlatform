@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { X, Sparkles, Send, Loader2, AlertCircle, MessageCircle } from 'lucide-react';
 import { aiQaApi } from '../../api/aiQaApi';

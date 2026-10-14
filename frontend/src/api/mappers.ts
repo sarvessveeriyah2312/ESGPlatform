@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { PlanType } from '../contexts/PlanContext';
 import { MatterCategory } from './referenceApi';
 

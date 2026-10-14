@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 export type TargetStatus = 'complete' | 'overdue' | 'on-track' | 'off-track' | 'not-started';
 
 /**

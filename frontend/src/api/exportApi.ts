@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { apiClient } from './client';
 
 export type ExportFormat = 'PDF' | 'WORD' | 'CSV' | 'CSV_CSI';

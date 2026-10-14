@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { ForecastStatus, TrendDirection } from '../api/forecastingApi';
 
 export const FORECAST_STATUS_STYLES: Record<ForecastStatus, { label: string; className: string }> = {

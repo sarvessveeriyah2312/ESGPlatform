@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { ShieldCheck, Plus, Pencil, Trash2, X, Check, AlertCircle } from 'lucide-react';
 import Button from './ui/Button';

@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { Monitor, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';

@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';

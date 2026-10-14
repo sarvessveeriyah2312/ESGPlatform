@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Building2, Clock, FileText, Hash } from 'lucide-react';
 import { activityLogApi } from '../../api/activityLogApi';

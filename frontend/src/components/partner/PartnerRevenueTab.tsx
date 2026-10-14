@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { CreditCard, ExternalLink, Percent } from 'lucide-react';
 import { partnerConsoleApi, PartnerRevenueSummary } from '../../api/partnerConsoleApi';

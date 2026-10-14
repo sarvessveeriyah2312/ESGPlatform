@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React from 'react';
 import { Lock, Sparkles, ShieldAlert, ArrowRight } from 'lucide-react';
 import { usePlan, PlanType } from '../../contexts/PlanContext';

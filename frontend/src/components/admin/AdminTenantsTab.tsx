@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { Search, X, Filter, Archive, Check, CreditCard } from 'lucide-react';
 import { tenantAdminApi } from '../../api/tenantAdminApi';

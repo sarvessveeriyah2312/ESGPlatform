@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { Globe, ShieldCheck, Sparkles, Building2 } from 'lucide-react';
 import { usePlan } from '../contexts/PlanContext';

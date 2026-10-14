@@ -59,6 +59,26 @@ ESG/
 - **Admin console** — a separate operator surface for `PLATFORM_ADMIN`/`SUPERADMIN` to manage
   tenants, plans, and platform-wide reference data.
 
+## Domain logic — where to look
+
+Most of what makes this a Bursa compliance tool (rather than a generic CRUD dashboard) lives in
+the backend. Paths are relative to `backend/src/main/java/com/esgeasy/esg/`.
+
+| Rule | Where | What it does |
+|---|---|---|
+| Disclosure framework resolution | `reference/MatterSetResolverService.java`, `reference/MatterSet.java` | Picks the applicable matter set from plan × market classification — SEDG for SMEs, Bursa Main Market or ACE Market sets for Issuer-Ready listed companies — plus the opt-in sector module (Growth and up). Every indicator, report and forecast is scoped through this. |
+| Scope 3 transition relief | `reference/TransitionReliefRule.java` | Bursa's climate-first relief period (2 years Main Market, 3 years ACE Market) is seeded reference data and computed server-side, never a user-editable flag. |
+| Monthly → annual aggregation | `reference/AggregationRule.java` | Each indicator declares how its disclosure figure is derived: `SUM`/`COUNT` for flows and events, `LATEST` for point-in-time snapshots, `AVERAGE` for rates, `DIRECT_ANNUAL` where monthly data makes no sense. |
+| Live plan gating | `reference/PlanGateService.java`, `reference/FeatureFlag.java` | Feature access is re-read from the company row on every request, not trusted from the JWT, so a downgrade takes effect immediately. |
+| Tenant isolation | `common/TenantOwnedEntity.java` | A Hibernate `@Filter` on `company_id` scopes every tenant-owned query at the data layer. |
+| GHG ledger | `climate/EmissionActivityService.java`, `climate/EmissionFactor.java`, `climate/Scope3Category.java` | Activity quantity × factor from a global emission-factor library → tCO2e per entry, with Scope 3 broken out by category for IFRS S2. |
+| IFRS S1/S2 | `climate/IfrsService.java`, `export/IfrsReportService.java` | Risk/opportunity register, business segments and governance/strategy/risk narratives rendered into standalone IFRS S1 and S2 disclosure PDFs. |
+| Assurance sign-off | `assurance/AssuranceService.java` | Fiscal-year sign-off is refused until 100% of the company's applicable indicators have values, with a separate sign-off audit trail. |
+| Bursa CSI export | `export/ExportService.java` | Produces a CSV that lines up with Bursa's Centralised Sustainability Intelligence (CSI) manual portal, marking each row ready or pending. |
+| Trend forecasting | `forecasting/ForecastingService.java`, `forecasting/LinearTrend.java` | Least-squares projection of recorded annual values against linked performance targets, classified ON_TRACK / AT_RISK / OFF_TRACK. The math is deterministic; AI is only used for the optional narrative. |
+
+Schema history is in `backend/src/main/resources/db/migration` (Flyway, applied on startup).
+
 ## Getting started
 
 ### Prerequisites
@@ -129,4 +149,4 @@ SME/`starter`-plan user and a Main Market/`issuer-ready` user with IFRS S1/S2 ac
 
 ## License
 
-Apache-2.0 (see SPDX headers in source files).
+Proprietary — all rights reserved. See [`LICENSE`](LICENSE).

@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 import ToastStack from '../components/ui/ToastStack';
 

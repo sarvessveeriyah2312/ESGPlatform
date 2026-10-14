@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { Plus, X, KeyRound, Copy, Check, Power } from 'lucide-react';
 import { partnerConsoleApi, PartnerUserResponse, CreatePartnerAdminUserResponse } from '../../api/partnerConsoleApi';

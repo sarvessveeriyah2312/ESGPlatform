@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { ComplianceStatus } from '../api/compliancePolicyApi';
 
 export const COMPLIANCE_STATUS_STYLES: Record<ComplianceStatus, { label: string; className: string }> = {

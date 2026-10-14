@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { referenceApi } from '../api/referenceApi';
 import { planFromBackend } from '../api/mappers';

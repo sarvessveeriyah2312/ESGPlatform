@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useCallback, useEffect, useState } from 'react';
 import { referenceApi } from '../api/referenceApi';
 import { categoryFromBackend, FrontendMatterCategory } from '../api/mappers';

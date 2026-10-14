@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { Send, StickyNote } from 'lucide-react';
 import { TicketMessageResponse } from '../../api/supportTicketApi';

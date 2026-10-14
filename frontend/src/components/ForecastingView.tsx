@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, Minus, Sparkles, Loader2, Target as TargetIcon, ListChecks } from 'lucide-react';
 import Card from './ui/Card';

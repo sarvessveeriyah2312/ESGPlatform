@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Building2, Landmark, Contact, Pencil, Check, AlertCircle, Trash2, RefreshCw, ShieldAlert, X } from 'lucide-react';

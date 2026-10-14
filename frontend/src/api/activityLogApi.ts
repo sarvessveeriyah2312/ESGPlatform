@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { apiClient } from './client';
 
 export type BackendActivityEventType = 'SIGNUP' | 'PLAN_CHANGE' | 'SUPPORT_TICKET' | 'EXPORT_SUCCESS' | 'TRIAL_CONVERTED' | 'TRIAL_REVOKED';

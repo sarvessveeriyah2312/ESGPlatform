@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, X, Handshake, Building2, Sparkles, Image as ImageIcon, Mail, Send, Globe, Percent, ShieldCheck, KeyRound, Copy, Check, CreditCard, ExternalLink } from 'lucide-react';
 import { partnerAdminApi, PartnerResponse, SavePartnerRequest, CreatePartnerAdminUserResponse, StripeConnectStatusResponse } from '../../api/partnerAdminApi';

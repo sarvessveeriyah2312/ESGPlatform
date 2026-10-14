@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React from 'react';
 import { CheckCircle2, AlertCircle, AlertTriangle, Loader2, X } from 'lucide-react';
 import { ToastMessage, ToastType } from '../../contexts/ToastContext';

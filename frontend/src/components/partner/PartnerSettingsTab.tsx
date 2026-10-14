@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { Sliders, Mail, ShieldCheck } from 'lucide-react';
 import PartnerGeneralSettingsTab from './settings/PartnerGeneralSettingsTab';
