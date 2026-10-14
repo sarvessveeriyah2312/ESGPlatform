@@ -1,4 +1,4 @@
-# On-premise deployment bundle — see ../ONPREM_PLAN.md for the plan this implements.
+# On-premise deployment bundle
 #
 # Packaging only: builds the same backend/ and frontend/ source as the SaaS deployment, plus an
 # nginx container serving the built frontend and reverse-proxying /api to the backend. Run from

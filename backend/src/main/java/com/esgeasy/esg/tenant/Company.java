@@ -38,7 +38,7 @@ public class Company extends BaseEntity {
     private Company parentCompany;
 
     /** Null means a direct EsgEasy customer (every company today) — a non-null value means this
-     *  company was provisioned under that partner's brand. See Partner, WHITELABEL_PLAN.md Phase 1.
+     *  company was provisioned under that partner's brand. See Partner.
      *  Independent of subscriptionPlan — a white-labeled company still has its own plan tier. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partner_id")
@@ -157,7 +157,7 @@ public class Company extends BaseEntity {
     // --- Effective branding — resolves the white-label partner's brand if one is linked,
     // otherwise EsgEasy's own defaults. Single source of truth reused by MeResponse, transactional
     // emails, MFA TOTP issuer, and PDF export templates (all read these rather than re-deriving the
-    // same partner-or-default fallback independently). See WHITELABEL_PLAN.md Phase 2.
+    // same partner-or-default fallback independently).
 
     public String getEffectiveBrandName() {
         return partner != null ? partner.getBrandName() : "EsgEasy";

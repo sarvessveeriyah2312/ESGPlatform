@@ -14,8 +14,8 @@ import java.math.BigDecimal;
  * A white-label partner (consultancy, bank, accounting firm) that can offer EsgEasy under its own
  * brand to its own end customers. Independent of {@link SubscriptionPlan} — a company linked to a
  * partner (via {@link Company#getPartner()}) still has its own plan tier underneath; the partner
- * only determines branding/attribution, not feature access. See ONPREM_PLAN.md's sibling doc,
- * WHITELABEL_PLAN.md, Phase 1. Admin-only CRUD (PartnerController) — no self-service yet, and
+ * only determines branding/attribution, not feature access.
+ * Admin-only CRUD (PartnerController) — no self-service yet, and
  * brand resolution (MeResponse, frontend theming) is a later phase, not wired up here.
  */
 @Entity
@@ -45,7 +45,7 @@ public class Partner extends BaseEntity {
     @Column(name = "email_from_address")
     private String emailFromAddress;
 
-    /** Reserved for future subdomain-based brand routing (WHITELABEL_PLAN.md Phase 3) — not resolved anywhere yet. */
+    /** Reserved for future subdomain-based brand routing — not resolved anywhere yet. */
     @Column(name = "subdomain_slug", length = 100, unique = true)
     private String subdomainSlug;
 
@@ -53,7 +53,7 @@ public class Partner extends BaseEntity {
     @Column(name = "billing_model", length = 50)
     private String billingModel;
 
-    // --- Stripe Connect / revenue share (WHITELABEL_PLAN.md Phase 5) ---
+    // --- Stripe Connect / revenue share ---
 
     /** Null until a platform admin starts Connect onboarding for this partner — see PartnerService.startStripeConnectOnboarding. */
     @Column(name = "stripe_account_id", length = 255)

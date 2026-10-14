@@ -500,7 +500,7 @@ public class CompanyService {
         return toSummary(company);
     }
 
-    /** Links (or unlinks, when request.partnerId() is null) a company to a partner — see Partner, WHITELABEL_PLAN.md Phase 1. */
+    /** Links (or unlinks, when request.partnerId() is null) a company to a partner — see Partner. */
     @Transactional
     public TenantSummaryResponse adminUpdatePartner(UUID companyId, UpdateTenantPartnerRequest request) {
         Company company = findCompany(companyId);

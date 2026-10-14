@@ -248,7 +248,7 @@ public class CompanyBillingService {
     }
 
     /**
-     * WHITELABEL_PLAN.md Phase 5: if this company was referred by a partner with both a connected
+     * If this company was referred by a partner with both a connected
      * Stripe account and an explicit revenue share % set, route that share to the partner as a
      * destination charge on the resulting subscription — Stripe collects the full amount from the
      * customer and automatically transfers the fee-minus share to the partner's connected account.
@@ -348,7 +348,7 @@ public class CompanyBillingService {
         return switch (plan) {
             case STARTER -> MarketClassification.SME;
             case GROWTH -> MarketClassification.ACE_MARKET;
-            // On-prem's real target customer (bank, GLC, Main Market issuer — see ONPREM_PLAN.md)
+            // On-prem's real target customer (bank, GLC, Main Market issuer)
             // is the same profile as ISSUER_READY's; a platform admin can correct this afterward
             // via the company's profile if a given purchaser doesn't fit that default.
             case ISSUER_READY, ON_PREM -> MarketClassification.MAIN_MARKET;
@@ -356,7 +356,7 @@ public class CompanyBillingService {
     }
 
     // Extracted to PlatformStripeSecretProvider (shared with PartnerService's Stripe Connect
-    // operations, WHITELABEL_PLAN.md Phase 5) — kept as a thin delegate here so the 4 existing
+    // operations) — kept as a thin delegate here so the 4 existing
     // call sites in this class didn't need touching.
     private String requireStripeSecretKey() {
         return stripeSecretProvider.requireSecretKey();

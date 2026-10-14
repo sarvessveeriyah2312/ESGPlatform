@@ -8,10 +8,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Deliberately minimal — the partner console (WHITELABEL_PLAN.md Phase 4) is read-only visibility
- * only. What a partner should be allowed to see/do beyond this (billing? inviting users into their
- * companies? changing plans?) is explicitly flagged as undecided in WHITELABEL_PLAN.md's open
- * decisions, so this intentionally does NOT reuse the fuller TenantSummaryResponse a platform admin
+ * Deliberately minimal — the partner console is read-only visibility only. What a partner should
+ * be allowed to see/do beyond this (billing? inviting users into their companies? changing plans?)
+ * is still undecided, so this intentionally does NOT reuse the fuller TenantSummaryResponse a platform admin
  * sees (contact details, trial state, etc.) until that's actually designed.
  */
 public record PartnerCompanySummaryResponse(

@@ -42,7 +42,7 @@ public class PublicReferenceController {
     }
 
     /**
-     * Pre-login brand resolution for a partner's subdomain (WHITELABEL_PLAN.md Phase 3). Takes an
+     * Pre-login brand resolution for a partner's subdomain. Takes an
      * already-extracted slug rather than reading the request's own Host header, since the frontend
      * (window.location.hostname) and this API commonly run on different origins/ports — the
      * frontend is in the better position to know which hostname its visitor is actually on. A

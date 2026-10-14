@@ -27,7 +27,7 @@ export interface SavePartnerRequest {
   revenueSharePercent?: number | null;
 }
 
-/** WHITELABEL_PLAN.md Phase 5 — scaffolded, never exercised against a real onboarded account. */
+/** Stripe Connect — scaffolded, never exercised against a real onboarded account. */
 export interface StripeConnectStatusResponse {
   connected: boolean;
   stripeAccountId: string | null;
@@ -55,7 +55,7 @@ export const partnerAdminApi = {
 
   remove: (id: string) => apiClient.delete<void>(`/api/v1/admin/partners/${id}`),
 
-  /** Creates the partner's own login (WHITELABEL_PLAN.md Phase 4) — no partner self-service yet. */
+  /** Creates the partner's own login — no partner self-service yet. */
   createUser: (partnerId: string, name: string, email: string) =>
     apiClient.post<CreatePartnerAdminUserResponse>(`/api/v1/admin/partners/${partnerId}/users`, { name, email }),
 

@@ -4,7 +4,7 @@
  *   - "{slug}.localhost" (any port) — local dev; the ".localhost" TLD resolves to loopback in
  *     every modern browser/OS with no /etc/hosts edit needed (RFC 6761), so this is directly
  *     testable by just navigating to e.g. http://nusantara.localhost:3000.
- *   - "{slug}.esgeasy.my" — the real production wildcard domain (WHITELABEL_PLAN.md Phase 3),
+ *   - "{slug}.esgeasy.my" — the real production wildcard domain,
  *     excluding "www" since that's the apex marketing site, not a partner.
  * Returns null for the bare app domain (esgeasy.my, localhost, an IP, etc.) — no subdomain, no
  * partner to resolve, caller should just use EsgEasy's own branding without an API call.

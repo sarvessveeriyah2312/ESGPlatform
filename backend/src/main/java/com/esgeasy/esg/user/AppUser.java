@@ -34,7 +34,7 @@ public class AppUser extends BaseEntity {
     @JoinColumn(name = "company_id")
     private Company company;
 
-    /** Set only for a PARTNER_ADMIN user (whose company is always null) — see Role.PARTNER_ADMIN, WHITELABEL_PLAN.md Phase 4. */
+    /** Set only for a PARTNER_ADMIN user (whose company is always null) — see Role.PARTNER_ADMIN. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partner_id")
     private Partner partner;
@@ -96,8 +96,7 @@ public class AppUser extends BaseEntity {
      * A PARTNER_ADMIN belongs directly; a tenant user belongs via their company's own partner
      * link; platform-level roles (no company, no partner) always return null. Single resolution
      * point reused by both AuthService.requireDomainMatch (login-time) and
-     * JwtAuthenticationFilter (every subsequent request) — see WHITELABEL_PLAN.md Phase 3's
-     * login-boundary follow-up.
+     * JwtAuthenticationFilter (every subsequent request).
      */
     public java.util.UUID getEffectivePartnerId() {
         if (partner != null) {

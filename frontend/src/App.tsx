@@ -236,7 +236,7 @@ function AuthenticatedLayout({ children, allowedRoles, requiredPermissions }: { 
         </button>
 
         {/* Sidebar Header — reflects the linked white-label partner's brand if any, else EsgEasy's
-            own (see Company.getEffectiveBrandName / user.brandName, WHITELABEL_PLAN.md Phase 2). */}
+            own (see Company.getEffectiveBrandName / user.brandName). */}
         <div className="h-[72px] flex items-center px-6 border-b border-transparent shrink-0">
           <div className="flex items-center space-x-3 w-full">
             {user?.logoUrl ? (
@@ -496,7 +496,7 @@ const PAGE_TITLES: Record<string, string> = {
 function usePageTitle() {
   const location = useLocation();
   const { user } = useAuth();
-  // Post-login: the logged-in user's own company brand (WHITELABEL_PLAN.md Phase 2). Pre-login on
+  // Post-login: the logged-in user's own company brand. Pre-login on
   // a partner's subdomain (nusantara.esgeasy.my): resolved from the hostname instead (Phase 3) —
   // LoginPage/RegisterPage already call this hook themselves for their own logo/name, so this is
   // a second, independent call just for the tab title. Note this means the browser tab *title*
@@ -525,7 +525,7 @@ function AppContent() {
     <Routes>
       {/* Superadmin Panel — sections are separate routes so the sidebar can navigate/highlight them */}
       <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
-      {/* Partner console (WHITELABEL_PLAN.md Phase 4) — standalone, not AuthenticatedLayout-wrapped;
+      {/* Partner console — standalone, not AuthenticatedLayout-wrapped;
           PartnerConsoleLayout guards auth/role and renders its own sidebar+topbar shell (mirrors
           the platform admin's own layout, see its own doc comment for why it's a separate
           component rather than reusing AuthenticatedLayout). PartnerConsole reads the URL to pick

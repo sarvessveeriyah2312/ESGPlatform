@@ -27,7 +27,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const { register, resendVerification } = useAuth();
   const { showToast } = useToast();
-  // See LoginPage — same subdomain-based pre-login brand resolution (WHITELABEL_PLAN.md Phase 3).
+  // See LoginPage — same subdomain-based pre-login brand resolution.
   const brand = useSubdomainBrand();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);

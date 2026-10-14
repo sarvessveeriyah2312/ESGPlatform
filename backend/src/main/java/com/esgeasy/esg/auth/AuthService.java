@@ -349,8 +349,8 @@ public class AuthService {
     MeResponse toMeResponse(AppUser user) {
         Company company = user.getCompany();
         // Brand resolution order: the user's own partner first (a PARTNER_ADMIN sees their own
-        // brand, not EsgEasy's — see Role.PARTNER_ADMIN), else their company's effective brand
-        // (WHITELABEL_PLAN.md Phase 2), else EsgEasy's own default. A user is never linked to both
+        // brand, not EsgEasy's — see Role.PARTNER_ADMIN), else their company's effective brand,
+        // else EsgEasy's own default. A user is never linked to both
         // a company and a partner at once (see AppUser.partner's own doc comment).
         Partner partner = user.getPartner();
         boolean mfaSetupRequired = requiresMfa(partner) && !mfaService.isEnabled(user.getId());

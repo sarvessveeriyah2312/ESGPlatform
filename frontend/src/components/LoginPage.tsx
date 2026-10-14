@@ -26,7 +26,7 @@ export default function LoginPage() {
   const { login, completeMfaLogin, resendVerification, sessionExpired, clearSessionExpired } = useAuth();
   // Resolves a partner's brand from the subdomain this page is visited on (e.g.
   // nusantara.esgeasy.my) — distinct from post-login branding (App.tsx), which comes from the
-  // logged-in user's own company instead. See WHITELABEL_PLAN.md Phase 3.
+  // logged-in user's own company instead.
   const brand = useSubdomainBrand();
   const { showToast } = useToast();
 

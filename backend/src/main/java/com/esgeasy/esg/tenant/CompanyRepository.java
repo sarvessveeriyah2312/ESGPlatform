@@ -14,7 +14,7 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
     List<Company> findByParentCompanyId(UUID parentCompanyId);
     Optional<Company> findByStripeCustomerId(String stripeCustomerId);
     boolean existsByPartnerId(UUID partnerId);
-    /** Backs the partner console (WHITELABEL_PLAN.md Phase 4) — a partner's own scoped view of its companies. */
+    /** Backs the partner console — a partner's own scoped view of its companies. */
     List<Company> findByPartnerIdOrderByNameAsc(UUID partnerId);
 
     /**

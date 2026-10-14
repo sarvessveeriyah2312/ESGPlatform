@@ -2,7 +2,7 @@ package com.esgeasy.esg.tenant.dto;
 
 import java.math.BigDecimal;
 
-/** A partner's own revenue-share view (WHITELABEL_PLAN.md Phase 5) — the % is platform-admin-set and shown here read-only; Connect status is live from Stripe. See PartnerService.getMyRevenueSummary. */
+/** A partner's own revenue-share view — the % is platform-admin-set and shown here read-only; Connect status is live from Stripe. See PartnerService.getMyRevenueSummary. */
 public record PartnerRevenueSummaryResponse(
         BigDecimal revenueSharePercent,
         boolean connected,

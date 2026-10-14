@@ -6,7 +6,7 @@ export { resolveSubdomainSlug };
 
 const ESGEASY_DEFAULT: PublicBrand = { brandName: 'EsgEasy', logoUrl: null, primaryColor: null };
 
-/** Pre-login brand for whichever partner's subdomain this page is being visited on, or EsgEasy's own if none. Used by LoginPage/RegisterPage — see WHITELABEL_PLAN.md Phase 3. */
+/** Pre-login brand for whichever partner's subdomain this page is being visited on, or EsgEasy's own if none. Used by LoginPage/RegisterPage. */
 export function useSubdomainBrand(): PublicBrand {
   const [brand, setBrand] = useState<PublicBrand>(ESGEASY_DEFAULT);
 

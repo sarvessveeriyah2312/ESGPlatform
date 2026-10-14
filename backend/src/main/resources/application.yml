@@ -44,7 +44,7 @@ esgeasy:
   cors:
     # setAllowedOriginPatterns (SecurityConfig.java) supports Ant-style wildcards, but that only
     # matters if a pattern is actually listed here — the bare host alone never matched a partner's
-    # subdomain (nusantara.localhost:3000, WHITELABEL_PLAN.md Phase 3), so every cross-subdomain
+    # subdomain (nusantara.localhost:3000), so every cross-subdomain
     # fetch from the browser (e.g. LandingPage/LoginPage's useSubdomainBrand) was silently CORS-
     # blocked. *.esgeasy.my covers production; *.localhost:3000 covers local dev (RFC 6761 — any
     # "{x}.localhost" resolves to loopback with no /etc/hosts edit needed).

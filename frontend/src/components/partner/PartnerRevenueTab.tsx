@@ -4,7 +4,7 @@ import { partnerConsoleApi, PartnerRevenueSummary } from '../../api/partnerConso
 import { useToast } from '../../contexts/ToastContext';
 import Button from '../ui/Button';
 
-/** WHITELABEL_PLAN.md Phase 5 — self-service mirror of the admin Stripe Connect panel in AdminPartnersTab, scoped to the caller's own partner (no partnerId anywhere, backend resolves it from the JWT). */
+/** Self-service mirror of the admin Stripe Connect panel in AdminPartnersTab, scoped to the caller's own partner (no partnerId anywhere, backend resolves it from the JWT). */
 export default function PartnerRevenueTab() {
   const { showToast } = useToast();
   const [summary, setSummary] = useState<PartnerRevenueSummary | null>(null);

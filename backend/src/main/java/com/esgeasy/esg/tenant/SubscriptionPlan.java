@@ -5,7 +5,7 @@ public enum SubscriptionPlan {
     GROWTH(2),
     ISSUER_READY(3),
     /** On-premise / enterprise contract tier — provisioned directly by a platform admin
-     *  (CompanyService.adminUpdatePlan), never via self-serve Stripe checkout. See ONPREM_PLAN.md. */
+     *  (CompanyService.adminUpdatePlan), never via self-serve Stripe checkout. */
     ON_PREM(4);
 
     private final int level;

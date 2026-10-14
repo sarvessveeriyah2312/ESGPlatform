@@ -13,7 +13,7 @@ const TICKET_STATUS_ACTION_LABEL: Record<TicketStatus, string> = { OPEN: 'Claim'
  * A partner as first-line support for its own client companies' tickets — mirrors AdminSupportTab
  * exactly (same claim/resolve workflow, same reusable TicketChatPanel for replies + shared note),
  * just scoped to the partner's own companies via the backend's requirePartnerId() check rather
- * than a platform-wide view. See WHITELABEL_PLAN.md's scope note on why this isn't read-only.
+ * than a platform-wide view. Partners can act on tickets (not just view them) because they are the client's first line of support.
  */
 export default function PartnerSupportTab() {
   const { user } = useAuth();

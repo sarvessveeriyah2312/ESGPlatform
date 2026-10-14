@@ -13,7 +13,7 @@ export interface PublicFeatureFlag {
   visibleOnlyAtMinPlan: boolean;
 }
 
-/** Pre-login brand for a partner's subdomain — always resolves to something (EsgEasy's own defaults if no partner matches), never 404s. See WHITELABEL_PLAN.md Phase 3. */
+/** Pre-login brand for a partner's subdomain — always resolves to something (EsgEasy's own defaults if no partner matches), never 404s. */
 export interface PublicBrand {
   brandName: string;
   logoUrl: string | null;

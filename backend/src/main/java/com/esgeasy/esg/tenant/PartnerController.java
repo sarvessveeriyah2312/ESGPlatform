@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-/** Platform-admin-only white-label partner CRUD — see PartnerService, WHITELABEL_PLAN.md Phase 1. */
+/** Platform-admin-only white-label partner CRUD — see PartnerService. */
 @RestController
 @RequestMapping("/api/v1/admin/partners")
 @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SUPERADMIN')")
@@ -54,13 +54,13 @@ public class PartnerController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Creates the partner's own login (WHITELABEL_PLAN.md Phase 4) — no partner self-service yet, so this is the only way one gets created. */
+    /** Creates the partner's own login — no partner self-service yet, so this is the only way one gets created. */
     @PostMapping("/{id}/users")
     public CreatePartnerAdminUserResponse createUser(@PathVariable UUID id, @Valid @RequestBody CreatePartnerAdminUserRequest request) {
         return partnerService.createPartnerAdminUser(id, request);
     }
 
-    /** Starts (or resumes) Stripe Connect Express onboarding for this partner — WHITELABEL_PLAN.md Phase 5. */
+    /** Starts (or resumes) Stripe Connect Express onboarding for this partner. */
     @PostMapping("/{id}/stripe-connect/link")
     public StripeConnectLinkResponse startStripeConnectOnboarding(@PathVariable UUID id) {
         return partnerService.startStripeConnectOnboarding(id);

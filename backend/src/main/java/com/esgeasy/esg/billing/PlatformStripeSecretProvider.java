@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Extracted from {@link CompanyBillingService}'s original private method — reused by
- * {@code PartnerService}'s Stripe Connect operations (WHITELABEL_PLAN.md Phase 5), which need the
+ * {@code PartnerService}'s Stripe Connect operations, which need the
  * same platform-level Stripe secret key, not a separate one.
  */
 @Service

@@ -22,7 +22,7 @@ const NAV_ITEMS: { key: PartnerTab; label: string; icon: React.ReactNode; path: 
  * top bar (AuthTopBar) assumes company context in a few places (company switcher, links into
  * /settings and /support) that were never verified to behave for a partner-scoped user, and (2)
  * PartnerConsole.tsx's own guard logic (redirect non-PARTNER_ADMIN elsewhere) is specific to this
- * role and doesn't belong inside the shared tenant/platform layout. See WHITELABEL_PLAN.md Phase 4.
+ * role and doesn't belong inside the shared tenant/platform layout.
  */
 export default function PartnerConsoleLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading, logout } = useAuth();

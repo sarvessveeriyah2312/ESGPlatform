@@ -12,10 +12,7 @@ fully wired to each other (no mocked data in the frontend).
 ```
 ESG/
 ├── frontend/   React 19 + TypeScript + Vite — the web app
-├── backend/    Java 21 + Spring Boot 3 + PostgreSQL — the REST API
-├── BRD_SDG_ESG_Platform.docx   Business Requirements Document
-├── PRD_SDG_ESG_Platform.docx   Product Requirements Document
-└── SRS_SDG_ESG_Platform.docx   Software Requirements Specification
+└── backend/    Java 21 + Spring Boot 3 + PostgreSQL — the REST API
 ```
 
 ## Tech stack
@@ -140,9 +137,6 @@ SME/`starter`-plan user and a Main Market/`issuer-ready` user with IFRS S1/S2 ac
 
 ## Documentation
 
-- [`BRD_SDG_ESG_Platform.docx`](BRD_SDG_ESG_Platform.docx) — Business Requirements
-- [`PRD_SDG_ESG_Platform.docx`](PRD_SDG_ESG_Platform.docx) — Product Requirements
-- [`SRS_SDG_ESG_Platform.docx`](SRS_SDG_ESG_Platform.docx) — Software Requirements Specification
 - [`backend/README.md`](backend/README.md) — backend architecture, package layout, known
   simplifications
 - [`CLAUDE.md`](CLAUDE.md) — codebase guidance for AI coding agents working in this repo

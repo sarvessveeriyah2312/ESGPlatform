@@ -6,6 +6,6 @@ public enum Role {
     CONSULTANT,
     PLATFORM_ADMIN,
     SUPERADMIN,
-    /** A white-label partner's own login — see Partner, AppUser.partner, WHITELABEL_PLAN.md Phase 4. */
+    /** A white-label partner's own login — see Partner, AppUser.partner. */
     PARTNER_ADMIN
 }

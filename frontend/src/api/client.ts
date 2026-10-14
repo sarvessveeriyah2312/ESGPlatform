@@ -6,9 +6,8 @@ const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? 'http://localhos
 /**
  * Tells the backend which partner subdomain (if any) this request was made from, so
  * JwtAuthenticationFilter can reject a session whose account doesn't belong there — not just at
- * login (AuthService.requireDomainMatch), but for every request a still-valid token makes. See
- * WHITELABEL_PLAN.md Phase 3's login-boundary follow-up: that closed the "log in on the wrong
- * subdomain" hole, but did nothing for a token issued elsewhere (or from before this check
+ * login (AuthService.requireDomainMatch), but for every request a still-valid token makes. The login
+ * check closes the "log in on the wrong subdomain" hole, but does nothing for a token issued elsewhere (or from before this check
  * existed) that's simply still sitting in that origin's localStorage.
  */
 function partnerSlugHeader(): Record<string, string> {

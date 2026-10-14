@@ -12,7 +12,7 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     List<AppUser> findByCompanyId(UUID companyId);
     boolean existsByCustomRoleId(UUID customRoleId);
     long countByCompanyIdAndRoleAndActiveTrue(UUID companyId, Role role);
-    /** Backs the partner console (WHITELABEL_PLAN.md Phase 4) and PartnerService's delete-guard. */
+    /** Backs the partner console and PartnerService's delete-guard. */
     List<AppUser> findByPartnerId(UUID partnerId);
     boolean existsByPartnerId(UUID partnerId);
     List<AppUser> findByPartnerIdOrderByNameAsc(UUID partnerId);

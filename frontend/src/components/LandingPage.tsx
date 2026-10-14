@@ -48,7 +48,7 @@ export default function LandingPage({
   onNavigateToRegister
 }: LandingPageProps) {
   // Site chrome (header/footer logo + wordmark) reflects the partner's brand when visited on
-  // their subdomain (WHITELABEL_PLAN.md Phase 3) — this page previously never called this hook at
+  // their subdomain — this page previously never called this hook at
   // all, so a partner's own client visiting e.g. nusantara.esgeasy.my still saw plain "EsgEasy" in
   // the nav and footer even though LoginPage/RegisterPage already resolved it correctly. Deliberately
   // scoped to just the logo/wordmark, not the marketing copy, testimonials, or the footer's legal

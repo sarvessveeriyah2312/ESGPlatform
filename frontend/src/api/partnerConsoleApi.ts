@@ -77,7 +77,7 @@ export interface PartnerSecuritySettingsResponse {
   mfaRequiredForTeam: boolean;
 }
 
-/** For a signed-in PARTNER_ADMIN only — see WHITELABEL_PLAN.md Phase 4. Every call is implicitly scoped to the caller's own partner; there's no partnerId param anywhere here. */
+/** For a signed-in PARTNER_ADMIN only. Every call is implicitly scoped to the caller's own partner; there's no partnerId param anywhere here. */
 export const partnerConsoleApi = {
   myCompanies: () => apiClient.get<PartnerCompanySummary[]>('/api/v1/partner/companies'),
 
@@ -96,7 +96,7 @@ export const partnerConsoleApi = {
 
   listInvoices: () => apiClient.get<PartnerInvoiceResponse[]>('/api/v1/partner/invoices'),
 
-  /** A partner acts as first-line support for its own client companies' tickets — reply, note, and claim/resolve, same as the admin support APIs. See WHITELABEL_PLAN.md's scope note. */
+  /** A partner acts as first-line support for its own client companies' tickets — reply, note, and claim/resolve, same as the admin support APIs. */
   listSupportTickets: () => apiClient.get<SupportTicketResponse[]>('/api/v1/partner/support-tickets'),
   listSupportTicketMessages: (ticketId: string) => apiClient.get<TicketMessageResponse[]>(`/api/v1/partner/support-tickets/${ticketId}/messages`),
   postSupportTicketMessage: (ticketId: string, message: string) =>

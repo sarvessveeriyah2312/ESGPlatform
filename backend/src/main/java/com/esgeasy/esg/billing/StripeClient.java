@@ -75,7 +75,7 @@ public class StripeClient {
         return post(secretKey, "/subscriptions/" + subscriptionId, params);
     }
 
-    // --- Stripe Connect (WHITELABEL_PLAN.md Phase 5) — a partner's own connected account, used to
+    // --- Stripe Connect — a partner's own connected account, used to
     // route a share of their referred companies' payments to them via destination charges. See
     // PartnerService for the orchestration. Account creation verified live against this platform's
     // own Stripe test account (a real acct_... id, a real onboarding page) — a human still needs to

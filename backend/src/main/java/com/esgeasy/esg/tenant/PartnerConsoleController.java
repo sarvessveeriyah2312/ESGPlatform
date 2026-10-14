@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A signed-in partner's own scoped self-service console (WHITELABEL_PLAN.md Phase 4, expanded):
+ * A signed-in partner's own scoped self-service console:
  * its companies, its own branding, its Stripe Connect revenue-share status, its own team of
  * PARTNER_ADMIN logins, billing history, audit log, and first-line support over its client
  * companies' tickets (reply, note, claim/resolve). Every method delegates to a

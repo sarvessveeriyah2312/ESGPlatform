@@ -10,7 +10,7 @@ export const MANAGEMENT_ROLES: Role[] = ['COMPANY_ADMIN'];
 /** Roles allowed into the platform operator console. SUPERADMIN supersedes PLATFORM_ADMIN. */
 export const PLATFORM_ROLES: Role[] = ['PLATFORM_ADMIN', 'SUPERADMIN'];
 
-/** A white-label partner's own login — sees only its own companies (WHITELABEL_PLAN.md Phase 4). No company of its own, same as PLATFORM_ROLES. */
+/** A white-label partner's own login — sees only its own companies. No company of its own, same as PLATFORM_ROLES. */
 export const PARTNER_ROLES: Role[] = ['PARTNER_ADMIN'];
 
 /** `allowed` of `undefined` means "any authenticated role" — the common case for data views. */

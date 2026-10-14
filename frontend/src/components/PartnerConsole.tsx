@@ -11,7 +11,7 @@ import PartnerAuditLogTab from './partner/PartnerAuditLogTab';
 import PartnerSettingsTab from './partner/PartnerSettingsTab';
 
 /**
- * Content switcher for the partner console (WHITELABEL_PLAN.md Phase 4, expanded) — mirrors
+ * Content switcher for the partner console — mirrors
  * AdminPanel.tsx's own "URL owns the active section" pattern. Rendered inside
  * PartnerConsoleLayout, which owns the sidebar, auth guard, and top bar. `/partner` itself (no
  * sub-segment) is the dashboard — same convention as `/admin` defaulting to Overview.

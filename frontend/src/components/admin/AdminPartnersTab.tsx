@@ -23,7 +23,7 @@ export default function AdminPartnersTab({ showToast }: AdminPartnersTabProps) {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Create-login flow (WHITELABEL_PLAN.md Phase 4) — separate from the edit-partner modal above.
+  // Create-login flow — separate from the edit-partner modal above.
   const [loginModalPartner, setLoginModalPartner] = useState<PartnerResponse | null>(null);
   const [loginName, setLoginName] = useState('');
   const [loginEmail, setLoginEmail] = useState('');
@@ -31,7 +31,7 @@ export default function AdminPartnersTab({ showToast }: AdminPartnersTabProps) {
   const [createdCredentials, setCreatedCredentials] = useState<CreatePartnerAdminUserResponse | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Stripe Connect status (WHITELABEL_PLAN.md Phase 5) — only fetched while editing an existing partner.
+  // Stripe Connect status — only fetched while editing an existing partner.
   const [connectStatus, setConnectStatus] = useState<StripeConnectStatusResponse | null>(null);
   const [connectLoading, setConnectLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -153,7 +153,7 @@ export default function AdminPartnersTab({ showToast }: AdminPartnersTabProps) {
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900">Partners</h2>
             <p className="text-sm text-gray-500 mt-0.5">
-              White-label partners a tenant company can be linked to — independent of plan tier, see WHITELABEL_PLAN.md.
+              White-label partners a tenant company can be linked to. A partner sets branding only; the company keeps its own plan tier.
             </p>
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function AdminPartnersTab({ showToast }: AdminPartnersTabProps) {
                 <tr><td colSpan={6} className="text-center py-8 text-gray-400 text-xs font-medium">Loading partners…</td></tr>
               )}
               {!loading && partners.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400 text-xs font-medium">No partners yet — Phase 0 of WHITELABEL_PLAN.md: line up a real prospect before this list needs to grow.</td></tr>
+                <tr><td colSpan={6} className="text-center py-8 text-gray-400 text-xs font-medium">No partners yet.</td></tr>
               )}
               {!loading && partners.map((p) => (
                 <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
@@ -345,7 +345,7 @@ export default function AdminPartnersTab({ showToast }: AdminPartnersTabProps) {
                 </div>
               </FormSection>
 
-              {/* Stripe Connect (WHITELABEL_PLAN.md Phase 5) — only relevant once the partner already exists */}
+              {/* Stripe Connect — only relevant once the partner already exists */}
               {editingId && (
                 <FormSection title="Stripe Connect">
                   <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">

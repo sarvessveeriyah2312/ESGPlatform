@@ -64,8 +64,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         // setAllowedOriginPatterns (not setAllowedOrigins) — an exact-match allowlist can never
         // admit a wildcard subdomain, which white-label partner routing needs (a partner's own
-        // origin, e.g. https://nusantara.esgeasy.my, isn't known in advance — see
-        // WHITELABEL_PLAN.md Phase 3). Patterns support '*' (e.g. "https://*.esgeasy.my"); a
+        // origin, e.g. https://nusantara.esgeasy.my, isn't known in advance).
+        // Patterns support '*' (e.g. "https://*.esgeasy.my"); a
         // pattern with no '*' still matches only that exact origin, so existing single-origin
         // configs behave identically to before.
         configuration.setAllowedOriginPatterns(List.of(allowedOrigins));

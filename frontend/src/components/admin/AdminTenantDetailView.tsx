@@ -150,7 +150,7 @@ export default function AdminTenantDetailView({ tenantId, tenants, invoices, inv
 
           <div className="pt-4 border-t border-gray-100">
             <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1.5">
-              White-Label Partner — independent of plan tier, see WHITELABEL_PLAN.md
+              White-Label Partner (branding only)
             </span>
             <select
               value={activeTenantDetails.partnerId ?? ''}

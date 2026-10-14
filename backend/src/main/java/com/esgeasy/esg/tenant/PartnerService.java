@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Platform-admin-only CRUD over {@link Partner} (plus its own login, WHITELABEL_PLAN.md Phase 4) — see PartnerController for the role check. */
+/** Platform-admin-only CRUD over {@link Partner} (plus its own login) — see PartnerController for the role check. */
 @Service
 public class PartnerService {
 
@@ -119,7 +119,7 @@ public class PartnerService {
         partnerRepository.delete(partner);
     }
 
-    /** Platform-admin-only: creates the partner's own login (WHITELABEL_PLAN.md Phase 4) — there's no partner self-service yet, same posture as Phase 1. */
+    /** Platform-admin-only: creates the partner's own login — there's no partner self-service yet, same as partner CRUD. */
     @Transactional
     public CreatePartnerAdminUserResponse createPartnerAdminUser(UUID partnerId, CreatePartnerAdminUserRequest request) {
         Partner partner = findPartner(partnerId);
@@ -200,8 +200,8 @@ public class PartnerService {
     /**
      * Creates the partner's Stripe Express connected account on first call (reused on every
      * subsequent call, since Stripe account links are single-use/short-lived but the account
-     * itself is permanent), then returns a fresh onboarding link. WHITELABEL_PLAN.md Phase 5 —
-     * country is hardcoded to "MY" since every partner in this ESG-for-Bursa-Malaysia platform is
+     * itself is permanent), then returns a fresh onboarding link.
+     * Country is hardcoded to "MY" since every partner in this ESG-for-Bursa-Malaysia platform is
      * expected to be Malaysia-based.
      *
      * Verified live against this platform's own Stripe test account: the plain {@code type=express}

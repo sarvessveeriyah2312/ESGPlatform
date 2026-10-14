@@ -1,6 +1,6 @@
 # On-Premise Runbook
 
-Operational companion to [`../ONPREM_PLAN.md`](../ONPREM_PLAN.md). Assumes Docker and Docker Compose are installed on the target host.
+Operational runbook for on-prem deployments. Assumes Docker and Docker Compose are installed on the target host.
 
 ## Install
 
@@ -19,7 +19,7 @@ This builds the backend (`../backend`), frontend (`../frontend`), and starts Pos
 2. Register the customer's own company through the normal onboarding flow (`/register`) — pick whichever market classification (SME / ACE Market / Main Market) best matches the customer, since it drives which indicator/matter sets they see. This assigns a default plan (starter/growth/issuer-ready); the next step corrects that.
 3. As the platform admin, go to `/admin` → Tenants → the new company → **Modify Tenant Subscription Plan** → select **On-Premise**. This calls the existing `PATCH /api/v1/tenants/{id}/plan` endpoint (`TenantAdminController`/`CompanyService.adminUpdatePlan`) — no new endpoint was needed for this, it's the same mechanism used to change any tenant's plan.
 4. Still as platform admin, mark the company's trial converted (`PATCH /api/v1/tenants/{id}/trial`, `{"converted": true}`) so `TrialAccessFilter` never blocks it — on-prem companies are on a contract, not a trial clock.
-5. Change the seeded platform admin's own password (step 1) if you haven't yet, and consider whether the customer's own IT admin should hold `PLATFORM_ADMIN` on this instance or whether your team retains it — see the "Support model" open decision in `ONPREM_PLAN.md`.
+5. Change the seeded platform admin's own password (step 1) if you haven't yet, and consider whether the customer's own IT admin should hold `PLATFORM_ADMIN` on this instance or whether your team retains it.
 
 There's no separate on-prem provisioning API — steps 2–4 reuse the same admin tooling that manages every other tenant, just pointed at a single-customer database.
 
@@ -54,7 +54,7 @@ Flyway migrations run automatically and are additive-only by policy — no destr
 
 ## Network requirements
 
-The instance is internet-connected, not air-gapped (see `ONPREM_PLAN.md`'s decided section). Outbound HTTPS (443) must reach:
+The instance is internet-connected, not air-gapped. Outbound HTTPS (443) must reach:
 
 - The customer's own SMTP relay (`SMTP_HOST` in `.env`), if outbound email is enabled.
 - Whichever AI provider a company configures under Settings → AI (Gemini: `generativelanguage.googleapis.com`, OpenAI, or Anthropic) — only needed if that company turns on AI-assisted features, and only the one provider they actually pick.
@@ -63,4 +63,4 @@ No other outbound access is required. Nothing in this deployment calls Stripe, E
 
 ## Open items not covered here
 
-Per `ONPREM_PLAN.md`'s "Open decisions" section: this runbook assumes contract-only entitlement (no signed license file) and Docker Compose (not Kubernetes). Revisit this document if either of those decisions changes.
+This runbook assumes contract-only entitlement (no signed license file) and Docker Compose (not Kubernetes). Revisit this document if either of those decisions changes.

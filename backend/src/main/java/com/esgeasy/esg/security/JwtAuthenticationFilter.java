@@ -35,8 +35,8 @@ import java.util.Optional;
  * alone (their own natural expiry retires this fallback within one token lifetime of deploy).
  *
  * Also re-checks the partner-subdomain boundary on every request, not just at login. A partner's
- * subdomain is a login boundary (AuthService.requireDomainMatch, WHITELABEL_PLAN.md Phase 3's
- * follow-up), but that check only fires when a password is actually submitted — it does nothing
+ * subdomain is a login boundary (AuthService.requireDomainMatch), but that check only fires when
+ * a password is actually submitted — it does nothing
  * for a token that was already issued (on the bare domain, on a different partner's subdomain, or
  * before the login check existed) and is simply still sitting, unexpired, in that origin's
  * localStorage. The frontend sends the subdomain it's being viewed from as X-Partner-Slug
